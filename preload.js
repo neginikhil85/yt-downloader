@@ -1,10 +1,19 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
     searchYouTube: (query, page = 1) => ipcRenderer.invoke('search-youtube', query, page),
     getStreamUrl: (url) => ipcRenderer.invoke('get-stream-url', url),
     startDownload: (options) => ipcRenderer.invoke('start-download', options),
     selectFolder: () => ipcRenderer.invoke('select-folder'),
+    selectFileToSend: () => ipcRenderer.invoke('select-file-to-send'),
+    getFilePath: (file) => {
+        try {
+            if (webUtils && typeof webUtils.getPathForFile === 'function') {
+                return webUtils.getPathForFile(file);
+            }
+        } catch (e) {}
+        return file?.path || '';
+    },
     openInFinder: (filePath) => ipcRenderer.invoke('open-in-finder', filePath),
     getDefaultSavePath: () => ipcRenderer.invoke('get-default-save-path'),
     getLibraryFiles: (dirPath) => ipcRenderer.invoke('get-library-files', dirPath),
@@ -13,7 +22,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
         ipcRenderer.on('download-progress', handler);
         return () => ipcRenderer.removeListener('download-progress', handler);
     },
-    // ToffeeShare App-to-App Direct P2P APIs
+    // Direct P2P Transfer APIs
     p2pGetLocalInfo: () => ipcRenderer.invoke('p2p-get-local-info'),
     p2pGetPeers: () => ipcRenderer.invoke('p2p-get-peers'),
     p2pStartSend: (filePath) => ipcRenderer.invoke('p2p-start-send', filePath),
@@ -22,6 +31,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     p2pReceivePeer: (options) => ipcRenderer.invoke('p2p-receive-peer', options),
     p2pCancelReceive: () => ipcRenderer.invoke('p2p-cancel-receive'),
     p2pSendClipboard: (options) => ipcRenderer.invoke('p2p-send-clipboard', options),
+    p2pCompressToken: (obj) => ipcRenderer.invoke('p2p-compress-token', obj),
+    p2pDecompressToken: (tokenStr) => ipcRenderer.invoke('p2p-decompress-token', tokenStr),
 
     // Real-time Event Listeners
     onP2PPeersUpdated: (cb) => {

@@ -96,6 +96,80 @@
     box-shadow: 0 2px 10px rgba(59, 130, 246, 0.35);
 }
 
+/* Scope Sub-Tabs (Nearby vs Remote) */
+.p2p-scope-tabs {
+    display: flex;
+    gap: 8px;
+    margin-top: -8px;
+}
+
+.p2p-scope-btn {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+}
+
+.p2p-scope-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.p2p-scope-btn.active {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.4);
+    color: #60a5fa;
+}
+
+.p2p-chip-secure {
+    font-size: 11px;
+    font-weight: 600;
+    color: #34d399;
+    background: rgba(52, 211, 153, 0.1);
+    border: 1px solid rgba(52, 211, 153, 0.25);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* Token Containers for Remote WAN */
+.p2p-token-container {
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.token-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.token-display-input {
+    flex: 1;
+    background: #0d0e11;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: #e2e8f0;
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace, sans-serif;
+    outline: none;
+}
+
+.token-display-input:focus {
+    border-color: #3b82f6;
+}
+
 /* Panels */
 .toffee-panel {
     display: none;

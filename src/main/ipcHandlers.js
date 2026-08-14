@@ -1,7 +1,7 @@
 const { ipcMain } = require('electron');
 const { searchYouTube, getStreamUrl } = require('./services/youtubeService');
 const { startDownload, cancelDownload } = require('./services/downloadService');
-const { selectFolder, openInFinder, getDefaultSavePath, getLibraryFiles } = require('./services/libraryService');
+const { selectFolder, selectFileToSend, openInFinder, getDefaultSavePath, getLibraryFiles } = require('./services/libraryService');
 const {
     initP2PService,
     startSendingFile,
@@ -50,6 +50,10 @@ function registerIpcHandlers(getMainWindow) {
         return selectFolder(getMainWindow());
     });
 
+    ipcMain.handle('select-file-to-send', async () => {
+        return selectFileToSend(getMainWindow());
+    });
+
     ipcMain.handle('open-in-finder', async (event, targetPath) => {
         return openInFinder(targetPath);
     });
@@ -95,6 +99,16 @@ function registerIpcHandlers(getMainWindow) {
 
     ipcMain.handle('p2p-send-clipboard', async (event, { ip, port, text }) => {
         return sendClipboardToPeer(ip, port, text);
+    });
+
+    ipcMain.handle('p2p-compress-token', (event, obj) => {
+        const { compressToken } = require('./services/p2pShareService');
+        return compressToken(obj);
+    });
+
+    ipcMain.handle('p2p-decompress-token', (event, tokenStr) => {
+        const { decompressToken } = require('./services/p2pShareService');
+        return decompressToken(tokenStr);
     });
 }
 
