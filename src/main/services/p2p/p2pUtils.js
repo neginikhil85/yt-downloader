@@ -11,16 +11,44 @@ function generateTransferCode() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-function getLocalIpAddresses() {
+function calculateBroadcast(ip, netmask) {
+    try {
+        const ipParts = ip.split('.').map(Number);
+        const maskParts = netmask.split('.').map(Number);
+        const broadcastParts = [];
+        for (let i = 0; i < 4; i++) {
+            broadcastParts.push((ipParts[i] | (~maskParts[i] & 255)) >>> 0);
+        }
+        return broadcastParts.join('.');
+    } catch (e) {
+        return '255.255.255.255';
+    }
+}
+
+function getNetworkInterfaceConfigs() {
     const interfaces = os.networkInterfaces();
-    const list = [];
-    for (const iface of Object.values(interfaces)) {
+    const configs = [];
+    for (const [name, iface] of Object.entries(interfaces)) {
         for (const net of iface) {
             if (net.family === 'IPv4' && !net.internal) {
-                list.push(net.address);
+                const broadcast = calculateBroadcast(net.address, net.netmask || '255.255.255.0');
+                const subnetPrefix = net.address.split('.').slice(0, 3).join('.');
+                configs.push({
+                    name,
+                    address: net.address,
+                    netmask: net.netmask,
+                    broadcast,
+                    subnetPrefix
+                });
             }
         }
     }
+    return configs;
+}
+
+function getLocalIpAddresses() {
+    const configs = getNetworkInterfaceConfigs();
+    const list = configs.map(c => c.address);
     return list.length > 0 ? list : ['127.0.0.1'];
 }
 
@@ -40,6 +68,7 @@ module.exports = {
     localPeerId,
     localDeviceName,
     generateTransferCode,
+    getNetworkInterfaceConfigs,
     getLocalIpAddresses,
     getPrimaryIp,
     formatBytes

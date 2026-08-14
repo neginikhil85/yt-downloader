@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const { localPeerId, localDeviceName, generateTransferCode, getLocalIpAddresses, getPrimaryIp, formatBytes } = require('./p2p/p2pUtils');
 const { compressToken, decompressToken } = require('./p2p/p2pTokenCodec');
-const { startDiscoverySocket, broadcastDiscovery, stopDiscoverySocket, getDiscoveredPeers } = require('./p2p/p2pDiscovery');
+const { startDiscoverySocket, broadcastDiscovery, stopDiscoverySocket, getDiscoveredPeers, findPeerByTransferCode } = require('./p2p/p2pDiscovery');
 const { startHttpServer, getHttpPort, stopHttpServer, downloadFileFromPeer } = require('./p2p/p2pHttpServer');
 
 // Active Outgoing Share Session (Sender state)
@@ -39,8 +39,6 @@ async function initP2PService(onProgress) {
     });
 
     startDiscoverySocket({
-        localPeerId,
-        localDeviceName,
         getHttpPort,
         getActiveSend: () => currentSendSession ? {
             code: currentSendSession.code,
@@ -77,8 +75,6 @@ async function startSendSession(filePath) {
 
     // Immediate beacon broadcast
     broadcastDiscovery({
-        localPeerId,
-        localDeviceName,
         getHttpPort,
         getActiveSend: () => ({
             code,
@@ -104,8 +100,6 @@ async function startSendSession(filePath) {
 function cancelSendSession() {
     currentSendSession = null;
     broadcastDiscovery({
-        localPeerId,
-        localDeviceName,
         getHttpPort,
         getActiveSend: () => null
     });
@@ -120,21 +114,22 @@ async function receiveByCodeOrPeer(params = {}) {
 
     let targetIp = ip;
     let targetPort = port || 9876;
+    let fileInfo = null;
 
-    // If only code is provided, search discovered LAN peers table first
+    // If only code is provided, use bulletproof peer search (Memory cache + Active Subnet Probe)
     if (!targetIp && code) {
-        const peers = getDiscoveredPeers();
-        const found = peers.find(p => p.activeSend && p.activeSend.code === code);
+        const found = await findPeerByTransferCode(code);
         if (found) {
             targetIp = found.ip;
             targetPort = found.port || 9876;
+            fileInfo = found.file;
         }
     }
 
     if (!targetIp) {
         return {
             success: false,
-            error: 'Could not find a device hosting this transfer code on the local network.'
+            error: 'Could not find a device hosting this transfer code on the local network. Ensure both devices are connected to the same Wi-Fi.'
         };
     }
 
