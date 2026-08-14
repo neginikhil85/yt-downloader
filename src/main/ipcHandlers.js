@@ -1,3 +1,7 @@
+const { ipcMain } = require('electron');
+const { searchYouTube, getStreamUrl } = require('./services/youtubeService');
+const { startDownload, cancelDownload } = require('./services/downloadService');
+const { selectFolder, openInFinder, getDefaultSavePath, getLibraryFiles } = require('./services/libraryService');
 const {
     initP2PService,
     startSendingFile,
