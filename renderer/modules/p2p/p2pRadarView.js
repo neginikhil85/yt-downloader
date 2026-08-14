@@ -51,10 +51,18 @@ export function initP2PRadarView() {
                 const ip = btn.getAttribute('data-ip');
                 const port = btn.getAttribute('data-port');
                 const code = btn.getAttribute('data-code');
-                btn.disabled = true;
-                btn.textContent = 'Downloading...';
-                if (window.electronAPI && window.electronAPI.p2pReceivePeer) {
-                    await window.electronAPI.p2pReceivePeer({ ip, port, code });
+
+                // Switch to Receive tab and populate input
+                const btnModeReceive = document.getElementById('btn-mode-receive');
+                const tokenInput = document.getElementById('toffee-receive-code-input');
+                const btnConnectCode = document.getElementById('btn-connect-code');
+
+                if (btnModeReceive) btnModeReceive.click();
+                if (tokenInput) {
+                    tokenInput.value = code;
+                }
+                if (btnConnectCode) {
+                    btnConnectCode.click();
                 }
             });
         });

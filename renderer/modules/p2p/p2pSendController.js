@@ -1,5 +1,6 @@
 // ==========================================================================
 // YT Studio Pro — P2P Sender Controller
+// Manages file dropzone, token generation, copy actions, and upload telemetry
 // ==========================================================================
 
 export function initP2PSendController() {
@@ -10,7 +11,9 @@ export function initP2PSendController() {
     const sendingFileName = document.getElementById('toffee-sending-filename');
     const sendingFileSize = document.getElementById('toffee-sending-filesize');
     const btnCancelSend = document.getElementById('btn-cancel-send');
-    const btnCopySendCode = document.getElementById('btn-copy-send-code');
+    const tokenOutput = document.getElementById('ds-token-output');
+    const btnCopySendToken = document.getElementById('btn-copy-send-token');
+    const btnCopyTokenText = document.getElementById('btn-copy-token-text');
     const sendRadar = document.getElementById('toffee-send-radar');
     const sendRadarText = document.getElementById('toffee-send-radar-text');
     const sendProgressWrap = document.getElementById('toffee-send-progress-wrap');
@@ -20,7 +23,7 @@ export function initP2PSendController() {
     const sendEta = document.getElementById('toffee-send-eta');
 
     let currentActiveFile = null;
-    let currentRawCode = '';
+    let currentRawToken = '';
 
     // File Drag & Drop Handlers
     if (dropzone) {
@@ -87,18 +90,13 @@ export function initP2PSendController() {
             }
 
             currentActiveFile = res.file;
-            currentRawCode = res.code;
+            currentRawToken = res.token || res.code;
 
             if (senderIdleView) senderIdleView.style.display = 'none';
             if (sendSessionCard) sendSessionCard.style.display = 'flex';
             if (sendingFileName) sendingFileName.textContent = res.file.name;
             if (sendingFileSize) sendingFileSize.textContent = res.file.formattedSize;
-
-            // Set Individual Digit Boxes [7] [7] [7]  [1] [3] [6]
-            for (let i = 0; i < 6; i++) {
-                const digitEl = document.getElementById(`pin-d${i}`);
-                if (digitEl) digitEl.textContent = res.code[i] || '-';
-            }
+            if (tokenOutput) tokenOutput.value = currentRawToken;
 
             // Smart File Type SVG Icon
             const ext = (res.file.name.split('.').pop() || '').toLowerCase();
@@ -114,12 +112,6 @@ export function initP2PSendController() {
                     iconEl.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>`;
                 }
             }
-
-            // Update Header IP & Device Name Badge
-            const ipEl = document.getElementById('ds-local-ip');
-            const devEl = document.getElementById('ds-local-device-name');
-            if (ipEl && res.localIp) ipEl.textContent = `${res.localIp}:${res.port}`;
-            if (devEl && res.deviceName) devEl.textContent = res.deviceName;
 
             if (sendRadar) sendRadar.style.display = 'flex';
             if (sendRadarText) sendRadarText.textContent = 'Ready & listening for recipient connection...';
@@ -138,20 +130,19 @@ export function initP2PSendController() {
             }
             if (senderIdleView) senderIdleView.style.display = 'flex';
             if (sendSessionCard) sendSessionCard.style.display = 'none';
+            currentActiveFile = null;
+            currentRawToken = '';
         });
     }
 
-    // Copy PIN Button
-    if (btnCopySendCode) {
-        btnCopySendCode.addEventListener('click', () => {
-            if (currentRawCode) {
-                navigator.clipboard.writeText(currentRawCode);
-                btnCopySendCode.textContent = '✓ Copied!';
+    // 1-Click Copy Token Button
+    if (btnCopySendToken) {
+        btnCopySendToken.addEventListener('click', () => {
+            if (currentRawToken) {
+                navigator.clipboard.writeText(currentRawToken);
+                if (btnCopyTokenText) btnCopyTokenText.textContent = '✓ Copied!';
                 setTimeout(() => {
-                    btnCopySendCode.innerHTML = `
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                        <span>Copy PIN</span>
-                    `;
+                    if (btnCopyTokenText) btnCopyTokenText.textContent = 'Copy Token';
                 }, 2000);
             }
         });

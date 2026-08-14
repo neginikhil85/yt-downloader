@@ -1,14 +1,16 @@
 // ==========================================================================
 // YT Studio Pro — P2P Share Service Facade & Orchestrator
-// Coordinates HTTP Server, UDP Discovery, Token Codec, and Session State
+// Unified Token Architecture with Deterministic Dual-Route (LAN/WAN)
 // ==========================================================================
 
 const fs = require('fs');
 const path = require('path');
+const http = require('http');
 const { localPeerId, localDeviceName, generateTransferCode, getLocalIpAddresses, getPrimaryIp, formatBytes } = require('./p2p/p2pUtils');
-const { compressToken, decompressToken } = require('./p2p/p2pTokenCodec');
+const { encodeSessionToken, decodeSessionToken, compressToken, decompressToken } = require('./p2p/p2pTokenCodec');
 const { startDiscoverySocket, broadcastDiscovery, stopDiscoverySocket, getDiscoveredPeers, findPeerByTransferCode } = require('./p2p/p2pDiscovery');
 const { startHttpServer, getHttpPort, stopHttpServer, downloadFileFromPeer } = require('./p2p/p2pHttpServer');
+const { getDefaultSavePath } = require('./libraryService');
 
 // Active Outgoing Share Session (Sender state)
 let currentSendSession = null;
@@ -42,6 +44,7 @@ async function initP2PService(onProgress) {
         getHttpPort,
         getActiveSend: () => currentSendSession ? {
             code: currentSendSession.code,
+            token: currentSendSession.token,
             name: currentSendSession.file.name,
             size: currentSendSession.file.size,
             formattedSize: currentSendSession.file.formattedSize
@@ -51,7 +54,7 @@ async function initP2PService(onProgress) {
 }
 
 /**
- * Starts sharing a local file
+ * Starts sharing a local file and generates a unified compressed token
  */
 async function startSendSession(filePath) {
     if (!fs.existsSync(filePath)) {
@@ -61,23 +64,38 @@ async function startSendSession(filePath) {
     const stat = fs.statSync(filePath);
     const fileName = path.basename(filePath);
     const code = generateTransferCode();
+    const port = getHttpPort();
+    const lanIps = getLocalIpAddresses();
+
+    const fileMeta = {
+        name: fileName,
+        size: stat.size,
+        formattedSize: formatBytes(stat.size)
+    };
+
+    const token = encodeSessionToken({
+        file: fileMeta,
+        lanIps,
+        port,
+        key: code
+    });
 
     currentSendSession = {
         code,
+        token,
         filePath,
-        file: {
-            name: fileName,
-            size: stat.size,
-            formattedSize: formatBytes(stat.size)
-        },
+        file: fileMeta,
+        lanIps,
+        port,
         startTime: Date.now()
     };
 
-    // Immediate beacon broadcast
+    // Immediate beacon broadcast for nearby radar
     broadcastDiscovery({
         getHttpPort,
         getActiveSend: () => ({
             code,
+            token,
             name: fileName,
             size: stat.size,
             formattedSize: formatBytes(stat.size)
@@ -86,9 +104,10 @@ async function startSendSession(filePath) {
 
     return {
         success: true,
+        token,
         code,
         localIp: getPrimaryIp(),
-        port: getHttpPort(),
+        port,
         deviceName: localDeviceName,
         file: currentSendSession.file
     };
@@ -107,29 +126,117 @@ function cancelSendSession() {
 }
 
 /**
- * Connects and receives a file by 6-digit code or peer IP
+ * Inspects a token and returns incoming file details without starting download
+ */
+function inspectToken(tokenStr) {
+    try {
+        const decoded = decodeSessionToken(tokenStr);
+        return {
+            success: true,
+            file: {
+                name: decoded.file.name,
+                size: decoded.file.size,
+                formattedSize: formatBytes(decoded.file.size),
+                hash: decoded.file.hash
+            },
+            lanIps: decoded.lanIps,
+            port: decoded.port,
+            key: decoded.key
+        };
+    } catch (err) {
+        return { success: false, error: err.message };
+    }
+}
+
+/**
+ * Tests an IP address to see if sender is reachable
+ */
+function probePeerIp(ip, port, code, timeoutMs = 400) {
+    return new Promise((resolve) => {
+        const req = http.get(`http://${ip}:${port}/api/p2p/probe?code=${encodeURIComponent(code)}`, { timeout: timeoutMs }, (res) => {
+            if (res.statusCode === 200) {
+                let body = '';
+                res.on('data', c => body += c);
+                res.on('end', () => {
+                    try {
+                        const json = JSON.parse(body);
+                        if (json.match) {
+                            resolve(true);
+                            return;
+                        }
+                    } catch (e) {}
+                    resolve(false);
+                });
+            } else {
+                resolve(false);
+            }
+        });
+
+        req.on('error', () => resolve(false));
+        req.on('timeout', () => {
+            req.destroy();
+            resolve(false);
+        });
+    });
+}
+
+/**
+ * Connects and receives a file using a unified token or peer options
  */
 async function receiveByCodeOrPeer(params = {}) {
-    const { code, ip, port, targetDir } = params;
+    const { token, code, ip, port, targetDir = getDefaultSavePath() } = params;
 
     let targetIp = ip;
     let targetPort = port || 9876;
-    let fileInfo = null;
+    let transferCode = code;
 
-    // If only code is provided, use bulletproof peer search (Memory cache + Active Subnet Probe)
-    if (!targetIp && code) {
-        const found = await findPeerByTransferCode(code);
+    // 1. If token is provided, decode and resolve route
+    if (token) {
+        try {
+            const decoded = decodeSessionToken(token);
+            transferCode = decoded.key;
+            targetPort = decoded.port || 9876;
+
+            // Probe LAN IPs in parallel to find the fastest local route
+            if (decoded.lanIps && decoded.lanIps.length > 0) {
+                const results = await Promise.all(
+                    decoded.lanIps.map(async (lanIp) => {
+                        const ok = await probePeerIp(lanIp, targetPort, transferCode, 500);
+                        return ok ? lanIp : null;
+                    })
+                );
+                const foundIp = results.find(r => r !== null);
+                if (foundIp) {
+                    targetIp = foundIp;
+                }
+            }
+
+            // Fallback: If WAN endpoint exists in token, attempt WAN
+            if (!targetIp && decoded.wanEndpoint) {
+                const [wanIp, wanPort] = decoded.wanEndpoint.split(':');
+                if (wanIp) {
+                    targetIp = wanIp;
+                    targetPort = parseInt(wanPort, 10) || targetPort;
+                }
+            }
+        } catch (err) {
+            return { success: false, error: err.message };
+        }
+    }
+
+    // 2. If short code was provided (legacy or radar peer click), search subnet
+    if (!targetIp && transferCode) {
+        const found = await findPeerByTransferCode(transferCode);
         if (found) {
             targetIp = found.ip;
             targetPort = found.port || 9876;
-            fileInfo = found.file;
         }
     }
 
     if (!targetIp) {
         return {
             success: false,
-            error: 'Could not find a device hosting this transfer code on the local network. Ensure both devices are connected to the same Wi-Fi.'
+            error: 'Unable to reach sender. Ensure sender app is open and on the same network.'
         };
     }
 
@@ -137,7 +244,7 @@ async function receiveByCodeOrPeer(params = {}) {
         const result = await downloadFileFromPeer({
             ip: targetIp,
             port: targetPort,
-            code,
+            code: transferCode,
             targetDir,
             onProgress: (data) => notifyRenderer('p2p:receive-progress', data),
             onComplete: (data) => notifyRenderer('p2p:receive-complete', data),
@@ -161,6 +268,7 @@ function getLocalP2PInfo() {
         port: getHttpPort(),
         activeSend: currentSendSession ? {
             code: currentSendSession.code,
+            token: currentSendSession.token,
             file: currentSendSession.file
         } : null
     };
@@ -178,21 +286,22 @@ function sendClipboardToPeer(ip, port, text) {
     return { success: true };
 }
 
+// Backward-compatible API exports
 module.exports = {
     initP2PService,
-    setProgressCallback,
     startSendSession,
-    startSendingFile: startSendSession,
     cancelSendSession,
-    cancelSendingFile: cancelSendSession,
     receiveByCodeOrPeer,
-    connectByCode: (code) => receiveByCodeOrPeer({ code }),
-    receiveFileFromPeer: (ip, port, code) => receiveByCodeOrPeer({ ip, port, code }),
+    inspectToken,
+    getLocalP2PInfo,
+    setProgressCallback,
     cancelReceiving,
     sendClipboardToPeer,
-    getLocalP2PInfo,
-    getLocalInfo: getLocalP2PInfo,
-    getDiscoveredPeers,
-    compressToken,
-    decompressToken
+
+    // Legacy Aliases
+    startSendingFile: (filePath) => startSendSession(filePath),
+    cancelSendingFile: () => cancelSendSession(),
+    receiveFileFromPeer: (ip, port, code) => receiveByCodeOrPeer({ ip, port, code }),
+    connectByCode: (code) => receiveByCodeOrPeer({ code }),
+    getLocalInfo: () => getLocalP2PInfo()
 };

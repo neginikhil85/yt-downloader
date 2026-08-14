@@ -6,14 +6,15 @@ const {
     initP2PService,
     startSendingFile,
     cancelSendingFile,
-    receiveFileFromPeer,
+    receiveByCodeOrPeer,
+    inspectToken,
     connectByCode,
     cancelReceiving,
     sendClipboardToPeer,
-    getDiscoveredPeers,
     setProgressCallback,
     getLocalInfo
 } = require('./services/p2pShareService');
+const { getDiscoveredPeers } = require('./services/p2p/p2pDiscovery');
 
 /**
  * Registers all IPC handlers
@@ -67,7 +68,7 @@ function registerIpcHandlers(getMainWindow) {
     });
 
     // ======================================================================
-    // ToffeeShare App-to-App Direct P2P IPC Handlers
+    // Direct P2P Transfer IPC Handlers
     // ======================================================================
     ipcMain.handle('p2p-get-local-info', () => {
         return getLocalInfo();
@@ -85,12 +86,23 @@ function registerIpcHandlers(getMainWindow) {
         return cancelSendingFile();
     });
 
-    ipcMain.handle('p2p-receive-code', async (event, code) => {
-        return connectByCode(code);
+    ipcMain.handle('p2p-inspect-token', (event, tokenStr) => {
+        return inspectToken(tokenStr);
     });
 
-    ipcMain.handle('p2p-receive-peer', async (event, { ip, port, code }) => {
-        return receiveFileFromPeer(ip, port, code);
+    ipcMain.handle('p2p-receive-token', async (event, { token, targetDir }) => {
+        return receiveByCodeOrPeer({ token, targetDir });
+    });
+
+    ipcMain.handle('p2p-receive-code', async (event, params) => {
+        if (typeof params === 'string') {
+            return receiveByCodeOrPeer({ code: params });
+        }
+        return receiveByCodeOrPeer(params);
+    });
+
+    ipcMain.handle('p2p-receive-peer', async (event, { ip, port, code, targetDir }) => {
+        return receiveByCodeOrPeer({ ip, port, code, targetDir });
     });
 
     ipcMain.handle('p2p-cancel-receive', () => {
@@ -102,12 +114,12 @@ function registerIpcHandlers(getMainWindow) {
     });
 
     ipcMain.handle('p2p-compress-token', (event, obj) => {
-        const { compressToken } = require('./services/p2pShareService');
+        const { compressToken } = require('./services/p2p/p2pTokenCodec');
         return compressToken(obj);
     });
 
     ipcMain.handle('p2p-decompress-token', (event, tokenStr) => {
-        const { decompressToken } = require('./services/p2pShareService');
+        const { decompressToken } = require('./services/p2p/p2pTokenCodec');
         return decompressToken(tokenStr);
     });
 }

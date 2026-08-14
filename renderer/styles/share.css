@@ -399,7 +399,7 @@
     color: #f87171;
 }
 
-/* PIN Display Stage */
+/* Token Display Stage (Sender) */
 .ds-pin-display-stage {
     background: rgba(0, 0, 0, 0.2);
     border: 1px solid var(--border-subtle);
@@ -408,7 +408,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
 .ds-pin-title {
@@ -418,53 +418,38 @@
     color: var(--text-muted);
 }
 
-.ds-pin-boxes {
+.ds-token-box-row {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 8px;
+    width: 100%;
+    max-width: 520px;
 }
 
-.ds-pin-cell {
-    width: 38px;
-    height: 44px;
+.ds-token-readonly-input {
+    flex: 1;
     background: #0f1013;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 7px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 9px 12px;
     font-family: 'JetBrains Mono', monospace, sans-serif;
-    font-size: 20px;
-    font-weight: 600;
-    color: #ffffff;
-    display: flex;
+    font-size: 13px;
+    color: #38bdf8;
+    letter-spacing: 0.5px;
+    outline: none;
+    user-select: all;
+    min-width: 0;
+}
+
+.ds-btn-copy-token {
+    white-space: nowrap;
+    height: 38px;
+    padding: 0 16px;
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
-}
-
-.ds-pin-dot-sep {
-    width: 4px;
-    height: 2px;
-    background: rgba(255, 255, 255, 0.2);
-    margin: 0 2px;
-}
-
-.ds-btn-copy-pin {
-    height: 44px;
-    padding: 0 14px;
-    border-radius: 7px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-subtle);
-    color: #ffffff;
-    font-size: 11.5px;
-    font-weight: 500;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    margin-left: 8px;
-    transition: background 0.12s ease;
-}
-
-.ds-btn-copy-pin:hover {
-    background: rgba(255, 255, 255, 0.1);
+    gap: 6px;
+    font-size: 12px;
+    flex-shrink: 0;
 }
 
 .ds-pin-guide {
@@ -571,31 +556,107 @@
     color: var(--text-secondary);
 }
 
-.ds-pin-entry-row {
+.ds-token-entry-row {
     display: flex;
     gap: 8px;
-    max-width: 400px;
+    max-width: 520px;
     margin: 0 auto;
     width: 100%;
 }
 
-.ds-pin-large-input {
+.ds-token-large-input {
     flex: 1;
     background: #0f1013;
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 8px;
     padding: 10px 14px;
     font-family: 'JetBrains Mono', monospace, sans-serif;
-    font-size: 18px;
-    font-weight: 600;
-    letter-spacing: 3px;
+    font-size: 13.5px;
     color: #ffffff;
-    text-align: center;
     outline: none;
+    min-width: 0;
 }
 
-.ds-pin-large-input:focus {
+.ds-token-large-input:focus {
     border-color: #3b82f6;
+}
+
+.ds-token-preview-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 520px;
+    margin: 14px auto 0 auto;
+    width: 100%;
+}
+
+.ds-preview-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ds-preview-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.ds-preview-details h4 {
+    margin: 0 0 4px 0;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ds-dest-folder-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 8px 12px;
+}
+
+.ds-dest-folder-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.ds-dest-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.ds-dest-path {
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ds-btn-sm {
+    padding: 5px 10px;
+    font-size: 11px;
+    flex-shrink: 0;
+}
+
+.ds-btn-full {
+    width: 100%;
+    justify-content: center;
 }
 
 .ds-btn-large {
@@ -612,6 +673,9 @@
     padding: 8px 12px;
     border-radius: 6px;
     text-align: center;
+    max-width: 520px;
+    margin: 8px auto 0 auto;
+    width: 100%;
 }
 
 .ds-complete-banner {

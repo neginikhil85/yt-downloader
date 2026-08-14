@@ -28,6 +28,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     p2pGetPeers: () => ipcRenderer.invoke('p2p-get-peers'),
     p2pStartSend: (filePath) => ipcRenderer.invoke('p2p-start-send', filePath),
     p2pCancelSend: () => ipcRenderer.invoke('p2p-cancel-send'),
+    p2pInspectToken: (tokenStr) => ipcRenderer.invoke('p2p-inspect-token', tokenStr),
+    p2pReceiveToken: (options) => ipcRenderer.invoke('p2p-receive-token', options),
     p2pReceiveCode: (code) => ipcRenderer.invoke('p2p-receive-code', code),
     p2pReceivePeer: (options) => ipcRenderer.invoke('p2p-receive-peer', options),
     p2pCancelReceive: () => ipcRenderer.invoke('p2p-cancel-receive'),
