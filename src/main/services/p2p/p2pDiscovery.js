@@ -73,14 +73,14 @@ function startDiscoverySocket(options = {}) {
     sweepSubnetForPeers({ getHttpPort, onPeersUpdated });
     httpSweepTimer = setInterval(() => {
         sweepSubnetForPeers({ getHttpPort, onPeersUpdated });
-    }, 4500);
+    }, 3500);
 
-    // Prune stale peers (unseen for > 12 seconds)
+    // Prune stale peers (unseen for > 6.5 seconds)
     pruneTimer = setInterval(() => {
         const now = Date.now();
         let changed = false;
         for (const [key, peer] of discoveredPeers.entries()) {
-            if (now - peer.lastSeen > 12000) {
+            if (now - peer.lastSeen > 6500) {
                 discoveredPeers.delete(key);
                 changed = true;
             }
@@ -88,7 +88,7 @@ function startDiscoverySocket(options = {}) {
         if (changed) {
             onPeersUpdated(getDiscoveredPeers());
         }
-    }, 4000);
+    }, 2500);
 }
 
 function registerPeer(peerId, peerData, onPeersUpdated) {

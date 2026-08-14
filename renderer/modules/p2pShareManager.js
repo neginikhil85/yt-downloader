@@ -25,6 +25,7 @@ export function initP2PShareManager() {
             btnModeReceive.classList.remove('active');
             if (sendPanel) sendPanel.classList.add('active');
             if (receivePanel) receivePanel.classList.remove('active');
+            pollPeers();
         });
 
         btnModeReceive.addEventListener('click', () => {
@@ -67,6 +68,9 @@ export function initP2PShareManager() {
             } catch (e) {}
         }
     }
+
+    // Continuous auto-refresh every 2.5 seconds
+    setInterval(pollPeers, 2500);
 
     // Fetch initial local info & active peers on startup
     if (window.electronAPI && window.electronAPI.p2pGetLocalInfo) {
