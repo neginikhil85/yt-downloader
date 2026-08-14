@@ -515,11 +515,6 @@
                 <header class="ds-topbar">
                     <div class="ds-title-cluster">
                         <h2>Direct Share</h2>
-                        <div class="ds-presence-badge" id="ds-presence-badge">
-                            <span class="ds-pulse-dot"></span>
-                            <span class="ds-device-name" id="ds-local-device-name">My Computer</span>
-                            <span class="ds-local-ip" id="ds-local-ip">127.0.0.1:9876</span>
-                        </div>
                     </div>
 
                     <div class="ds-center-segmented">
@@ -533,9 +528,7 @@
                         </button>
                     </div>
 
-                    <div class="ds-topbar-right">
-                        <span class="ds-secure-pill">🔒 Direct Socket Stream</span>
-                    </div>
+                    <div class="ds-topbar-right"></div>
                 </header>
 
                 <!-- 2. Main Content Container -->
@@ -560,20 +553,18 @@
                                 <input type="file" id="toffee-file-input" style="display: none;" />
                             </div>
 
-                            <!-- Discovered Nearby Devices Grid (AirDrop Radar style) -->
+                            <!-- Discovered Nearby Devices Grid (AirDrop style) -->
                             <div class="ds-nearby-radar-section">
                                 <div class="ds-section-header">
                                     <div class="ds-section-title">
-                                        <span class="ds-radar-pulse-ring"></span>
-                                        <h4>Nearby Devices on Wi-Fi</h4>
+                                        <h4>Nearby Devices</h4>
                                     </div>
                                     <span class="ds-counter-badge" id="ds-peers-count">0 nearby</span>
                                 </div>
 
                                 <div class="ds-devices-grid" id="toffee-peers-list">
                                     <div class="ds-radar-searching">
-                                        <span class="ds-radar-pulse-ring"></span>
-                                        <span>Scanning local network for other devices...</span>
+                                        <span>Looking for nearby devices on the local network...</span>
                                     </div>
                                 </div>
                             </div>
@@ -589,8 +580,6 @@
                                         <h3 id="toffee-sending-filename">video.mp4</h3>
                                         <div class="ds-file-tags">
                                             <span class="ds-tag" id="toffee-sending-filesize">0 MB</span>
-                                            <span class="ds-tag ds-tag-green">🔒 Direct Socket</span>
-                                            <span class="ds-tag ds-tag-blue">⚡ Progressive SHA-256</span>
                                         </div>
                                     </div>
                                     <button class="ds-btn-cancel-session" id="btn-cancel-send" title="Cancel Sharing">✕ Cancel</button>
@@ -617,7 +606,6 @@
 
                                 <!-- Status Strip -->
                                 <div class="ds-status-strip" id="toffee-send-radar">
-                                    <span class="ds-radar-pulse-ring"></span>
                                     <span id="toffee-send-radar-text">Ready & listening for recipient connection...</span>
                                 </div>
 

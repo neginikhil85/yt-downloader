@@ -20,9 +20,9 @@
    1. Window Titlebar / Navigation Header
    ========================================================================== */
 .ds-topbar {
-    height: 60px;
-    padding: 0 28px;
-    border-bottom: 1px solid var(--border-subtle);
+    height: 52px;
+    padding: 0 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -43,54 +43,18 @@
 .ds-title-cluster h2 {
     margin: 0;
     font-family: 'Outfit', sans-serif;
-    font-size: 17px;
-    font-weight: 700;
-    letter-spacing: -0.3px;
-    color: var(--text-primary);
-}
-
-.ds-presence-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 3px 10px;
-    background: rgba(52, 211, 153, 0.08);
-    border: 1px solid rgba(52, 211, 153, 0.25);
-    border-radius: 20px;
-    font-size: 11.5px;
+    font-size: 15px;
     font-weight: 600;
-    color: #34d399;
-}
-
-.ds-pulse-dot {
-    width: 6px;
-    height: 6px;
-    background: #34d399;
-    border-radius: 50%;
-    box-shadow: 0 0 8px #34d399;
-    animation: dsPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes dsPulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.3; transform: scale(1.3); }
-}
-
-.ds-local-ip {
-    color: var(--text-muted);
-    font-family: 'JetBrains Mono', monospace, sans-serif;
-    font-size: 10px;
-    border-left: 1px solid rgba(255, 255, 255, 0.12);
-    padding-left: 6px;
-    margin-left: 2px;
+    letter-spacing: -0.2px;
+    color: var(--text-primary);
 }
 
 /* Center Mode Segmented Controller */
 .ds-center-segmented {
     display: flex;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-subtle);
-    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
     padding: 3px;
     gap: 2px;
     -webkit-app-region: no-drag;
@@ -100,15 +64,15 @@
     border: none;
     background: transparent;
     color: var(--text-secondary);
-    padding: 6px 20px;
-    border-radius: 7px;
-    font-size: 12.5px;
-    font-weight: 600;
+    padding: 5px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 6px;
-    transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.15s ease;
 }
 
 .ds-tab-pill:hover {
@@ -116,25 +80,16 @@
 }
 
 .ds-tab-pill.active {
-    background: #2563eb;
+    background: rgba(255, 255, 255, 0.12);
     color: #ffffff;
-    box-shadow: 0 2px 10px rgba(37, 99, 235, 0.35);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .ds-topbar-right {
     display: flex;
     align-items: center;
     -webkit-app-region: no-drag;
-}
-
-.ds-secure-pill {
-    font-size: 11px;
-    font-weight: 600;
-    color: #60a5fa;
-    background: rgba(59, 130, 246, 0.08);
-    border: 1px solid rgba(59, 130, 246, 0.2);
-    padding: 4px 10px;
-    border-radius: 6px;
+    width: 80px; /* Balances header centering */
 }
 
 /* ==========================================================================
@@ -143,8 +98,8 @@
 .ds-main-content {
     flex: 1;
     overflow-y: auto;
-    padding: 32px 28px;
-    max-width: 840px;
+    padding: 32px 24px;
+    max-width: 760px;
     width: 100%;
     margin: 0 auto;
     display: flex;
@@ -155,7 +110,7 @@
     display: none;
     flex-direction: column;
     width: 100%;
-    animation: dsFade 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: dsFade 0.15s ease-out;
 }
 
 .ds-view-panel.active {
@@ -163,7 +118,7 @@
 }
 
 @keyframes dsFade {
-    from { opacity: 0; transform: translateY(4px); }
+    from { opacity: 0; transform: translateY(3px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
@@ -173,95 +128,93 @@
 .ds-sender-idle-view {
     display: flex;
     flex-direction: column;
-    gap: 26px;
+    gap: 24px;
 }
 
 .ds-drop-zone {
-    background: rgba(22, 23, 26, 0.6);
-    border: 1px dashed rgba(255, 255, 255, 0.18);
-    border-radius: 16px;
-    padding: 42px 24px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 36px 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.15s ease;
 }
 
 .ds-drop-zone:hover, .ds-drop-zone.dragover {
-    border-color: #3b82f6;
-    background: rgba(59, 130, 246, 0.04);
-    box-shadow: 0 0 24px rgba(59, 130, 246, 0.12);
+    border-color: rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.04);
 }
 
 .ds-drop-icon-wrap {
-    width: 52px;
-    height: 52px;
-    border-radius: 14px;
-    background: rgba(59, 130, 246, 0.1);
-    border: 1px solid rgba(59, 130, 246, 0.25);
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.06);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #60a5fa;
-    margin-bottom: 14px;
+    color: var(--text-primary);
+    margin-bottom: 12px;
 }
 
 .ds-drop-text h3 {
     margin: 0 0 4px 0;
-    font-size: 16px;
-    font-weight: 600;
+    font-size: 14.5px;
+    font-weight: 500;
     color: #ffffff;
 }
 
 .ds-drop-text p {
-    margin: 0 0 18px 0;
-    font-size: 13px;
+    margin: 0 0 16px 0;
+    font-size: 12.5px;
     color: var(--text-secondary);
 }
 
 .ds-btn-primary {
-    background: #2563eb;
+    background: #3b82f6;
     color: #ffffff;
     border: none;
-    padding: 9px 20px;
-    border-radius: 8px;
-    font-size: 12.5px;
-    font-weight: 600;
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    transition: all 0.15s ease;
+    gap: 6px;
+    transition: background 0.15s ease;
 }
 
 .ds-btn-primary:hover {
-    background: #1d4ed8;
+    background: #2563eb;
 }
 
 .ds-btn-secondary {
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.12);
     color: #ffffff;
-    padding: 8px 16px;
-    border-radius: 8px;
+    padding: 7px 14px;
+    border-radius: 6px;
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 500;
     cursor: pointer;
-    transition: all 0.12s ease;
+    transition: background 0.12s ease;
 }
 
 .ds-btn-secondary:hover {
     background: rgba(255, 255, 255, 0.1);
 }
 
-/* Nearby Radar Section */
+/* Nearby Devices Section */
 .ds-nearby-radar-section {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
 }
 
 .ds-section-header {
@@ -270,26 +223,11 @@
     justify-content: space-between;
 }
 
-.ds-section-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.ds-radar-pulse-ring {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #3b82f6;
-    box-shadow: 0 0 8px #3b82f6;
-    animation: dsPulse 1.8s infinite;
-}
-
 .ds-section-title h4 {
     margin: 0;
-    font-size: 13.5px;
-    font-weight: 600;
-    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
 }
 
 .ds-counter-badge {
@@ -299,55 +237,53 @@
 
 .ds-devices-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 8px;
 }
 
 .ds-radar-searching {
     grid-column: 1 / -1;
     background: rgba(255, 255, 255, 0.02);
     border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    padding: 22px 16px;
+    border-radius: 8px;
+    padding: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
     color: var(--text-muted);
     font-size: 12px;
 }
 
 .toffee-peer-card {
     background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 12px;
-    padding: 12px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    padding: 10px 12px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    transition: all 0.15s ease;
+    transition: background 0.15s ease;
 }
 
 .toffee-peer-card:hover {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(59, 130, 246, 0.3);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .toffee-peer-info {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     min-width: 0;
 }
 
 .toffee-peer-icon {
-    font-size: 18px;
+    font-size: 16px;
 }
 
 .toffee-peer-name {
-    font-size: 12.5px;
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 500;
     color: #ffffff;
     white-space: nowrap;
     overflow: hidden;
@@ -356,51 +292,48 @@
 
 .toffee-peer-sharing {
     font-size: 11px;
-    color: #60a5fa;
+    color: var(--text-muted);
 }
 
 .btn-toffee-receive-peer {
-    background: #2563eb;
+    background: #3b82f6;
     color: #ffffff;
     border: none;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 11.5px;
-    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 500;
     cursor: pointer;
-    transition: all 0.12s ease;
+    transition: background 0.12s ease;
 }
 
 /* ==========================================================================
    4. Active Sender Session Card
    ========================================================================== */
 .ds-session-card, .ds-receive-card {
-    background: rgba(22, 23, 26, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    padding: 28px;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 24px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    backdrop-filter: blur(16px);
+    gap: 18px;
 }
 
 .ds-file-header {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--border-subtle);
+    gap: 12px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .ds-file-icon-box {
-    font-size: 26px;
-    width: 44px;
-    height: 44px;
+    font-size: 22px;
+    width: 38px;
+    height: 38px;
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -413,9 +346,9 @@
 }
 
 .ds-file-info h3 {
-    margin: 0 0 4px 0;
-    font-size: 15px;
-    font-weight: 600;
+    margin: 0 0 3px 0;
+    font-size: 14px;
+    font-weight: 500;
     color: #ffffff;
     white-space: nowrap;
     overflow: hidden;
@@ -430,115 +363,101 @@
 
 .ds-tag {
     font-size: 11px;
-    font-weight: 600;
-    color: var(--text-secondary);
+    color: var(--text-muted);
     background: rgba(255, 255, 255, 0.04);
-    padding: 2px 7px;
+    padding: 1px 6px;
     border-radius: 4px;
 }
 
-.ds-tag-green {
-    color: #34d399;
-    background: rgba(52, 211, 153, 0.08);
-}
-
-.ds-tag-blue {
-    color: #60a5fa;
-    background: rgba(59, 130, 246, 0.08);
-}
-
 .ds-btn-cancel-session {
-    background: rgba(255, 255, 255, 0.05);
+    background: transparent;
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: var(--text-secondary);
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 11.5px;
-    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.12s ease;
 }
 
 .ds-btn-cancel-session:hover {
-    background: rgba(239, 68, 68, 0.12);
-    border-color: rgba(239, 68, 68, 0.3);
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.25);
     color: #f87171;
 }
 
 /* PIN Display Stage */
 .ds-pin-display-stage {
-    background: rgba(0, 0, 0, 0.35);
-    border: 1px solid var(--border-subtle);
-    border-radius: 14px;
-    padding: 22px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    padding: 18px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 
 .ds-pin-title {
     font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.8px;
+    font-weight: 600;
+    letter-spacing: 0.6px;
     color: var(--text-muted);
 }
 
 .ds-pin-boxes {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
 }
 
 .ds-pin-cell {
-    width: 44px;
-    height: 52px;
-    background: #111215;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 9px;
+    width: 38px;
+    height: 44px;
+    background: #0f1013;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 7px;
     font-family: 'JetBrains Mono', monospace, sans-serif;
-    font-size: 24px;
-    font-weight: 700;
+    font-size: 20px;
+    font-weight: 600;
     color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
 .ds-pin-dot-sep {
-    width: 6px;
+    width: 4px;
     height: 2px;
     background: rgba(255, 255, 255, 0.2);
-    margin: 0 3px;
+    margin: 0 2px;
 }
 
 .ds-btn-copy-pin {
-    height: 52px;
-    padding: 0 16px;
-    border-radius: 9px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    height: 44px;
+    padding: 0 14px;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: #ffffff;
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 11.5px;
+    font-weight: 500;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-left: 10px;
-    transition: all 0.12s ease;
+    gap: 5px;
+    margin-left: 8px;
+    transition: background 0.12s ease;
 }
 
 .ds-btn-copy-pin:hover {
-    background: rgba(59, 130, 246, 0.15);
-    border-color: rgba(59, 130, 246, 0.4);
-    color: #60a5fa;
+    background: rgba(255, 255, 255, 0.1);
 }
 
 .ds-pin-guide {
     margin: 0;
-    font-size: 12px;
+    font-size: 11.5px;
     color: var(--text-muted);
     text-align: center;
 }
@@ -547,24 +466,23 @@
 .ds-status-strip {
     display: flex;
     align-items: center;
-    gap: 10px;
     background: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--border-subtle);
-    border-radius: 10px;
-    padding: 10px 14px;
-    font-size: 12.5px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12px;
     color: var(--text-secondary);
 }
 
 /* Progress Telemetry */
 .ds-progress-telemetry {
-    background: rgba(0, 0, 0, 0.35);
-    border: 1px solid var(--border-subtle);
-    border-radius: 12px;
-    padding: 16px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    padding: 14px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
 }
 
 .ds-metrics-bar {
@@ -575,35 +493,35 @@
 
 .ds-metric-speed {
     font-family: 'JetBrains Mono', monospace, sans-serif;
-    font-size: 15px;
-    font-weight: 700;
+    font-size: 13.5px;
+    font-weight: 600;
     color: #ffffff;
 }
 
 .ds-metric-percent {
-    font-size: 14px;
-    font-weight: 700;
-    color: #60a5fa;
+    font-size: 13px;
+    font-weight: 600;
+    color: #3b82f6;
 }
 
 .ds-progress-track {
     width: 100%;
-    height: 7px;
+    height: 6px;
     background: rgba(255, 255, 255, 0.08);
-    border-radius: 8px;
+    border-radius: 6px;
     overflow: hidden;
 }
 
 .ds-progress-fill {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, #2563eb, #60a5fa);
-    border-radius: 8px;
+    background: #3b82f6;
+    border-radius: 6px;
     transition: width 0.15s ease-out;
 }
 
 .ds-progress-footer {
-    font-size: 11.5px;
+    font-size: 11px;
     color: var(--text-muted);
 }
 
@@ -612,45 +530,45 @@
    ========================================================================== */
 .ds-receive-hero {
     text-align: center;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .ds-receive-icon {
-    font-size: 32px;
-    margin-bottom: 8px;
+    font-size: 26px;
+    margin-bottom: 6px;
 }
 
 .ds-receive-hero h3 {
-    margin: 0 0 4px 0;
-    font-size: 17px;
-    font-weight: 600;
+    margin: 0 0 3px 0;
+    font-size: 15px;
+    font-weight: 500;
     color: #ffffff;
 }
 
 .ds-receive-hero p {
     margin: 0;
-    font-size: 13px;
+    font-size: 12.5px;
     color: var(--text-secondary);
 }
 
 .ds-pin-entry-row {
     display: flex;
-    gap: 10px;
-    max-width: 460px;
+    gap: 8px;
+    max-width: 400px;
     margin: 0 auto;
     width: 100%;
 }
 
 .ds-pin-large-input {
     flex: 1;
-    background: #0d0e11;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 10px;
-    padding: 12px 16px;
+    background: #0f1013;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 10px 14px;
     font-family: 'JetBrains Mono', monospace, sans-serif;
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 4px;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 3px;
     color: #ffffff;
     text-align: center;
     outline: none;
@@ -658,46 +576,45 @@
 
 .ds-pin-large-input:focus {
     border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
 .ds-btn-large {
-    padding: 12px 22px;
-    font-size: 13px;
+    padding: 10px 18px;
+    font-size: 12.5px;
     white-space: nowrap;
 }
 
 .ds-alert-error {
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.25);
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.2);
     color: #f87171;
-    font-size: 12px;
-    padding: 10px 14px;
-    border-radius: 8px;
+    font-size: 11.5px;
+    padding: 8px 12px;
+    border-radius: 6px;
     text-align: center;
 }
 
 .ds-complete-banner {
     display: flex;
     align-items: center;
-    gap: 14px;
-    background: rgba(16, 185, 129, 0.08);
-    border: 1px solid rgba(16, 185, 129, 0.25);
-    border-radius: 12px;
-    padding: 16px;
+    gap: 12px;
+    background: rgba(16, 185, 129, 0.06);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 10px;
+    padding: 14px;
 }
 
 .ds-complete-icon {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     background: #10b981;
     color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 800;
-    font-size: 16px;
+    font-weight: 700;
+    font-size: 14px;
     flex-shrink: 0;
 }
 
@@ -707,17 +624,17 @@
 
 .ds-complete-info h4 {
     margin: 0 0 2px 0;
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 500;
     color: #ffffff;
 }
 
 .ds-complete-info span {
-    font-size: 12px;
-    color: #34d399;
+    font-size: 11.5px;
+    color: var(--text-muted);
 }
 
 .ds-complete-actions {
     display: flex;
-    gap: 8px;
+    gap: 6px;
 }

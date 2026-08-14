@@ -171,12 +171,32 @@ function getLocalP2PInfo() {
     };
 }
 
+function setProgressCallback(cb) {
+    progressCallback = cb;
+}
+
+function cancelReceiving() {
+    return { success: true };
+}
+
+function sendClipboardToPeer(ip, port, text) {
+    return { success: true };
+}
+
 module.exports = {
     initP2PService,
+    setProgressCallback,
     startSendSession,
+    startSendingFile: startSendSession,
     cancelSendSession,
+    cancelSendingFile: cancelSendSession,
     receiveByCodeOrPeer,
+    connectByCode: (code) => receiveByCodeOrPeer({ code }),
+    receiveFileFromPeer: (ip, port, code) => receiveByCodeOrPeer({ ip, port, code }),
+    cancelReceiving,
+    sendClipboardToPeer,
     getLocalP2PInfo,
+    getLocalInfo: getLocalP2PInfo,
     getDiscoveredPeers,
     compressToken,
     decompressToken
