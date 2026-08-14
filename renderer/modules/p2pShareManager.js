@@ -47,6 +47,10 @@ export function initP2PShareManager() {
             sendController.onSendProgress(data);
         });
 
+        window.electronAPI.onP2PSendComplete((data) => {
+            sendController.onSendComplete(data);
+        });
+
         window.electronAPI.onP2PReceiveProgress((data) => {
             receiveController.onReceiveProgress(data);
         });

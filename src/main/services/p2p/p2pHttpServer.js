@@ -23,7 +23,8 @@ function startHttpServer(options = {}) {
         localPeerId,
         localDeviceName,
         getActiveSend = () => null,
-        onSendProgress = () => {}
+        onSendProgress = () => {},
+        onSendComplete = () => {}
     } = options;
 
     return new Promise((resolve) => {
@@ -126,7 +127,16 @@ function startHttpServer(options = {}) {
                 res.writeHead(isPartial ? 206 : 200, responseHeaders);
 
                 activeHttpResponses.add(res);
-                res.on('finish', () => activeHttpResponses.delete(res));
+                res.on('finish', () => {
+                    activeHttpResponses.delete(res);
+                    if (sentBytes >= fileSize) {
+                        onSendComplete({
+                            fileName,
+                            fileSize,
+                            formattedSize: formatBytes(fileSize)
+                        });
+                    }
+                });
                 res.on('close', () => activeHttpResponses.delete(res));
 
                 let sentBytes = start;

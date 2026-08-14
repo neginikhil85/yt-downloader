@@ -41,7 +41,8 @@ async function initP2PService(onProgress) {
         localPeerId,
         localDeviceName,
         getActiveSend: () => currentSendSession,
-        onSendProgress: (data) => notifyRenderer('p2p:send-progress', data)
+        onSendProgress: (data) => notifyRenderer('p2p:send-progress', data),
+        onSendComplete: (data) => notifyRenderer('p2p:send-complete', data)
     });
 
     startDiscoverySocket({

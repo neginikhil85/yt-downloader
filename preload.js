@@ -41,36 +41,64 @@ contextBridge.exposeInMainWorld('electronAPI', {
     onP2PPeersUpdated: (cb) => {
         const handler = (event, data) => cb(data);
         ipcRenderer.on('p2p-peers-updated', handler);
-        return () => ipcRenderer.removeListener('p2p-peers-updated', handler);
+        ipcRenderer.on('p2p:peers-updated', handler);
+        return () => {
+            ipcRenderer.removeListener('p2p-peers-updated', handler);
+            ipcRenderer.removeListener('p2p:peers-updated', handler);
+        };
     },
     onP2PSendProgress: (cb) => {
         const handler = (event, data) => cb(data);
         ipcRenderer.on('p2p-send-progress', handler);
-        return () => ipcRenderer.removeListener('p2p-send-progress', handler);
+        ipcRenderer.on('p2p:send-progress', handler);
+        return () => {
+            ipcRenderer.removeListener('p2p-send-progress', handler);
+            ipcRenderer.removeListener('p2p:send-progress', handler);
+        };
     },
     onP2PSendComplete: (cb) => {
         const handler = (event, data) => cb(data);
         ipcRenderer.on('p2p-send-complete', handler);
-        return () => ipcRenderer.removeListener('p2p-send-complete', handler);
+        ipcRenderer.on('p2p:send-complete', handler);
+        return () => {
+            ipcRenderer.removeListener('p2p-send-complete', handler);
+            ipcRenderer.removeListener('p2p:send-complete', handler);
+        };
     },
     onP2PReceiveProgress: (cb) => {
         const handler = (event, data) => cb(data);
         ipcRenderer.on('p2p-receive-progress', handler);
-        return () => ipcRenderer.removeListener('p2p-receive-progress', handler);
+        ipcRenderer.on('p2p:receive-progress', handler);
+        return () => {
+            ipcRenderer.removeListener('p2p-receive-progress', handler);
+            ipcRenderer.removeListener('p2p:receive-progress', handler);
+        };
     },
     onP2PReceiveComplete: (cb) => {
         const handler = (event, data) => cb(data);
         ipcRenderer.on('p2p-receive-complete', handler);
-        return () => ipcRenderer.removeListener('p2p-receive-complete', handler);
+        ipcRenderer.on('p2p:receive-complete', handler);
+        return () => {
+            ipcRenderer.removeListener('p2p-receive-complete', handler);
+            ipcRenderer.removeListener('p2p:receive-complete', handler);
+        };
     },
     onP2PReceiveError: (cb) => {
         const handler = (event, data) => cb(data);
         ipcRenderer.on('p2p-receive-error', handler);
-        return () => ipcRenderer.removeListener('p2p-receive-error', handler);
+        ipcRenderer.on('p2p:receive-error', handler);
+        return () => {
+            ipcRenderer.removeListener('p2p-receive-error', handler);
+            ipcRenderer.removeListener('p2p:receive-error', handler);
+        };
     },
     onP2PClipboardReceived: (cb) => {
         const handler = (event, data) => cb(data);
         ipcRenderer.on('p2p-clipboard-received', handler);
-        return () => ipcRenderer.removeListener('p2p-clipboard-received', handler);
+        ipcRenderer.on('p2p:clipboard-received', handler);
+        return () => {
+            ipcRenderer.removeListener('p2p-clipboard-received', handler);
+            ipcRenderer.removeListener('p2p:clipboard-received', handler);
+        };
     }
 });

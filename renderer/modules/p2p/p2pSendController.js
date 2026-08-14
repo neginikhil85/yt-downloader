@@ -1,6 +1,6 @@
 // ==========================================================================
 // YT Studio Pro — P2P Sender Controller
-// Manages file dropzone, token generation, copy actions, and upload telemetry
+// Manages file dropzone, token generation, copy actions, telemetry, and completion
 // ==========================================================================
 
 export function initP2PSendController() {
@@ -11,6 +11,7 @@ export function initP2PSendController() {
     const sendingFileName = document.getElementById('toffee-sending-filename');
     const sendingFileSize = document.getElementById('toffee-sending-filesize');
     const btnCancelSend = document.getElementById('btn-cancel-send');
+    const tokenStage = document.getElementById('send-token-stage');
     const tokenOutput = document.getElementById('ds-token-output');
     const btnCopySendToken = document.getElementById('btn-copy-send-token');
     const btnCopyTokenText = document.getElementById('btn-copy-token-text');
@@ -21,6 +22,11 @@ export function initP2PSendController() {
     const sendPercent = document.getElementById('toffee-send-percent');
     const sendBar = document.getElementById('toffee-send-bar');
     const sendEta = document.getElementById('toffee-send-eta');
+
+    // Sender Completion Banner
+    const sendCompleteBox = document.getElementById('toffee-send-complete-box');
+    const sentPathLabel = document.getElementById('toffee-sent-path');
+    const btnSendAnother = document.getElementById('btn-send-another');
 
     let currentActiveFile = null;
     let currentRawToken = '';
@@ -94,6 +100,8 @@ export function initP2PSendController() {
 
             if (senderIdleView) senderIdleView.style.display = 'none';
             if (sendSessionCard) sendSessionCard.style.display = 'flex';
+            if (tokenStage) tokenStage.style.display = 'flex';
+            if (sendCompleteBox) sendCompleteBox.style.display = 'none';
             if (sendingFileName) sendingFileName.textContent = res.file.name;
             if (sendingFileSize) sendingFileSize.textContent = res.file.formattedSize;
             if (tokenOutput) tokenOutput.value = currentRawToken;
@@ -125,14 +133,28 @@ export function initP2PSendController() {
     // Cancel Session
     if (btnCancelSend) {
         btnCancelSend.addEventListener('click', async () => {
-            if (window.electronAPI) {
-                await window.electronAPI.p2pCancelSend();
-            }
-            if (senderIdleView) senderIdleView.style.display = 'flex';
-            if (sendSessionCard) sendSessionCard.style.display = 'none';
-            currentActiveFile = null;
-            currentRawToken = '';
+            resetToIdle();
         });
+    }
+
+    // Share Another File Button
+    if (btnSendAnother) {
+        btnSendAnother.addEventListener('click', async () => {
+            resetToIdle();
+        });
+    }
+
+    async function resetToIdle() {
+        if (window.electronAPI) {
+            await window.electronAPI.p2pCancelSend();
+        }
+        if (senderIdleView) senderIdleView.style.display = 'flex';
+        if (sendSessionCard) sendSessionCard.style.display = 'none';
+        if (sendCompleteBox) sendCompleteBox.style.display = 'none';
+        if (tokenStage) tokenStage.style.display = 'flex';
+        if (sendProgressWrap) sendProgressWrap.style.display = 'none';
+        currentActiveFile = null;
+        currentRawToken = '';
     }
 
     // 1-Click Copy Token Button
@@ -158,7 +180,19 @@ export function initP2PSendController() {
         if (sendEta) sendEta.textContent = `Direct Socket Streaming • ${data.etaSeconds}s remaining`;
     }
 
+    // Send Complete Handler
+    function onSendComplete(data) {
+        if (sendRadar) sendRadar.style.display = 'none';
+        if (sendProgressWrap) sendProgressWrap.style.display = 'none';
+        if (tokenStage) tokenStage.style.display = 'none';
+        if (sendCompleteBox) sendCompleteBox.style.display = 'flex';
+        if (sentPathLabel && data) {
+            sentPathLabel.textContent = `Transferred ${data.fileName} (${data.formattedSize || ''}) successfully`;
+        }
+    }
+
     return {
-        onSendProgress
+        onSendProgress,
+        onSendComplete
     };
 }
