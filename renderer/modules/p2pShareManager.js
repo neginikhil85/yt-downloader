@@ -14,9 +14,13 @@ export function initP2PShareManager() {
     const receivePanel = document.getElementById('toffee-receive-panel');
 
     // Initialize sub-controllers
-    const radarView = initP2PRadarView();
-    const sendController = initP2PSendController();
     const receiveController = initP2PReceiveController();
+    const sendController = initP2PSendController();
+    const radarView = initP2PRadarView({
+        onSelectPeer: (peerData) => {
+            receiveController.prepareReceivePeer(peerData);
+        }
+    });
 
     // Mode Switching (Send vs Receive)
     if (btnModeSend && btnModeReceive) {

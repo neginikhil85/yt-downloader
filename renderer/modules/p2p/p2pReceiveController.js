@@ -3,8 +3,6 @@
 // Token inspection, destination folder selection, and direct stream downloader
 // ==========================================================================
 
-import { playLocalVideo } from '../videoPlayer.js';
-
 export function initP2PReceiveController() {
     const tokenInput = document.getElementById('toffee-receive-code-input');
     const btnPasteClipboard = document.getElementById('btn-paste-clipboard');
@@ -29,7 +27,6 @@ export function initP2PReceiveController() {
     const receiveEta = document.getElementById('toffee-receive-eta');
     const receiveCompleteBox = document.getElementById('toffee-receive-complete-box');
     const savedPathLabel = document.getElementById('toffee-saved-path');
-    const btnPlayReceived = document.getElementById('btn-play-received');
     const btnOpenReceivedFolder = document.getElementById('btn-open-received-folder');
 
     let inspectedSession = null;
@@ -91,7 +88,7 @@ export function initP2PReceiveController() {
         if (!tokenInput) return;
         const rawToken = tokenInput.value.trim();
         if (!rawToken) {
-            showError('Please paste a valid connection token');
+            showError('Please enter or paste a valid connection token');
             return;
         }
 
@@ -104,7 +101,6 @@ export function initP2PReceiveController() {
         try {
             // Check if it's a short 6-digit legacy PIN or full token
             if (/^\d{6}$/.test(rawToken)) {
-                // Direct PIN connect
                 await handleStartDownloadWithCode(rawToken);
                 btnConnectCode.disabled = false;
                 btnConnectCode.textContent = 'Inspect & Connect';
@@ -150,6 +146,41 @@ export function initP2PReceiveController() {
         }
     }
 
+    // Direct configuration when user clicks "Download" on radar peer
+    function prepareReceivePeer(peerData) {
+        const { ip, port, code, token, file } = peerData;
+        inspectedSession = {
+            ip,
+            port,
+            code,
+            token,
+            file: file || { name: 'incoming_file' }
+        };
+
+        if (tokenInput) {
+            tokenInput.value = token || code || '';
+        }
+
+        if (previewFilename) previewFilename.textContent = inspectedSession.file.name;
+        if (previewFilesize) previewFilesize.textContent = inspectedSession.file.formattedSize || '';
+
+        const ext = (inspectedSession.file.name.split('.').pop() || '').toLowerCase();
+        if (previewTypeIcon) {
+            if (['mp4', 'mkv', 'mov', 'webm', 'avi'].includes(ext)) {
+                previewTypeIcon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>`;
+            } else if (['mp3', 'wav', 'flac', 'aac', 'm4a'].includes(ext)) {
+                previewTypeIcon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>`;
+            } else {
+                previewTypeIcon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>`;
+            }
+        }
+
+        hideError();
+        if (receiveCompleteBox) receiveCompleteBox.style.display = 'none';
+        if (receiveProgressWrap) receiveProgressWrap.style.display = 'none';
+        if (previewCard) previewCard.style.display = 'flex';
+    }
+
     // Start Download CTA from Preview Card
     if (btnStartDownload) {
         btnStartDownload.addEventListener('click', async () => {
@@ -161,10 +192,25 @@ export function initP2PReceiveController() {
             if (receiveFilename) receiveFilename.textContent = `Connecting to ${inspectedSession.file.name}...`;
 
             try {
-                const res = await window.electronAPI.p2pReceiveToken({
-                    token: inspectedSession.token,
-                    targetDir: selectedDestFolder
-                });
+                let res;
+                if (inspectedSession.token) {
+                    res = await window.electronAPI.p2pReceiveToken({
+                        token: inspectedSession.token,
+                        targetDir: selectedDestFolder
+                    });
+                } else if (inspectedSession.ip) {
+                    res = await window.electronAPI.p2pReceivePeer({
+                        ip: inspectedSession.ip,
+                        port: inspectedSession.port || 9876,
+                        code: inspectedSession.code,
+                        targetDir: selectedDestFolder
+                    });
+                } else {
+                    res = await window.electronAPI.p2pReceiveCode({
+                        code: inspectedSession.code,
+                        targetDir: selectedDestFolder
+                    });
+                }
 
                 if (res && res.success) {
                     onReceiveComplete(res);
@@ -237,15 +283,6 @@ export function initP2PReceiveController() {
         if (receiveError) receiveError.style.display = 'none';
     }
 
-    // Play in Cinema
-    if (btnPlayReceived) {
-        btnPlayReceived.addEventListener('click', () => {
-            if (currentLastReceivedFile) {
-                playLocalVideo(currentLastReceivedFile);
-            }
-        });
-    }
-
     // Open Folder
     if (btnOpenReceivedFolder) {
         btnOpenReceivedFolder.addEventListener('click', async () => {
@@ -270,6 +307,7 @@ export function initP2PReceiveController() {
     }
 
     return {
+        prepareReceivePeer,
         onReceiveProgress,
         onReceiveComplete,
         onReceiveError

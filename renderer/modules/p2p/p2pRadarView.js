@@ -2,7 +2,8 @@
 // YT Studio Pro — P2P Nearby Devices Radar Component
 // ==========================================================================
 
-export function initP2PRadarView() {
+export function initP2PRadarView(options = {}) {
+    const { onSelectPeer = () => {} } = options;
     const peersList = document.getElementById('toffee-peers-list');
     const countEl = document.getElementById('ds-peers-count');
 
@@ -22,6 +23,11 @@ export function initP2PRadarView() {
 
         peersList.innerHTML = peers.map(peer => {
             const hasActiveSend = peer.activeSend;
+            const fileName = hasActiveSend ? (peer.activeSend.name || peer.activeSend.file?.name || 'File') : '';
+            const fileSize = hasActiveSend ? (peer.activeSend.formattedSize || peer.activeSend.file?.formattedSize || '') : '';
+            const token = hasActiveSend ? (peer.activeSend.token || '') : '';
+            const code = hasActiveSend ? (peer.activeSend.code || '') : '';
+
             return `
                 <div class="toffee-peer-card">
                     <div class="toffee-peer-info">
@@ -31,12 +37,18 @@ export function initP2PRadarView() {
                         <div>
                             <div class="toffee-peer-name">${escapeHtml(peer.name)}</div>
                             <div class="toffee-peer-sharing">
-                                ${hasActiveSend ? `Sharing: <strong>${escapeHtml(peer.activeSend.name)}</strong> (${peer.activeSend.formattedSize})` : 'Online on Wi-Fi'}
+                                ${hasActiveSend ? `Sharing: <strong>${escapeHtml(fileName)}</strong> (${fileSize})` : 'Online on Wi-Fi'}
                             </div>
                         </div>
                     </div>
                     ${hasActiveSend ? `
-                        <button class="btn-toffee-receive-peer" data-ip="${peer.ip}" data-port="${peer.port}" data-code="${peer.activeSend.code}">
+                        <button class="btn-toffee-receive-peer"
+                            data-ip="${peer.ip}"
+                            data-port="${peer.port || 9876}"
+                            data-code="${code}"
+                            data-token="${token}"
+                            data-name="${escapeHtml(fileName)}"
+                            data-size="${fileSize}">
                             Download
                         </button>
                     ` : `
@@ -49,20 +61,24 @@ export function initP2PRadarView() {
         peersList.querySelectorAll('.btn-toffee-receive-peer').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const ip = btn.getAttribute('data-ip');
-                const port = btn.getAttribute('data-port');
+                const port = parseInt(btn.getAttribute('data-port'), 10) || 9876;
                 const code = btn.getAttribute('data-code');
+                const token = btn.getAttribute('data-token');
+                const name = btn.getAttribute('data-name');
+                const size = btn.getAttribute('data-size');
 
-                // Switch to Receive tab and populate input
+                // Switch to Receive tab
                 const btnModeReceive = document.getElementById('btn-mode-receive');
-                const tokenInput = document.getElementById('toffee-receive-code-input');
-                const btnConnectCode = document.getElementById('btn-connect-code');
-
                 if (btnModeReceive) btnModeReceive.click();
-                if (tokenInput) {
-                    tokenInput.value = code;
-                }
-                if (btnConnectCode) {
-                    btnConnectCode.click();
+
+                if (onSelectPeer) {
+                    onSelectPeer({
+                        ip,
+                        port,
+                        code,
+                        token,
+                        file: { name, formattedSize: size }
+                    });
                 }
             });
         });
