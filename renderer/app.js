@@ -2,9 +2,9 @@
 // YT Studio Pro — Main Application Bootstrap (ES Module)
 // ==========================================================================
 
-import { initSettings } from './modules/state.js';
+import { state, initSettings } from './modules/state.js';
 import { initNavigation } from './modules/navigation.js';
-import { initSearchFeed } from './modules/searchFeed.js';
+import { initSearchFeed, performSearch } from './modules/searchFeed.js';
 import { initVideoPlayer } from './modules/videoPlayer.js';
 import { initDownloadManager } from './modules/downloadManager.js';
 import { initLibraryManager } from './modules/libraryManager.js';
@@ -27,4 +27,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     initP2PShareManager();
     initSettingsModal();
     initOnboardingModal();
+
+    // 3. Auto-load Explore Trending Feed if onboarding is already completed
+    if (state.userSettings.onboardingCompleted) {
+        performSearch('trending');
+    }
 });

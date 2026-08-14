@@ -38,20 +38,22 @@ function getYtDlpPath() {
     const platform = process.platform;
     const arch = process.arch;
 
-    // 1. Prefer venv yt-dlp first (runs as 'python' process — bypasses Netskope)
     const candidatePaths = [
-        // Local venv candidates (preferred — process name 'python' is bypassed by Netskope)
-        path.join(PROJECT_ROOT, 'venv', isWin ? 'Scripts' : 'bin', exeName),
-        process.resourcesPath && path.join(process.resourcesPath, 'app', 'venv', isWin ? 'Scripts' : 'bin', exeName),
-        // Electron production packaged resourcesPath
+        // 1. Packaged production extraResources (priority inside built .app / standalone)
         process.resourcesPath && path.join(process.resourcesPath, 'bin', platform, exeName),
         process.resourcesPath && path.join(process.resourcesPath, 'bin', `${platform}-${arch}`, exeName),
         process.resourcesPath && path.join(process.resourcesPath, 'bin', exeName),
-        // Project root bin directory (for development & portable bundles)
+
+        // 2. Project root bin directory (for local development & portable bundles)
         path.join(PROJECT_ROOT, 'bin', platform, exeName),
         path.join(PROJECT_ROOT, 'bin', `${platform}-${arch}`, exeName),
         path.join(PROJECT_ROOT, 'bin', exeName),
-        // UserData bin directory (for self-updating / dynamically downloaded binaries)
+
+        // 3. Local venv (only on Windows or if valid python exists)
+        isWin && path.join(PROJECT_ROOT, 'venv', 'Scripts', exeName),
+        isWin && process.resourcesPath && path.join(process.resourcesPath, 'app', 'venv', 'Scripts', exeName),
+
+        // 4. UserData bin directory (for self-updating binaries)
         path.join(os.homedir(), '.yt_downloader', 'bin', exeName)
     ].filter(Boolean);
 
