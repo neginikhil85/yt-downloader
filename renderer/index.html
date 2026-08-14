@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YT Studio Pro</title>
+    <!-- Google Fonts: Inter & Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand-logo">
+                    <svg class="brand-svg" width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <rect x="2" y="4" width="20" height="16" rx="4.5" fill="#FF0000"/>
+                        <polygon points="10,8.5 15.5,12 10,15.5" fill="#FFFFFF"/>
+                    </svg>
+                    <div class="brand-text">
+                        <span class="brand-name">YT Studio</span>
+                        <span class="brand-badge">PRO</span>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="nav-menu">
+                <button class="nav-item active" data-view="explore">
+                    <svg class="nav-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+                    </svg>
+                    <span class="nav-label">Explore Feed</span>
+                </button>
+                <button class="nav-item" data-view="player">
+                    <svg class="nav-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    <span class="nav-label">Cinema Player</span>
+                </button>
+                <button class="nav-item" data-view="downloads">
+                    <svg class="nav-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span class="nav-label">Downloads</span>
+                    <span class="nav-counter" id="downloads-badge" style="display: none;">0</span>
+                </button>
+                <button class="nav-item" data-view="library">
+                    <svg class="nav-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <span class="nav-label">Saved Library</span>
+                </button>
+                <button class="nav-item" data-view="browser">
+                    <svg class="nav-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="2" y1="12" x2="22" y2="12"></line>
+                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                    </svg>
+                    <span class="nav-label">Research Browser</span>
+                </button>
+                <button class="nav-item" data-view="share">
+                    <svg class="nav-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"></path>
+                        <path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"></path>
+                        <circle cx="12" cy="12" r="2"></circle>
+                        <path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"></path>
+                        <path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"></path>
+                    </svg>
+                    <span class="nav-label">Direct Share</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-profile-card" id="user-profile-card" title="Click to view & change preferences">
+                    <div class="user-avatar" id="user-avatar-initial">U</div>
+                    <div class="user-details">
+                        <span class="user-greeting" id="user-greeting-name">User</span>
+                        <span class="user-status" id="sidebar-folder-label">~/Downloads/YT_Downloads</span>
+                    </div>
+                    <svg class="gear-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="main-content">
+            <!-- Topbar Header -->
+            <header class="topbar">
+                <div class="topbar-drag-spacer"></div>
+
+                <!-- Global YouTube Search Bar -->
+                <div class="search-container">
+                    <div class="search-input-wrapper">
+                        <svg class="search-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="text" id="search-input" placeholder="Search YouTube or paste video link..." autocomplete="off" />
+                        <button class="search-clear-btn" id="btn-clear-search" style="display: none;">✕</button>
+                    </div>
+                    <button class="btn-search-submit" id="btn-search-submit">Search</button>
+                </div>
+
+                <div class="topbar-actions">
+                    <button class="btn-direct-download" id="btn-quick-download" title="Instant Download URL">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        <span>Direct Download</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Topic Chips Bar (Explore Mode) -->
+            <div class="topic-chips" id="topic-chips">
+                <button class="chip active" data-topic="all">All Videos</button>
+                <button class="chip" data-topic="tarak mehta">Taarak Mehta</button>
+                <button class="chip" data-topic="trending songs">Trending Music</button>
+                <button class="chip" data-topic="trailer 2026">Movie Trailers</button>
+                <button class="chip" data-topic="gaming live">Gaming</button>
+                <button class="chip" data-topic="standup comedy">Comedy</button>
+                <button class="chip" data-topic="coding tutorials">Tech & Coding</button>
+            </div>
+
+            <!-- View 1: Explore & Search Feed -->
+            <section class="view-panel active" id="view-explore">
+                <div class="feed-header">
+                    <h2 class="feed-title" id="explore-title">Featured Feed</h2>
+                    <span class="feed-subtitle" id="explore-subtitle">Search or select a topic above</span>
+                </div>
+
+                <div class="video-grid" id="video-grid">
+                    <!-- Dynamic YouTube Video Cards -->
+                </div>
+
+                <div class="loading-spinner" id="explore-loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <span>Searching YouTube...</span>
+                </div>
+
+                <!-- Infinite Scroll Bottom Loader -->
+                <div class="infinite-scroll-loader" id="infinite-loading" style="display: none;">
+                    <div class="spinner-small"></div>
+                    <span>Loading more videos...</span>
+                </div>
+                <div id="scroll-sentinel" style="height: 20px;"></div>
+            </section>
+
+            <!-- View 2: Cinema Theater Player -->
+            <section class="view-panel" id="view-player">
+                <div class="player-header-bar">
+                    <button class="btn-back-player" id="btn-back-player" title="Back to previous feed">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                        <span id="btn-back-label">Back to Feed</span>
+                    </button>
+                </div>
+                <div class="player-container">
+                    <div class="video-screen-wrapper" id="video-screen-wrapper">
+                        <!-- 1. YouTube Cinema Embed Player (Instant HD/4K, Zero buffering) -->
+                        <iframe id="cinema-iframe" class="player-element" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="width: 100%; height: 100%; border: none;"></iframe>
+
+                        <!-- 2. Hardware Accelerated Offline Local Video Player -->
+                        <video id="cinema-video" class="player-element" preload="metadata" playsinline style="display: none; width: 100%; height: 100%;"></video>
+                        
+                        <!-- Custom Cinema Controls Overlay (Local Video) -->
+                        <div class="player-controls-overlay" id="player-controls" style="display: none;">
+                            <!-- Progress Timeline -->
+                            <div class="timeline-container">
+                                <input type="range" class="timeline-slider" id="timeline-slider" min="0" max="100" value="0" step="0.1" />
+                            </div>
+
+                            <div class="controls-row">
+                                <div class="controls-left">
+                                    <button class="ctrl-btn" id="btn-play-pause" title="Play/Pause (Space)">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                    </button>
+                                    <button class="ctrl-btn" id="btn-rewind-10" title="Rewind 10 seconds (Left Arrow)">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="11 17 6 12 11 7"></polyline>
+                                            <polyline points="18 17 13 12 18 7"></polyline>
+                                        </svg>
+                                    </button>
+                                    <button class="ctrl-btn" id="btn-forward-10" title="Forward 10 seconds (Right Arrow)">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="6 17 11 12 6 7"></polyline>
+                                            <polyline points="13 17 18 12 13 7"></polyline>
+                                        </svg>
+                                    </button>
+                                    
+                                    <div class="volume-box">
+                                        <button class="ctrl-btn" id="btn-mute" title="Mute/Unmute">
+                                            <svg id="vol-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                                            </svg>
+                                        </button>
+                                        <input type="range" class="volume-slider" id="volume-slider" min="0" max="1" value="0.9" step="0.05" />
+                                    </div>
+
+                                    <div class="time-display">
+                                        <span id="current-time">00:00</span> / <span id="total-duration">00:00</span>
+                                    </div>
+                                </div>
+
+                                <div class="controls-right">
+                                    <select class="speed-selector" id="speed-selector">
+                                        <option value="0.5">0.5x</option>
+                                        <option value="0.75">0.75x</option>
+                                        <option value="1.0" selected>1.0x</option>
+                                        <option value="1.25">1.25x</option>
+                                        <option value="1.5">1.5x</option>
+                                        <option value="2.0">2.0x</option>
+                                    </select>
+                                    <button class="ctrl-btn" id="btn-pip" title="Picture in Picture">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"></rect><rect x="12" y="10" width="8" height="6" rx="1" fill="currentColor"></rect></svg>
+                                    </button>
+                                    <button class="ctrl-btn" id="btn-fullscreen" title="Fullscreen">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Player Loading Overlay -->
+                        <div class="player-loader" id="player-loader" style="display: none;">
+                            <div class="spinner"></div>
+                            <span>Connecting Live YouTube Stream...</span>
+                        </div>
+
+                        <!-- Seek Toast Notification Overlay -->
+                        <div class="seek-toast" id="seek-toast" style="display: none;">
+                            <span id="seek-toast-text">+10s</span>
+                        </div>
+                    </div>
+
+                    <!-- Video Details & Download Action Bar -->
+                    <div class="player-info-card">
+                        <div class="player-info-main">
+                            <h1 class="player-video-title" id="player-title">No Video Loaded</h1>
+                            <div class="player-meta-row">
+                                <div class="channel-info">
+                                    <div class="channel-avatar">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                    </div>
+                                    <div class="channel-details">
+                                        <span class="channel-name" id="player-channel">YouTube Video</span>
+                                        <span class="channel-status">Ready for playback & download</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="download-presets">
+                                    <button class="btn-dl-preset primary" data-format="1080p">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                        1080p
+                                    </button>
+                                    <button class="btn-dl-preset" data-format="720p">720p HD</button>
+                                    <button class="btn-dl-preset" data-format="480p">480p SD</button>
+                                    <button class="btn-dl-preset" data-format="360p">360p Fast</button>
+                                    <button class="btn-dl-preset audio" data-format="MP3">MP3</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- View 3: Active Downloads & Tasks -->
+            <section class="view-panel" id="view-downloads">
+                <div class="feed-header">
+                    <h2 class="feed-title">Active Downloads</h2>
+                    <span class="feed-subtitle">Real-time background download tasks and progress</span>
+                </div>
+
+                <div class="downloads-list" id="downloads-list">
+                    <div class="empty-state" id="downloads-empty">
+                        <svg class="empty-svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        <h3>No Active Downloads</h3>
+                        <p>Search any video and click Download to start transferring files</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- View 4: Saved Library -->
+            <section class="view-panel" id="view-library">
+                <div class="feed-header">
+                    <h2 class="feed-title">Saved Library</h2>
+                    <span class="feed-subtitle" id="library-count-text">Saved videos in your folder</span>
+                </div>
+
+                <div class="library-grid" id="library-grid">
+                    <!-- Local Downloaded Files -->
+                </div>
+            </section>
+
+            <!-- View 5: Research Browser (Multi-Tab & Extensions Hub) -->
+            <section class="view-panel" id="view-browser">
+                <!-- 1. Multi-Tab Header Bar (with macOS window drag region) -->
+                <div class="browser-tabs-header">
+                    <div class="browser-tabs-scroll" id="browser-tabs-scroll">
+                        <!-- Dynamic Tab Elements Rendered Here -->
+                    </div>
+                    <button class="browser-btn-new-tab" id="browser-btn-new-tab" title="New Tab (⌘T / Ctrl+T)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </button>
+                    <!-- Empty Drag Spacer to move the window freely -->
+                    <div class="browser-tabs-drag-spacer"></div>
+                </div>
+
+                <!-- 2. Browser Navigation & Address Toolbar -->
+                <div class="browser-toolbar">
+                    <div class="browser-nav-row">
+                        <div class="browser-controls">
+                            <button class="browser-btn" id="browser-btn-back" title="Back (⌘[ / Alt+Left)" disabled>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                            </button>
+                            <button class="browser-btn" id="browser-btn-forward" title="Forward (⌘] / Alt+Right)" disabled>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                            </button>
+                            <button class="browser-btn" id="browser-btn-reload" title="Reload (⌘R / Ctrl+R)">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                            </button>
+                            <button class="browser-btn" id="browser-btn-home" title="Start Page / Quick Apps">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                            </button>
+                            <button class="browser-btn" id="browser-btn-fullscreen" title="Toggle Fullscreen (F11)">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+                            </button>
+                        </div>
+
+                        <!-- Address Bar -->
+                        <div class="browser-address-bar">
+                            <div class="browser-security-icon" id="browser-security-icon" title="Direct Secure Connection">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                            </div>
+                            <input type="text" class="browser-address-input" id="browser-url-input" placeholder="Search Google or enter address..." autocomplete="off" spellcheck="false" />
+                            
+                            <div class="browser-bar-actions">
+                                <button class="browser-action-icon-btn" id="browser-btn-edit-url" title="Edit / Select URL">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                </button>
+                                <button class="browser-action-icon-btn" id="browser-btn-copy-url" title="Copy URL">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                </button>
+                                <button class="browser-action-icon-btn" id="browser-btn-pin-page" title="Bookmark / Pin Site (⌘D)">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                                </button>
+                                <button class="browser-action-icon-btn" id="browser-btn-extensions" title="Extensions & Power Tools Hub">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.5 11H19V7a2 2 0 0 0-2-2h-4V3.5a1.5 1.5 0 0 0-3 0V5H6a2 2 0 0 0-2 2v4H2.5a1.5 1.5 0 0 0 0 3H4v4a2 2 0 0 0 2 2h4v1.5a1.5 1.5 0 0 0 3 0V20h4a2 2 0 0 0 2-2v-4h1.5a1.5 1.5 0 0 0 0-3z"></path></svg>
+                                </button>
+                            </div>
+                            <button class="browser-go-btn" id="browser-btn-go" title="Navigate (Enter)">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Pinned Quick Apps Bar (Firefox Style) -->
+                    <div class="browser-pinned-bar" id="browser-pinned-bar">
+                        <!-- Dynamic Pinned Apps Rendered Here -->
+                    </div>
+
+                    <div class="browser-progress-bar" id="browser-progress-bar"></div>
+                </div>
+
+                <!-- 3. Extensions & Power Tools Floating Menu (🧩) -->
+                <div class="browser-extensions-panel" id="browser-extensions-panel">
+                    <div class="ext-header">
+                        <h4>
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19.439 7.85c0-1.57-1.28-2.85-2.85-2.85v-1a2 2 0 0 0-2-2h-3.17a2 2 0 0 0-2 2v1c-1.57 0-2.85 1.28-2.85 2.85h-1a2 2 0 0 0-2 2v3.17a2 2 0 0 0 2 2h1c0 1.57 1.28 2.85 2.85 2.85v1a2 2 0 0 0 2 2h3.17a2 2 0 0 0 2-2v-1c1.57 0 2.85-1.28 2.85-2.85h1a2 2 0 0 0 2-2v-3.17a2 2 0 0 0-2-2h-1Z"></path></svg>
+                            Browser Extensions & Tools
+                        </h4>
+                        <button class="ext-close-btn" id="ext-close-btn">✕</button>
+                    </div>
+                    
+                    <div class="ext-list">
+                        <!-- 1. Ad & Tracker Blocker -->
+                        <div class="ext-item">
+                            <div class="ext-info">
+                                <span class="ext-icon">🛡️</span>
+                                <div>
+                                    <div class="ext-name">Ad & Tracker Shield</div>
+                                    <div class="ext-desc">Block ads, banners & popup overlays</div>
+                                </div>
+                            </div>
+                            <label class="ext-switch">
+                                <input type="checkbox" id="ext-toggle-adblock" checked>
+                                <span class="ext-slider"></span>
+                            </label>
+                        </div>
+
+                        <!-- 2. Dark Reader Mode -->
+                        <div class="ext-item">
+                            <div class="ext-info">
+                                <span class="ext-icon">🌙</span>
+                                <div>
+                                    <div class="ext-name">Dark Reader Mode</div>
+                                    <div class="ext-desc">Force smart high-contrast dark theme</div>
+                                </div>
+                            </div>
+                            <label class="ext-switch">
+                                <input type="checkbox" id="ext-toggle-darkmode">
+                                <span class="ext-slider"></span>
+                            </label>
+                        </div>
+
+                        <!-- 3. Reader Clean Mode -->
+                        <div class="ext-item">
+                            <div class="ext-info">
+                                <span class="ext-icon">📖</span>
+                                <div>
+                                    <div class="ext-name">Distraction Free Reader</div>
+                                    <div class="ext-desc">Clean article reading view</div>
+                                </div>
+                            </div>
+                            <button class="ext-action-btn" id="ext-btn-reader" style="width: 70px;">Apply</button>
+                        </div>
+
+                        <!-- 4. Picture-in-Picture Popout -->
+                        <div class="ext-item">
+                            <div class="ext-info">
+                                <span class="ext-icon">🍿</span>
+                                <div>
+                                    <div class="ext-name">Video PiP Popout</div>
+                                    <div class="ext-desc">Float video player in native window</div>
+                                </div>
+                            </div>
+                            <button class="ext-action-btn" id="ext-btn-pip" style="width: 70px;">Popout</button>
+                        </div>
+
+                        <!-- 5. User-Agent Switcher -->
+                        <div class="ext-item" style="flex-direction: column; align-items: flex-start; gap: 6px;">
+                            <div class="ext-info" style="width: 100%; justify-content: space-between;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span class="ext-icon">📱</span>
+                                    <div class="ext-name">User-Agent Spoofing</div>
+                                </div>
+                            </div>
+                            <select class="ext-ua-select" id="ext-ua-select">
+                                <option value="desktop">💻 Desktop Chrome (Default)</option>
+                                <option value="iphone">📱 Apple iPhone (iOS Safari)</option>
+                                <option value="android">🤖 Android Phone (Chrome Mobile)</option>
+                                <option value="ipad">📱 Apple iPad (Tablet View)</option>
+                                <option value="safari-mac">🍏 Mac Safari (macOS)</option>
+                            </select>
+                        </div>
+
+                        <!-- Quick Utility Actions Grid -->
+                        <div class="ext-actions-grid">
+                            <button class="ext-action-btn" id="ext-btn-devtools">
+                                <span>🛠️</span> DevTools
+                            </button>
+                            <button class="ext-action-btn" id="ext-btn-inject-js">
+                                <span>📜</span> Run Script
+                            </button>
+                            <button class="ext-action-btn" id="ext-btn-clear-cache">
+                                <span>🧹</span> Clear Cache
+                            </button>
+                            <button class="ext-action-btn" id="ext-btn-hard-reload">
+                                <span>⚡</span> Hard Refresh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Webviews Multi-Tab Container & New Tab Dashboard -->
+                <div class="browser-webview-container" id="browser-webview-container">
+                    <!-- New Tab Home Dashboard (Firefox / Start Page Style) -->
+                    <div class="browser-home-dashboard" id="browser-home-dashboard">
+                        <div class="home-branding">
+                            <div class="home-logo-box">
+                                <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
+                                    <rect x="2" y="4" width="20" height="16" rx="4.5" fill="#FFFFFF"/>
+                                    <polygon points="10,8.5 15.5,12 10,15.5" fill="#FF0000"/>
+                                </svg>
+                            </div>
+                            <h2>Research & Web Portal</h2>
+                            <p>Private, unmonitored web browsing & fast video extraction</p>
+                        </div>
+
+                        <div class="home-search-box">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            <input type="text" class="home-search-input" id="home-search-input" placeholder="Search the web or paste any URL..." />
+                            <button class="home-search-btn" id="home-search-btn">Search</button>
+                        </div>
+
+                        <div class="home-quick-apps-section">
+                            <div class="home-section-header">
+                                <h3>Pinned Quick Apps</h3>
+                                <button class="btn-add-pin-chip" id="home-btn-add-pin">＋ Pin Shortcut</button>
+                            </div>
+                            <div class="home-apps-grid" id="home-apps-grid">
+                                <!-- Rendered Pinned App Cards -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic <webview> instances appended here -->
+                </div>
+            </section>
+
+            <!-- View 6: ToffeeShare App-to-App Direct P2P Share -->
+            <section class="view-panel" id="view-share">
+                <div class="toffee-header">
+                    <div class="toffee-title-wrap">
+                        <div class="toffee-badge">⚡ P2P DIRECT STREAM</div>
+                        <h2>ToffeeShare Direct App-to-App</h2>
+                        <p>Direct peer-to-peer file streaming directly between two YT Studio apps over local network. Zero cloud, zero size limits.</p>
+                    </div>
+
+                    <!-- Mode Toggle Buttons -->
+                    <div class="toffee-mode-switch">
+                        <button class="toffee-tab-btn active" id="btn-mode-send">
+                            <span>📤</span> Send File
+                        </button>
+                        <button class="toffee-tab-btn" id="btn-mode-receive">
+                            <span>📥</span> Receive File
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 1. SENDER MODE PANEL -->
+                <div class="toffee-panel active" id="toffee-send-panel">
+                    <!-- Dropzone (When idle) -->
+                    <div class="toffee-dropzone" id="toffee-dropzone">
+                        <div class="toffee-drop-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="1.8">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                        </div>
+                        <h3>Select or Drop any File to Send</h3>
+                        <p>Share 4K YouTube videos, songs or documents directly to your friend's app</p>
+                        <button class="toffee-select-file-btn" id="btn-toffee-browse">Browse Files</button>
+                        <input type="file" id="toffee-file-input" style="display: none;" />
+                    </div>
+
+                    <!-- Active Sending Session Card (When file selected) -->
+                    <div class="toffee-card toffee-session-card" id="toffee-send-session-card" style="display: none;">
+                        <div class="toffee-card-header">
+                            <div class="toffee-file-meta">
+                                <span class="toffee-file-icon">🎬</span>
+                                <div>
+                                    <h4 id="toffee-sending-filename">video.mp4</h4>
+                                    <span class="toffee-filesize" id="toffee-sending-filesize">0 MB</span>
+                                </div>
+                            </div>
+                            <button class="toffee-btn-cancel" id="btn-cancel-send">✕ Cancel</button>
+                        </div>
+
+                        <!-- 6-Digit Transfer Code Box -->
+                        <div class="toffee-code-container">
+                            <div class="toffee-code-label">6-DIGIT TRANSFER CODE</div>
+                            <div class="toffee-code-row">
+                                <div class="toffee-code-display" id="toffee-send-code">••• •••</div>
+                                <button class="toffee-btn-copy-code" id="btn-copy-send-code">📋 Copy Code</button>
+                            </div>
+                            <div class="toffee-code-hint">Tell your friend to enter this code in their <strong>Receive</strong> tab</div>
+                        </div>
+
+                        <!-- Live Pulse / Radar Indicator -->
+                        <div class="toffee-radar-status" id="toffee-send-radar">
+                            <div class="toffee-radar-pulse"></div>
+                            <span>Waiting for recipient app to connect...</span>
+                        </div>
+
+                        <!-- Active Transfer Live Progress -->
+                        <div class="toffee-transfer-progress" id="toffee-send-progress-wrap" style="display: none;">
+                            <div class="toffee-progress-info">
+                                <span id="toffee-send-speed">0.0 MB/s</span>
+                                <span id="toffee-send-percent">0%</span>
+                            </div>
+                            <div class="toffee-bar-track">
+                                <div class="toffee-bar-fill" id="toffee-send-bar"></div>
+                            </div>
+                            <div class="toffee-transfer-sub" id="toffee-send-eta">Transferring directly...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. RECEIVER MODE PANEL -->
+                <div class="toffee-panel" id="toffee-receive-panel">
+                    <div class="toffee-grid-receive">
+                        <!-- Code Entry Card -->
+                        <div class="toffee-card">
+                            <h3>📥 Receive by 6-Digit Code</h3>
+                            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">Enter the code from the sender's app to start direct streaming</p>
+
+                            <div class="toffee-input-group">
+                                <input type="tel" class="toffee-code-input" id="toffee-receive-code-input" maxlength="7" placeholder="••• •••" autocomplete="off" />
+                                <button class="toffee-btn-connect" id="btn-connect-code">Connect & Receive →</button>
+                            </div>
+                            <div id="toffee-receive-error" class="toffee-error-text" style="display: none;"></div>
+
+                            <!-- Live Receiving Progress -->
+                            <div class="toffee-transfer-progress" id="toffee-receive-progress-wrap" style="display: none; margin-top: 20px;">
+                                <div class="toffee-progress-info">
+                                    <span id="toffee-receive-filename" style="font-weight: 600;">Downloading...</span>
+                                    <span id="toffee-receive-percent">0%</span>
+                                </div>
+                                <div class="toffee-bar-track">
+                                    <div class="toffee-bar-fill" id="toffee-receive-bar"></div>
+                                </div>
+                                <div class="toffee-transfer-sub" style="display: flex; justify-content: space-between;">
+                                    <span id="toffee-receive-speed">0.0 MB/s</span>
+                                    <span id="toffee-receive-eta">Calculating ETA...</span>
+                                </div>
+                            </div>
+
+                            <!-- Download Complete Banner -->
+                            <div class="toffee-complete-box" id="toffee-receive-complete-box" style="display: none;">
+                                <div class="toffee-complete-icon">✓</div>
+                                <div>
+                                    <div style="font-size: 14px; font-weight: 700; color: #10b981;">Transfer Complete!</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);" id="toffee-saved-path">Saved to Library</div>
+                                </div>
+                                <div style="display: flex; gap: 8px; margin-left: auto;">
+                                    <button class="btn-play-received" id="btn-play-received">▶ Play</button>
+                                    <button class="btn-open-folder" id="btn-open-received-folder">📁 Open</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Discovered LAN Peers (1-Click Receive) -->
+                        <div class="toffee-card">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                                <h3>📡 Nearby Apps on Wi-Fi</h3>
+                                <div class="toffee-live-badge">● Auto Discovery</div>
+                            </div>
+                            <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 14px;">Other computers running YT Studio Pro on your network appear here automatically</p>
+
+                            <div class="toffee-peers-list" id="toffee-peers-list">
+                                <div style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 24px 0;">
+                                    Searching for nearby apps on local network...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 1. First-Time Welcome & Onboarding Wizard Modal -->
+    <div class="modal-overlay" id="onboarding-modal" style="display: none;">
+        <div class="modal-card onboarding-card">
+            <div class="onboarding-header">
+                <div class="onboarding-icon-box">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                        <rect x="2" y="4" width="20" height="16" rx="4.5" fill="#FF0000"/>
+                        <polygon points="10,8.5 15.5,12 10,15.5" fill="#FFFFFF"/>
+                    </svg>
+                </div>
+                <h2>Welcome to YT Studio Pro</h2>
+                <p>Personalize your workspace before getting started</p>
+            </div>
+            
+            <div class="modal-body">
+                <div class="input-group">
+                    <label for="onboarding-name">What should we call you?</label>
+                    <input type="text" id="onboarding-name" class="modal-input" placeholder="Enter your name (e.g. Nikhil)" autocomplete="name" />
+                </div>
+
+                <div class="input-group">
+                    <label for="onboarding-path">Preferred Download Location:</label>
+                    <div class="path-input-row">
+                        <input type="text" id="onboarding-path" class="modal-input" readonly />
+                        <button class="btn-browse-folder" id="btn-onboarding-browse">Browse</button>
+                    </div>
+                    <span class="input-hint">You can change this anytime from Settings in the sidebar.</span>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-primary btn-large" id="btn-onboarding-submit">Get Started →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Settings & Preferences Modal (Accessible Anytime) -->
+    <div class="modal-overlay" id="settings-modal" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Preferences & Settings</h3>
+                <button class="btn-close-modal" id="btn-close-settings">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label for="settings-name">Your Name:</label>
+                    <input type="text" id="settings-name" class="modal-input" placeholder="Your name" />
+                </div>
+
+                <div class="input-group">
+                    <label for="settings-path">Download Location:</label>
+                    <div class="path-input-row">
+                        <input type="text" id="settings-path" class="modal-input" readonly />
+                        <button class="btn-browse-folder" id="btn-settings-browse">Browse</button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="settings-default-quality">Default Download Quality:</label>
+                    <select id="settings-default-quality" class="modal-select">
+                        <option value="1080p">1080p Full HD</option>
+                        <option value="720p">720p HD</option>
+                        <option value="480p">480p SD (Medium File Size)</option>
+                        <option value="360p">360p Compact (Fast Download)</option>
+                        <option value="240p">240p Low Data (Super Fast)</option>
+                        <option value="best">Best Available</option>
+                        <option value="MP3">Audio Only (MP3)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="btn-settings-cancel">Cancel</button>
+                <button class="btn-primary" id="btn-settings-save">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Quick Download Modal Dialog -->
+    <div class="modal-overlay" id="quick-dl-modal" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Direct Video Download</h3>
+                <button class="btn-close-modal" id="btn-close-modal">✕</button>
+            </div>
+            <div class="modal-body">
+                <label>YouTube Video Link or ID:</label>
+                <input type="text" id="quick-url-input" class="modal-input" placeholder="https://www.youtube.com/watch?v=..." />
+                
+                <label>Quality Format Preset:</label>
+                <select id="quick-format-select" class="modal-select">
+                    <option value="1080p">1080p Full HD (MP4)</option>
+                    <option value="720p">720p HD (MP4)</option>
+                    <option value="480p">480p SD (Medium File Size)</option>
+                    <option value="360p">360p Compact (Fast Download)</option>
+                    <option value="240p">240p Low Data (Super Fast)</option>
+                    <option value="best">Best Available Quality</option>
+                    <option value="MP3">Audio Only (MP3)</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="btn-modal-cancel">Cancel</button>
+                <button class="btn-primary" id="btn-modal-start">Start Download</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Pin Web App / Custom Shortcut Modal -->
+    <div class="modal-overlay" id="pin-app-modal" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>📌 Pin Web App / Shortcut</h3>
+                <button class="btn-close-modal" id="btn-close-pin-modal">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label for="pin-name-input">Website Name:</label>
+                    <input type="text" id="pin-name-input" class="modal-input" placeholder="e.g. ChatGPT, DeepSeek, YouTube" autocomplete="off" />
+                </div>
+                <div class="input-group">
+                    <label for="pin-url-input">Website URL:</label>
+                    <input type="text" id="pin-url-input" class="modal-input" placeholder="https://chat.deepseek.com" autocomplete="off" />
+                </div>
+                <div class="input-group">
+                    <label for="pin-emoji-input">Icon / Emoji (Optional):</label>
+                    <input type="text" id="pin-emoji-input" class="modal-input" placeholder="e.g. 🤖, 🎬, 🚀, 💻 (or leave blank for auto favicon)" autocomplete="off" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="btn-pin-cancel">Cancel</button>
+                <button class="btn-primary" id="btn-pin-save">Pin Shortcut</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Custom JavaScript Userscript Injector Modal -->
+    <div class="modal-overlay" id="script-inject-modal" style="display: none;">
+        <div class="modal-card" style="max-width: 520px;">
+            <div class="modal-header">
+                <h3>📜 Run Custom JavaScript (Userscript)</h3>
+                <button class="btn-close-modal" id="btn-close-script-modal">✕</button>
+            </div>
+            <div class="modal-body">
+                <label>JavaScript Code to Execute on Current Tab:</label>
+                <textarea id="script-inject-textarea" class="modal-input" rows="7" style="font-family: monospace; font-size: 12px; resize: vertical;" placeholder="// e.g. document.body.style.background = '#000';&#10;alert('Hello from Userscript!');"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="btn-script-cancel">Cancel</button>
+                <button class="btn-primary" id="btn-script-run">Execute Code</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
