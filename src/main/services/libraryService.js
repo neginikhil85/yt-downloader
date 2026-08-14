@@ -65,9 +65,25 @@ function getLibraryFiles(dirPath) {
         });
 }
 
+/**
+ * Opens native file selection dialog to select a file for direct P2P sharing
+ */
+async function selectFileToSend(browserWindow) {
+    const result = await dialog.showOpenDialog(browserWindow, {
+        title: 'Select File to Send',
+        buttonLabel: 'Select File',
+        properties: ['openFile']
+    });
+    if (!result.canceled && result.filePaths.length > 0) {
+        return result.filePaths[0];
+    }
+    return null;
+}
+
 module.exports = {
     getDefaultSavePath,
     selectFolder,
+    selectFileToSend,
     openInFinder,
     getLibraryFiles
 };

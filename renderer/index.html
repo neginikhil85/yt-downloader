@@ -511,204 +511,176 @@
 
             <!-- View 6: Studio Direct P2P Share -->
             <section class="view-panel" id="view-share">
-                <div class="toffee-header">
-                    <div class="toffee-title-wrap">
-                        <div class="toffee-badge">⚡ ZERO-SERVER DIRECT P2P</div>
-                        <h2>Direct P2P File Transfer</h2>
-                        <p>Direct device-to-device file transfer. Zero cloud servers, zero file size limits, progressive SHA-256 integrity.</p>
+                <!-- 1. Native Window Titlebar / Navigation Header -->
+                <header class="ds-topbar">
+                    <div class="ds-title-cluster">
+                        <h2>Direct Share</h2>
+                        <div class="ds-presence-badge" id="ds-presence-badge">
+                            <span class="ds-pulse-dot"></span>
+                            <span class="ds-device-name" id="ds-local-device-name">My Computer</span>
+                            <span class="ds-local-ip" id="ds-local-ip">127.0.0.1:9876</span>
+                        </div>
                     </div>
 
-                    <!-- Main Mode Switcher: Send vs Receive -->
-                    <div class="toffee-mode-switch">
-                        <button class="toffee-tab-btn active" id="btn-mode-send">
-                            <span>📤</span> Send File
+                    <div class="ds-center-segmented">
+                        <button class="ds-tab-pill active" id="btn-mode-send">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+                            <span>Send File</span>
                         </button>
-                        <button class="toffee-tab-btn" id="btn-mode-receive">
-                            <span>📥</span> Receive File
+                        <button class="ds-tab-pill" id="btn-mode-receive">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+                            <span>Receive File</span>
                         </button>
                     </div>
-                </div>
 
-                <!-- Scope Sub-Tabs: Nearby (LAN) vs Remote (WAN) -->
-                <div class="p2p-scope-tabs">
-                    <button class="p2p-scope-btn active" id="btn-scope-nearby">
-                        <span>📡</span> Nearby (Same Wi-Fi / LAN)
-                    </button>
-                    <button class="p2p-scope-btn" id="btn-scope-remote">
-                        <span>🌐</span> Remote (Internet Token)
-                    </button>
-                </div>
-
-                <!-- ========================================================== -->
-                <!-- 1. SENDER MODE PANEL -->
-                <!-- ========================================================== -->
-                <div class="toffee-panel active" id="toffee-send-panel">
-                    <!-- Dropzone (When idle) -->
-                    <div class="toffee-dropzone" id="toffee-dropzone">
-                        <div class="toffee-drop-icon">
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="1.8">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="17 8 12 3 7 8"></polyline>
-                                <line x1="12" y1="3" x2="12" y2="15"></line>
-                            </svg>
-                        </div>
-                        <h3>Select or Drop any File to Send</h3>
-                        <p>Transfer 4K videos, songs or documents directly to another computer without uploading to any server</p>
-                        <button class="toffee-select-file-btn" id="btn-toffee-browse">Browse Files</button>
-                        <input type="file" id="toffee-file-input" style="display: none;" />
+                    <div class="ds-topbar-right">
+                        <span class="ds-secure-pill">🔒 Direct Socket Stream</span>
                     </div>
+                </header>
 
-                    <!-- Active Sending Session Card (When file selected) -->
-                    <div class="toffee-card toffee-session-card" id="toffee-send-session-card" style="display: none;">
-                        <div class="toffee-card-header">
-                            <div class="toffee-file-meta">
-                                <span class="toffee-file-icon">🎬</span>
-                                <div>
-                                    <h4 id="toffee-sending-filename">video.mp4</h4>
-                                    <div style="display: flex; gap: 8px; align-items: center;">
-                                        <span class="toffee-filesize" id="toffee-sending-filesize">0 MB</span>
-                                        <span class="p2p-chip-secure">🔒 Direct P2P</span>
+                <!-- 2. Main Content Container -->
+                <main class="ds-main-content">
+                    <!-- ==================== SENDER VIEW ==================== -->
+                    <div class="ds-view-panel active" id="toffee-send-panel">
+                        <!-- State A: Idle (File Dropzone & Discovered Peers Grid) -->
+                        <div class="ds-sender-idle-view" id="ds-sender-idle-view">
+                            <!-- Dropzone Box -->
+                            <div class="ds-drop-zone" id="toffee-dropzone">
+                                <div class="ds-drop-icon-wrap">
+                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                                </div>
+                                <div class="ds-drop-text">
+                                    <h3>Drop files to share instantly</h3>
+                                    <p>Direct peer-to-peer streaming between devices with zero cloud servers</p>
+                                </div>
+                                <button class="ds-btn-primary" id="btn-toffee-browse">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                                    <span>Browse Files</span>
+                                </button>
+                                <input type="file" id="toffee-file-input" style="display: none;" />
+                            </div>
+
+                            <!-- Discovered Nearby Devices Grid (AirDrop Radar style) -->
+                            <div class="ds-nearby-radar-section">
+                                <div class="ds-section-header">
+                                    <div class="ds-section-title">
+                                        <span class="ds-radar-pulse-ring"></span>
+                                        <h4>Nearby Devices on Wi-Fi</h4>
+                                    </div>
+                                    <span class="ds-counter-badge" id="ds-peers-count">0 nearby</span>
+                                </div>
+
+                                <div class="ds-devices-grid" id="toffee-peers-list">
+                                    <div class="ds-radar-searching">
+                                        <span class="ds-radar-pulse-ring"></span>
+                                        <span>Scanning local network for other devices...</span>
                                     </div>
                                 </div>
                             </div>
-                            <button class="toffee-btn-cancel" id="btn-cancel-send">✕ Cancel Session</button>
                         </div>
 
-                        <!-- NEARBY VIEW: 6-Digit Transfer Code Box -->
-                        <div class="toffee-code-container" id="send-nearby-box">
-                            <div class="toffee-code-label">6-DIGIT TRANSFER CODE (SAME NETWORK)</div>
-                            <div class="toffee-code-row">
-                                <div class="toffee-code-display" id="toffee-send-code">••• •••</div>
-                                <button class="toffee-btn-copy-code" id="btn-copy-send-code">📋 Copy Code</button>
-                            </div>
-                            <div class="toffee-code-hint">Tell the recipient to open the <strong>Receive</strong> tab on their app</div>
-                        </div>
-
-                        <!-- REMOTE VIEW: Out-of-Band Token Generator -->
-                        <div class="p2p-token-container" id="send-remote-box" style="display: none;">
-                            <div class="toffee-code-label">STEP 1: SHARE CONNECTION TOKEN</div>
-                            <div class="token-input-row">
-                                <input type="text" class="token-display-input" id="token-offer-display" readonly placeholder="Generating connection token..." />
-                                <button class="toffee-btn-copy-code" id="btn-copy-token">📋 Copy Token</button>
-                            </div>
-                            <div class="toffee-code-hint" style="margin-bottom: 12px;">Share this token with your friend via Slack, WhatsApp, Signal or Email.</div>
-
-                            <div class="toffee-code-label">STEP 2: PASTE RECIPIENT'S ANSWER TOKEN</div>
-                            <div class="token-input-row">
-                                <input type="text" class="token-display-input" id="token-answer-input" placeholder="Paste the Answer Token from recipient here..." />
-                                <button class="toffee-btn-connect" id="btn-apply-answer" style="padding: 0 16px;">Connect & Send</button>
-                            </div>
-                        </div>
-
-                        <!-- Live Radar Indicator -->
-                        <div class="toffee-radar-status" id="toffee-send-radar">
-                            <div class="toffee-radar-pulse"></div>
-                            <span id="toffee-send-radar-text">Waiting for recipient to connect...</span>
-                        </div>
-
-                        <!-- Active Transfer Live Progress -->
-                        <div class="toffee-transfer-progress" id="toffee-send-progress-wrap" style="display: none;">
-                            <div class="toffee-progress-info">
-                                <span id="toffee-send-speed">0.0 MB/s</span>
-                                <span id="toffee-send-percent">0%</span>
-                            </div>
-                            <div class="toffee-bar-track">
-                                <div class="toffee-bar-fill" id="toffee-send-bar"></div>
-                            </div>
-                            <div class="toffee-transfer-sub" id="toffee-send-eta">Transferring directly...</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ========================================================== -->
-                <!-- 2. RECEIVER MODE PANEL -->
-                <!-- ========================================================== -->
-                <div class="toffee-panel" id="toffee-receive-panel">
-                    <!-- NEARBY RECEIVER VIEW -->
-                    <div id="receive-nearby-view">
-                        <div class="toffee-grid-receive">
-                            <!-- Code Entry Card -->
-                            <div class="toffee-card">
-                                <h3>📥 Receive by 6-Digit Code</h3>
-                                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">Enter the code from the sender's app to start direct streaming over Wi-Fi/LAN</p>
-
-                                <div class="toffee-input-group">
-                                    <input type="tel" class="toffee-code-input" id="toffee-receive-code-input" maxlength="7" placeholder="••• •••" autocomplete="off" />
-                                    <button class="toffee-btn-connect" id="btn-connect-code">Connect & Receive →</button>
-                                </div>
-                                <div id="toffee-receive-error" class="toffee-error-text" style="display: none;"></div>
-
-                                <!-- Live Receiving Progress -->
-                                <div class="toffee-transfer-progress" id="toffee-receive-progress-wrap" style="display: none; margin-top: 20px;">
-                                    <div class="toffee-progress-info">
-                                        <span id="toffee-receive-filename" style="font-weight: 600;">Downloading...</span>
-                                        <span id="toffee-receive-percent">0%</span>
+                        <!-- State B: Active Share Session (File Selected & Transferring) -->
+                        <div class="ds-sender-active-view" id="toffee-send-session-card" style="display: none;">
+                            <div class="ds-session-card">
+                                <!-- File Header -->
+                                <div class="ds-file-header">
+                                    <div class="ds-file-icon-box" id="p2p-send-type-icon">🎬</div>
+                                    <div class="ds-file-info">
+                                        <h3 id="toffee-sending-filename">video.mp4</h3>
+                                        <div class="ds-file-tags">
+                                            <span class="ds-tag" id="toffee-sending-filesize">0 MB</span>
+                                            <span class="ds-tag ds-tag-green">🔒 Direct Socket</span>
+                                            <span class="ds-tag ds-tag-blue">⚡ Progressive SHA-256</span>
+                                        </div>
                                     </div>
-                                    <div class="toffee-bar-track">
-                                        <div class="toffee-bar-fill" id="toffee-receive-bar"></div>
-                                    </div>
-                                    <div class="toffee-transfer-sub" style="display: flex; justify-content: space-between;">
-                                        <span id="toffee-receive-speed">0.0 MB/s</span>
-                                        <span id="toffee-receive-eta">Calculating ETA...</span>
-                                    </div>
+                                    <button class="ds-btn-cancel-session" id="btn-cancel-send" title="Cancel Sharing">✕ Cancel</button>
                                 </div>
 
-                                <!-- Download Complete Banner -->
-                                <div class="toffee-complete-box" id="toffee-receive-complete-box" style="display: none;">
-                                    <div class="toffee-complete-icon">✓</div>
-                                    <div>
-                                        <div style="font-size: 14px; font-weight: 700; color: #10b981;">Transfer Complete & Verified!</div>
-                                        <div style="font-size: 12px; color: var(--text-secondary);" id="toffee-saved-path">Saved to Library</div>
+                                <!-- Unified 6-Digit PIN Display -->
+                                <div class="ds-pin-display-stage" id="send-nearby-box">
+                                    <span class="ds-pin-title">6-DIGIT TRANSFER PIN</span>
+                                    <div class="ds-pin-boxes">
+                                        <div class="ds-pin-cell" id="pin-d0">-</div>
+                                        <div class="ds-pin-cell" id="pin-d1">-</div>
+                                        <div class="ds-pin-cell" id="pin-d2">-</div>
+                                        <div class="ds-pin-dot-sep"></div>
+                                        <div class="ds-pin-cell" id="pin-d3">-</div>
+                                        <div class="ds-pin-cell" id="pin-d4">-</div>
+                                        <div class="ds-pin-cell" id="pin-d5">-</div>
+                                        <button class="ds-btn-copy-pin" id="btn-copy-send-code">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                            <span>Copy PIN</span>
+                                        </button>
                                     </div>
-                                    <div style="display: flex; gap: 8px; margin-left: auto;">
-                                        <button class="btn-play-received" id="btn-play-received">▶ Play in Cinema</button>
-                                        <button class="btn-open-folder" id="btn-open-received-folder">📁 Open Folder</button>
-                                    </div>
+                                    <p class="ds-pin-guide">Tell the receiver to enter this 6-digit PIN on their <strong>Receive</strong> tab.</p>
                                 </div>
-                            </div>
 
-                            <!-- Discovered LAN Peers (1-Click Receive) -->
-                            <div class="toffee-card">
-                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-                                    <h3>📡 Nearby Apps on Wi-Fi</h3>
-                                    <div class="toffee-live-badge">● Auto Discovery</div>
+                                <!-- Status Strip -->
+                                <div class="ds-status-strip" id="toffee-send-radar">
+                                    <span class="ds-radar-pulse-ring"></span>
+                                    <span id="toffee-send-radar-text">Ready & listening for recipient connection...</span>
                                 </div>
-                                <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 14px;">Other computers running the app on your network appear here automatically</p>
 
-                                <div class="toffee-peers-list" id="toffee-peers-list">
-                                    <div style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 24px 0;">
-                                        Searching for nearby devices on local network...
+                                <!-- Live Transfer Progress Telemetry -->
+                                <div class="ds-progress-telemetry" id="toffee-send-progress-wrap" style="display: none;">
+                                    <div class="ds-metrics-bar">
+                                        <span class="ds-metric-speed" id="toffee-send-speed">0.0 MB/s</span>
+                                        <span class="ds-metric-percent" id="toffee-send-percent">0%</span>
                                     </div>
+                                    <div class="ds-progress-track">
+                                        <div class="ds-progress-fill" id="toffee-send-bar"></div>
+                                    </div>
+                                    <div class="ds-progress-footer" id="toffee-send-eta">Transferring directly...</div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- REMOTE RECEIVER VIEW -->
-                    <div id="receive-remote-view" style="display: none;">
-                        <div class="toffee-card" style="max-width: 680px; margin: 0 auto;">
-                            <h3>🌐 Remote P2P Token Handshake</h3>
-                            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">Connect with any computer across the internet without a central server</p>
-
-                            <div class="toffee-code-label">STEP 1: PASTE CONNECTION TOKEN FROM SENDER</div>
-                            <div class="token-input-row" style="margin-bottom: 14px;">
-                                <input type="text" class="token-display-input" id="remote-offer-input" placeholder="Paste the Connection Token here..." />
-                                <button class="toffee-btn-connect" id="btn-remote-gen-answer">Generate Answer</button>
+                    <!-- ==================== RECEIVER VIEW ==================== -->
+                    <div class="ds-view-panel" id="toffee-receive-panel">
+                        <div class="ds-receive-card">
+                            <div class="ds-receive-hero">
+                                <div class="ds-receive-icon">📥</div>
+                                <h3>Enter 6-Digit Transfer PIN</h3>
+                                <p>Type the PIN from the sender's app to start direct device streaming</p>
                             </div>
 
-                            <div id="remote-answer-box" style="display: none;">
-                                <div class="toffee-code-label">STEP 2: SEND THIS ANSWER TOKEN BACK TO SENDER</div>
-                                <div class="token-input-row" style="margin-bottom: 10px;">
-                                    <input type="text" class="token-display-input" id="remote-answer-display" readonly />
-                                    <button class="toffee-btn-copy-code" id="btn-copy-remote-answer">📋 Copy Answer</button>
+                            <div class="ds-pin-entry-row">
+                                <input type="tel" class="ds-pin-large-input" id="toffee-receive-code-input" maxlength="7" placeholder="••• •••" autocomplete="off" />
+                                <button class="ds-btn-primary ds-btn-large" id="btn-connect-code">Connect & Receive</button>
+                            </div>
+                            <div id="toffee-receive-error" class="ds-alert-error" style="display: none;"></div>
+
+                            <!-- Live Receiving Progress -->
+                            <div class="ds-progress-telemetry" id="toffee-receive-progress-wrap" style="display: none; margin-top: 20px;">
+                                <div class="ds-metrics-bar">
+                                    <span class="ds-metric-speed" id="toffee-receive-filename">Receiving...</span>
+                                    <span class="ds-metric-percent" id="toffee-receive-percent">0%</span>
                                 </div>
-                                <div class="toffee-code-hint">Once the sender pastes this Answer Token, the direct encrypted transfer will begin automatically!</div>
+                                <div class="ds-progress-track">
+                                    <div class="ds-progress-fill" id="toffee-receive-bar"></div>
+                                </div>
+                                <div class="ds-progress-footer" style="display: flex; justify-content: space-between;">
+                                    <span id="toffee-receive-speed">0.0 MB/s</span>
+                                    <span id="toffee-receive-eta">Calculating ETA...</span>
+                                </div>
                             </div>
 
-                            <div id="remote-receive-error" class="toffee-error-text" style="display: none; margin-top: 10px;"></div>
+                            <!-- Completion Banner -->
+                            <div class="ds-complete-banner" id="toffee-receive-complete-box" style="display: none;">
+                                <div class="ds-complete-icon">✓</div>
+                                <div class="ds-complete-info">
+                                    <h4>Transfer Complete & Verified</h4>
+                                    <span id="toffee-saved-path">SHA-256 Checksum Passed</span>
+                                </div>
+                                <div class="ds-complete-actions">
+                                    <button class="ds-btn-primary" id="btn-play-received">▶ Play in Cinema</button>
+                                    <button class="ds-btn-secondary" id="btn-open-received-folder">📂 Open Folder</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </main>
             </section>
         </main>
     </div>

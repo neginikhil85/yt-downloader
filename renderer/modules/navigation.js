@@ -68,7 +68,7 @@ export function switchView(viewName) {
     const topicChips = document.getElementById('topic-chips');
 
     if (viewName === 'browser' || viewName === 'share') {
-        if (topbar) topbar.style.display = (viewName === 'share') ? 'flex' : 'none';
+        if (topbar) topbar.style.display = 'none';
         if (topicChips) topicChips.style.display = 'none';
     } else {
         if (topbar) topbar.style.display = 'flex';
