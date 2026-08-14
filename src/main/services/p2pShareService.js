@@ -9,7 +9,7 @@ const http = require('http');
 const { localPeerId, localDeviceName, generateTransferCode, getLocalIpAddresses, getPrimaryIp, formatBytes } = require('./p2p/p2pUtils');
 const { encodeSessionToken, decodeSessionToken, compressToken, decompressToken } = require('./p2p/p2pTokenCodec');
 const { startDiscoverySocket, broadcastDiscovery, stopDiscoverySocket, getDiscoveredPeers, findPeerByTransferCode } = require('./p2p/p2pDiscovery');
-const { startHttpServer, getHttpPort, stopHttpServer, downloadFileFromPeer } = require('./p2p/p2pHttpServer');
+const { startHttpServer, abortActiveStreams, getHttpPort, stopHttpServer, downloadFileFromPeer } = require('./p2p/p2pHttpServer');
 const { getDefaultSavePath } = require('./libraryService');
 
 // Active Outgoing Share Session (Sender state)
@@ -22,7 +22,11 @@ let progressCallback = null;
 
 function notifyRenderer(event, data) {
     if (progressCallback) {
-        progressCallback(event, data);
+        const hyphenEvent = event.replace(/:/g, '-');
+        progressCallback(hyphenEvent, data);
+        if (hyphenEvent !== event) {
+            progressCallback(event, data);
+        }
     }
 }
 
@@ -118,6 +122,7 @@ async function startSendSession(filePath) {
  */
 function cancelSendSession() {
     currentSendSession = null;
+    abortActiveStreams();
     broadcastDiscovery({
         getHttpPort,
         getActiveSend: () => null

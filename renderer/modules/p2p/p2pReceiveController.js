@@ -166,8 +166,10 @@ export function initP2PReceiveController() {
                     targetDir: selectedDestFolder
                 });
 
-                if (!res.success) {
-                    showError(res.error || 'Connection to sender failed');
+                if (res && res.success) {
+                    onReceiveComplete(res);
+                } else {
+                    showError(res?.error || 'Connection to sender failed');
                     if (receiveProgressWrap) receiveProgressWrap.style.display = 'none';
                     if (previewCard) previewCard.style.display = 'flex';
                 }
@@ -189,8 +191,10 @@ export function initP2PReceiveController() {
                 code,
                 targetDir: selectedDestFolder
             });
-            if (!res.success) {
-                showError(res.error || 'Connection failed');
+            if (res && res.success) {
+                onReceiveComplete(res);
+            } else {
+                showError(res?.error || 'Connection failed');
                 if (receiveProgressWrap) receiveProgressWrap.style.display = 'none';
             }
         } catch (err) {
@@ -248,6 +252,20 @@ export function initP2PReceiveController() {
             if (currentLastReceivedFile && window.electronAPI && window.electronAPI.openInFinder) {
                 await window.electronAPI.openInFinder(currentLastReceivedFile);
             }
+        });
+    }
+
+    // Receive Another File Button
+    const btnReceiveAnother = document.getElementById('btn-receive-another');
+    if (btnReceiveAnother) {
+        btnReceiveAnother.addEventListener('click', () => {
+            currentLastReceivedFile = null;
+            inspectedSession = null;
+            if (tokenInput) tokenInput.value = '';
+            if (receiveCompleteBox) receiveCompleteBox.style.display = 'none';
+            if (previewCard) previewCard.style.display = 'none';
+            if (receiveProgressWrap) receiveProgressWrap.style.display = 'none';
+            hideError();
         });
     }
 

@@ -13,6 +13,7 @@ const { getDefaultSavePath } = require('../libraryService');
 
 let httpServer = null;
 let httpPort = 9876;
+const activeHttpResponses = new Set();
 
 function startHttpServer(options = {}) {
     if (httpServer) return Promise.resolve(httpPort);
@@ -56,7 +57,7 @@ function startHttpServer(options = {}) {
             if (pathname === '/api/p2p/probe') {
                 const code = urlObj.searchParams.get('code');
                 const active = getActiveSend();
-                if (active && active.code === code) {
+                if (active && (active.code === code || active.token === code || active.token?.includes(code))) {
                     res.writeHead(200, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({
                         match: true,
@@ -76,9 +77,9 @@ function startHttpServer(options = {}) {
                 const code = req.headers['x-transfer-code'] || urlObj.searchParams.get('code');
                 const active = getActiveSend();
 
-                if (!active || active.code !== code) {
+                if (!active || (active.code !== code && active.token !== code)) {
                     res.writeHead(403, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ error: 'Invalid or expired transfer code' }));
+                    res.end(JSON.stringify({ error: 'Transfer session expired or closed by sender' }));
                     return;
                 }
 
@@ -124,8 +125,11 @@ function startHttpServer(options = {}) {
 
                 res.writeHead(isPartial ? 206 : 200, responseHeaders);
 
+                activeHttpResponses.add(res);
+                res.on('finish', () => activeHttpResponses.delete(res));
+                res.on('close', () => activeHttpResponses.delete(res));
+
                 let sentBytes = start;
-                let startTime = Date.now();
                 let lastReportTime = Date.now();
                 let lastReportBytes = start;
 
@@ -135,11 +139,11 @@ function startHttpServer(options = {}) {
                     sentBytes += chunk.length;
                     const now = Date.now();
 
-                    if (now - lastReportTime >= 400 || sentBytes === fileSize) {
+                    if (now - lastReportTime >= 350 || sentBytes === fileSize) {
                         const elapsedSec = (now - lastReportTime) / 1000;
                         const deltaBytes = sentBytes - lastReportBytes;
                         const speedMBps = elapsedSec > 0 ? (deltaBytes / (1024 * 1024) / elapsedSec).toFixed(1) : '0.0';
-                        const progress = (sentBytes / fileSize) * 100;
+                        const progress = fileSize > 0 ? (sentBytes / fileSize) * 100 : 100;
                         const remainingBytes = fileSize - sentBytes;
                         const etaSeconds = parseFloat(speedMBps) > 0 ? Math.ceil((remainingBytes / (1024 * 1024)) / parseFloat(speedMBps)) : 0;
 
@@ -159,6 +163,7 @@ function startHttpServer(options = {}) {
 
                 fileStream.on('error', (err) => {
                     console.error('[P2P HTTP Stream] Error reading file:', err);
+                    activeHttpResponses.delete(res);
                     if (!res.headersSent) {
                         res.writeHead(500);
                     }
@@ -168,6 +173,7 @@ function startHttpServer(options = {}) {
                 fileStream.pipe(res);
 
                 req.on('close', () => {
+                    activeHttpResponses.delete(res);
                     fileStream.destroy();
                 });
 
@@ -196,11 +202,21 @@ function startHttpServer(options = {}) {
     });
 }
 
+function abortActiveStreams() {
+    for (const res of activeHttpResponses) {
+        try {
+            res.destroy(new Error('Session cancelled by sender'));
+        } catch (e) {}
+    }
+    activeHttpResponses.clear();
+}
+
 function getHttpPort() {
     return httpPort;
 }
 
 function stopHttpServer() {
+    abortActiveStreams();
     if (httpServer) {
         try {
             httpServer.close();
@@ -235,7 +251,7 @@ function downloadFileFromPeer(options = {}) {
                 let errBody = '';
                 res.on('data', (d) => errBody += d);
                 res.on('end', () => {
-                    const msg = `Transfer rejected (${res.statusCode}): ${errBody || 'Unknown error'}`;
+                    const msg = `Transfer rejected (${res.statusCode}): ${errBody || 'Session closed'}`;
                     onError({ error: msg });
                     reject(new Error(msg));
                 });
@@ -271,7 +287,7 @@ function downloadFileFromPeer(options = {}) {
                     const elapsedSec = (now - lastReportTime) / 1000;
                     const deltaBytes = receivedBytes - lastReportBytes;
                     const speedMBps = elapsedSec > 0 ? (deltaBytes / (1024 * 1024) / elapsedSec).toFixed(1) : '0.0';
-                    const progress = totalBytes > 0 ? (receivedBytes / totalBytes) * 100 : 0;
+                    const progress = totalBytes > 0 ? (receivedBytes / totalBytes) * 100 : 100;
                     const remainingBytes = totalBytes - receivedBytes;
                     const etaSeconds = parseFloat(speedMBps) > 0 ? Math.ceil((remainingBytes / (1024 * 1024)) / parseFloat(speedMBps)) : 0;
 
@@ -291,6 +307,15 @@ function downloadFileFromPeer(options = {}) {
 
             res.on('end', () => {
                 writeStream.end(() => {
+                    // Check if stream ended prematurely
+                    if (totalBytes > 0 && receivedBytes < totalBytes) {
+                        try { if (fs.existsSync(partPath)) fs.unlinkSync(partPath); } catch (e) {}
+                        const abortedMsg = 'Transfer aborted: Sender closed or cancelled the session.';
+                        onError({ error: abortedMsg });
+                        reject(new Error(abortedMsg));
+                        return;
+                    }
+
                     const calculatedHash = hash.digest('hex');
 
                     // Rename .part to final file
@@ -324,7 +349,8 @@ function downloadFileFromPeer(options = {}) {
 
             res.on('error', (err) => {
                 writeStream.destroy();
-                onError({ error: err.message });
+                try { if (fs.existsSync(partPath)) fs.unlinkSync(partPath); } catch (e) {}
+                onError({ error: `Connection dropped: ${err.message}` });
                 reject(err);
             });
         });
@@ -342,6 +368,7 @@ function downloadFileFromPeer(options = {}) {
 
 module.exports = {
     startHttpServer,
+    abortActiveStreams,
     getHttpPort,
     stopHttpServer,
     downloadFileFromPeer
