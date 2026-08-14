@@ -21,12 +21,14 @@
     padding: 20px 18px 0 18px;
     display: flex;
     align-items: center;
+    -webkit-app-region: drag;
 }
 
 .brand-logo {
     display: flex;
     align-items: center;
     gap: 10px;
+    -webkit-app-region: no-drag;
 }
 
 .brand-svg {
