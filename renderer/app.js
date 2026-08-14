@@ -14,6 +14,10 @@ import { initBrowserManager } from './modules/browserManager.js';
 import { initP2PShareManager } from './modules/p2pShareManager.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // 0. Platform styling class
+    const platform = window.electronAPI?.platform || 'darwin';
+    document.body.classList.add(`platform-${platform}`);
+
     // 1. Initialize State & Settings
     await initSettings();
 

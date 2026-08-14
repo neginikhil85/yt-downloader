@@ -12,9 +12,14 @@ function createMainWindow() {
         minWidth: 980,
         minHeight: 680,
         title: 'YT Studio Pro',
-        titleBarStyle: isMac ? 'hiddenInset' : 'default',
-        trafficLightPosition: isMac ? { x: 18, y: 18 } : undefined,
-        autoHideMenuBar: !isMac,
+        titleBarStyle: isMac ? 'hiddenInset' : 'hidden',
+        titleBarOverlay: isMac ? false : {
+            color: '#08090b',
+            symbolColor: '#94a3b8',
+            height: 38
+        },
+        trafficLightPosition: isMac ? { x: 18, y: 20 } : undefined,
+        autoHideMenuBar: true,
         backgroundColor: '#0c0d0e',
         webPreferences: {
             preload: path.join(__dirname, '..', '..', 'preload.js'),

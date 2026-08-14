@@ -17,11 +17,23 @@
 }
 
 .sidebar-header {
-    height: 64px;
-    padding: 20px 18px 0 18px;
+    min-height: 78px;
+    padding: 46px 18px 12px 18px;
     display: flex;
     align-items: center;
     -webkit-app-region: drag;
+}
+
+body.platform-win32 .sidebar-header,
+body.platform-linux .sidebar-header {
+    min-height: 60px;
+    padding: 16px 18px 10px 18px;
+}
+
+body.platform-win32 .topbar,
+body.platform-win32 .ds-topbar,
+body.platform-win32 .browser-tabs-header {
+    padding-right: 140px;
 }
 
 .brand-logo {
