@@ -236,9 +236,9 @@ function stopHttpServer() {
 }
 
 /**
- * Downloads a file directly from a sender peer HTTP endpoint
+ * Downloads a file directly from a sender peer HTTP endpoint with retry protection
  */
-function downloadFileFromPeer(options = {}) {
+function downloadFileFromPeer(options = {}, retries = 2) {
     const {
         ip,
         port,
@@ -365,7 +365,13 @@ function downloadFileFromPeer(options = {}) {
             });
         });
 
-        req.on('error', (err) => {
+        req.on('error', async (err) => {
+            if (retries > 0 && (err.message.includes('EHOSTUNREACH') || err.message.includes('ECONNREFUSED') || err.message.includes('ETIMEDOUT'))) {
+                console.warn(`[P2P Download] Retrying connection to ${ip}:${port} (${retries} attempts left)...`);
+                await new Promise(r => setTimeout(r, 400));
+                downloadFileFromPeer(options, retries - 1).then(resolve).catch(reject);
+                return;
+            }
             onError({ error: `Connection failed: ${err.message}` });
             reject(err);
         });

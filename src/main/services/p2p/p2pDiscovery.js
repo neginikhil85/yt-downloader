@@ -207,16 +207,13 @@ function checkPeerHttp(ip, onPeersUpdated) {
 async function findPeerByTransferCode(code) {
     // 1. Check memory cache first
     const peers = getDiscoveredPeers();
-    const cached = peers.find(p => p.activeSend && p.activeSend.code === code);
+    const cached = peers.find(p => p.activeSend && (p.activeSend.code === code || p.activeSend.token === code));
     if (cached) {
-        return {
-            ip: cached.ip,
-            port: cached.port || 9876,
-            file: cached.activeSend
-        };
+        const verified = await probeIpForCode(cached.ip, code);
+        if (verified) return verified;
     }
 
-    // 2. Perform lightning-fast parallel HTTP subnet probe
+    // 2. Perform parallel HTTP subnet probe
     const configs = getNetworkInterfaceConfigs();
     const localIps = new Set(configs.map(c => c.address));
 
@@ -232,15 +229,19 @@ async function findPeerByTransferCode(code) {
             }
         }
 
-        // Fire all probes in parallel
-        const match = await Promise.race([
-            ...ipsToScan.map(ip => probeIpForCode(ip, code)),
-            new Promise(r => setTimeout(() => r(null), 1800))
-        ]);
+        const probePromises = ipsToScan.map(ip => {
+            return new Promise((resolve, reject) => {
+                probeIpForCode(ip, code).then(res => {
+                    if (res) resolve(res);
+                    else reject();
+                }).catch(reject);
+            });
+        });
 
-        if (match) {
-            return match;
-        }
+        try {
+            const match = await Promise.any(probePromises);
+            if (match) return match;
+        } catch (e) {}
     }
 
     return null;
