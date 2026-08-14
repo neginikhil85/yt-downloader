@@ -25,20 +25,22 @@ export function initP2PRadarView() {
             return `
                 <div class="toffee-peer-card">
                     <div class="toffee-peer-info">
-                        <span class="toffee-peer-icon">💻</span>
+                        <div class="toffee-peer-icon-box">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                        </div>
                         <div>
                             <div class="toffee-peer-name">${escapeHtml(peer.name)}</div>
                             <div class="toffee-peer-sharing">
-                                ${hasActiveSend ? `📤 Sharing: <strong>${escapeHtml(peer.activeSend.name)}</strong> (${peer.activeSend.formattedSize})` : '🟢 Online on Wi-Fi'}
+                                ${hasActiveSend ? `Sharing: <strong>${escapeHtml(peer.activeSend.name)}</strong> (${peer.activeSend.formattedSize})` : 'Online on Wi-Fi'}
                             </div>
                         </div>
                     </div>
                     ${hasActiveSend ? `
                         <button class="btn-toffee-receive-peer" data-ip="${peer.ip}" data-port="${peer.port}" data-code="${peer.activeSend.code}">
-                            📥 Download
+                            Download
                         </button>
                     ` : `
-                        <span style="font-size: 11px; color: #34d399;">Ready</span>
+                        <span style="font-size: 11px; color: var(--text-muted);">Ready</span>
                     `}
                 </div>
             `;
