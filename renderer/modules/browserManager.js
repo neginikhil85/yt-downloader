@@ -62,7 +62,9 @@ const DEFAULT_PINNED_APPS = [
 ];
 
 const USER_AGENTS = {
-    desktop: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
+    desktop: navigator.userAgent.includes('Mac')
+        ? 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36'
+        : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
     iphone: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
     android: 'Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Mobile Safari/537.36',
     ipad: 'Mozilla/5.0 (iPad; CPU OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
@@ -312,6 +314,18 @@ export function initBrowserManager() {
             // Sync Pin Star state
             updatePinStarState();
             applyExtensions(tab);
+
+            // Google OAuth / Bot-Detection Bypass (Defines genuine Chrome navigator properties)
+            if (wv.executeJavaScript) {
+                wv.executeJavaScript(`
+                    try {
+                        Object.defineProperty(navigator, 'webdriver', { get: () => undefined, configurable: true });
+                        if (!window.chrome) { window.chrome = {}; }
+                        if (!window.chrome.runtime) { window.chrome.runtime = {}; }
+                    } catch (e) {}
+                `).catch(() => {});
+            }
+
             updateNavControls();
             renderTabs();
         });

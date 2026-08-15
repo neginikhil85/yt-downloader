@@ -37,33 +37,68 @@ protocol.registerSchemesAsPrivileged([
     }
 ]);
 
-app.whenReady().then(() => {
-    // Set realistic Desktop Chrome User-Agent across sessions
-    session.defaultSession.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36');
+const CHROME_UA_DESKTOP = process.platform === 'darwin'
+    ? 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36'
+    : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36';
 
-    // Inject Referer & Origin headers to bypass Error 153 and domain embed blocks
-    session.defaultSession.webRequest.onBeforeSendHeaders(
-        { urls: ['*://*.youtube.com/*', '*://*.youtube-nocookie.com/*', '*://*.googlevideo.com/*'] },
-        (details, callback) => {
-            details.requestHeaders['Referer'] = 'https://www.youtube.com/';
-            details.requestHeaders['Origin'] = 'https://www.youtube.com';
-            callback({ requestHeaders: details.requestHeaders });
+app.userAgentFallback = CHROME_UA_DESKTOP;
+
+function configureBrowserSession(sess) {
+    if (!sess) return;
+    sess.setUserAgent(CHROME_UA_DESKTOP);
+
+    // Filter and sanitize request headers for all outgoing requests (Google Sign-In / OAuth / Media)
+    sess.webRequest.onBeforeSendHeaders((details, callback) => {
+        const headers = { ...details.requestHeaders };
+
+        // Strip any electron, builder, or custom app identifiers from User-Agent
+        let currentUa = headers['User-Agent'] || headers['user-agent'] || CHROME_UA_DESKTOP;
+        currentUa = currentUa
+            .replace(/Electron\/\S+\s*/gi, '')
+            .replace(/yt-downloader-pro\/\S+\s*/gi, '')
+            .replace(/bruno\/\S+\s*/gi, '')
+            .trim();
+        headers['User-Agent'] = currentUa || CHROME_UA_DESKTOP;
+
+        // Ensure proper Client Hints for Google and OAuth authentication
+        if (
+            details.url.includes('google.com') ||
+            details.url.includes('googleapis.com') ||
+            details.url.includes('gstatic.com') ||
+            details.url.includes('openai.com') ||
+            details.url.includes('chatgpt.com')
+        ) {
+            headers['sec-ch-ua'] = '"Chromium";v="133", "Google Chrome";v="133", "Not?A_Brand";v="99"';
+            headers['sec-ch-ua-mobile'] = '?0';
+            headers['sec-ch-ua-platform'] = process.platform === 'darwin' ? '"macOS"' : '"Windows"';
         }
-    );
+
+        // YouTube referer/origin headers to bypass error 153 and domain embed blocks
+        if (details.url.includes('youtube.com') || details.url.includes('googlevideo.com') || details.url.includes('youtube-nocookie.com')) {
+            headers['Referer'] = 'https://www.youtube.com/';
+            headers['Origin'] = 'https://www.youtube.com';
+        }
+
+        callback({ requestHeaders: headers });
+    });
 
     // Strip frame and CSP restrictions for embedded windows
-    session.defaultSession.webRequest.onHeadersReceived(
-        { urls: ['*://*.youtube.com/*', '*://*.youtube-nocookie.com/*'] },
-        (details, callback) => {
-            if (details.responseHeaders) {
-                delete details.responseHeaders['x-frame-options'];
-                delete details.responseHeaders['X-Frame-Options'];
-                delete details.responseHeaders['content-security-policy'];
-                delete details.responseHeaders['Content-Security-Policy'];
-            }
-            callback({ responseHeaders: details.responseHeaders });
+    sess.webRequest.onHeadersReceived((details, callback) => {
+        const responseHeaders = { ...details.responseHeaders };
+        if (details.url.includes('youtube.com') || details.url.includes('youtube-nocookie.com')) {
+            delete responseHeaders['x-frame-options'];
+            delete responseHeaders['X-Frame-Options'];
+            delete responseHeaders['content-security-policy'];
+            delete responseHeaders['Content-Security-Policy'];
         }
-    );
+        callback({ responseHeaders });
+    });
+}
+
+app.whenReady().then(() => {
+    // Configure default session and persistent research browser session
+    configureBrowserSession(session.defaultSession);
+    configureBrowserSession(session.fromPartition('persist:main'));
     protocol.handle('media', (request) => {
         try {
             let rawPath = decodeURIComponent(request.url.replace(/^media:\/\//, ''));
