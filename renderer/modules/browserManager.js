@@ -63,6 +63,7 @@ const DEFAULT_PINNED_APPS = [
 
 const USER_AGENTS = {
     desktop: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
+    firefox: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0',
     iphone: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
     android: 'Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Mobile Safari/537.36',
     ipad: 'Mozilla/5.0 (iPad; CPU OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
@@ -107,10 +108,8 @@ export function initBrowserManager() {
     const btnHome = document.getElementById('browser-btn-home');
     const btnFullscreen = document.getElementById('browser-btn-fullscreen');
     const btnPinPage = document.getElementById('browser-btn-pin-page');
-    const btnEditUrl = document.getElementById('browser-btn-edit-url');
     const btnCopyUrl = document.getElementById('browser-btn-copy-url');
     const btnExtensions = document.getElementById('browser-btn-extensions');
-    const progressBar = document.getElementById('browser-progress-bar');
     const browserPanel = document.getElementById('view-browser');
 
     // Extensions Controls
@@ -248,7 +247,8 @@ export function initBrowserManager() {
         webview.id = `webview-${tabId}`;
         webview.setAttribute('partition', 'persist:main');
         webview.setAttribute('allowpopups', 'true');
-        webview.setAttribute('useragent', USER_AGENTS[currentUaKey]);
+        const isGoogleAuth = finalUrl.includes('accounts.google.com') || finalUrl.includes('accounts.youtube.com') || finalUrl.includes('oauth2.googleapis.com');
+        webview.setAttribute('useragent', isGoogleAuth ? USER_AGENTS.firefox : (USER_AGENTS[currentUaKey] || USER_AGENTS.desktop));
         webview.style.width = '100%';
         webview.style.height = '100%';
         webview.style.border = 'none';
@@ -289,13 +289,11 @@ export function initBrowserManager() {
 
         wv.addEventListener('did-start-loading', () => {
             tab.isLoading = true;
-            if (activeTabId === tabId && progressBar) progressBar.classList.add('loading');
             renderTabs();
         });
 
         wv.addEventListener('did-stop-loading', () => {
             tab.isLoading = false;
-            if (activeTabId === tabId && progressBar) progressBar.classList.remove('loading');
             
             if (wv.getURL) {
                 const currentUrl = wv.getURL();
@@ -319,6 +317,7 @@ export function initBrowserManager() {
         wv.addEventListener('did-navigate', (e) => {
             tab.url = e.url;
             tab.isHome = false;
+
             if (activeTabId === tabId) {
                 if (urlInput) urlInput.value = e.url;
                 if (homeDashboard) homeDashboard.classList.remove('active');
@@ -367,7 +366,6 @@ export function initBrowserManager() {
         if (targetTab.isHome) {
             if (homeDashboard) homeDashboard.classList.add('active');
             if (urlInput) urlInput.value = '';
-            if (progressBar) progressBar.classList.remove('loading');
         } else {
             if (homeDashboard) homeDashboard.classList.remove('active');
             if (targetTab.webviewEl) {
@@ -375,8 +373,6 @@ export function initBrowserManager() {
                 targetTab.webviewEl.classList.add('active');
             }
             if (urlInput) urlInput.value = targetTab.url || '';
-            if (progressBar && targetTab.isLoading) progressBar.classList.add('loading');
-            else if (progressBar) progressBar.classList.remove('loading');
         }
 
         // Sync extension toggles & Star Pin button
@@ -912,14 +908,6 @@ export function initBrowserManager() {
     // Pin Star Button in Omnibar
     if (btnPinPage) {
         btnPinPage.addEventListener('click', togglePinCurrentPage);
-    }
-
-    // Edit / Select URL Button
-    if (btnEditUrl && urlInput) {
-        btnEditUrl.addEventListener('click', () => {
-            urlInput.focus();
-            urlInput.select();
-        });
     }
 
     // Copy URL Button with visual feedback

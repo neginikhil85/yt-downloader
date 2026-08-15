@@ -23,6 +23,66 @@ function getMimeType(filePath) {
     }
 }
 
+const DESKTOP_UA = process.platform === 'darwin'
+    ? 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36'
+    : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36';
+
+const FIREFOX_UA = process.platform === 'darwin'
+    ? 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:135.0) Gecko/20100101 Firefox/135.0'
+    : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0';
+
+function setupSessionSecurity(sess) {
+    sess.setUserAgent(DESKTOP_UA);
+
+    sess.webRequest.onBeforeSendHeaders((details, callback) => {
+        const url = details.url || '';
+        const isGoogleAuth = url.includes('accounts.google.com') ||
+                             url.includes('accounts.youtube.com') ||
+                             url.includes('oauth2.googleapis.com');
+
+        // Always strip Electron and app identifiers from request headers
+        if (details.requestHeaders['User-Agent']) {
+            details.requestHeaders['User-Agent'] = details.requestHeaders['User-Agent']
+                .replace(/Electron\/[0-9\.]+\s?/g, '')
+                .replace(/yt-downloader-pro\/[0-9\.]+\s?/g, '');
+        }
+
+        if (isGoogleAuth) {
+            // Google OAuth blocks Chromium WebViews; presenting modern Firefox UA allows seamless login
+            details.requestHeaders['User-Agent'] = FIREFOX_UA;
+            delete details.requestHeaders['sec-ch-ua'];
+            delete details.requestHeaders['sec-ch-ua-mobile'];
+            delete details.requestHeaders['sec-ch-ua-platform'];
+            delete details.requestHeaders['sec-ch-ua-model'];
+            delete details.requestHeaders['Sec-Ch-Ua'];
+            delete details.requestHeaders['Sec-Ch-Ua-Mobile'];
+            delete details.requestHeaders['Sec-Ch-Ua-Platform'];
+            delete details.requestHeaders['Sec-Ch-Ua-Model'];
+        }
+
+        // Inject Referer & Origin headers to bypass Error 153 and domain embed blocks
+        if (url.includes('youtube.com') || url.includes('youtube-nocookie.com') || url.includes('googlevideo.com')) {
+            details.requestHeaders['Referer'] = 'https://www.youtube.com/';
+            details.requestHeaders['Origin'] = 'https://www.youtube.com';
+        }
+
+        callback({ requestHeaders: details.requestHeaders });
+    });
+
+    sess.webRequest.onHeadersReceived((details, callback) => {
+        const url = details.url || '';
+        if (url.includes('youtube.com') || url.includes('youtube-nocookie.com')) {
+            if (details.responseHeaders) {
+                delete details.responseHeaders['x-frame-options'];
+                delete details.responseHeaders['X-Frame-Options'];
+                delete details.responseHeaders['content-security-policy'];
+                delete details.responseHeaders['Content-Security-Policy'];
+            }
+        }
+        callback({ responseHeaders: details.responseHeaders });
+    });
+}
+
 // Register media protocol for high-performance offline video playback
 protocol.registerSchemesAsPrivileged([
     {
@@ -38,32 +98,9 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 app.whenReady().then(() => {
-    // Set realistic Desktop Chrome User-Agent across sessions
-    session.defaultSession.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36');
+    setupSessionSecurity(session.defaultSession);
+    setupSessionSecurity(session.fromPartition('persist:main'));
 
-    // Inject Referer & Origin headers to bypass Error 153 and domain embed blocks
-    session.defaultSession.webRequest.onBeforeSendHeaders(
-        { urls: ['*://*.youtube.com/*', '*://*.youtube-nocookie.com/*', '*://*.googlevideo.com/*'] },
-        (details, callback) => {
-            details.requestHeaders['Referer'] = 'https://www.youtube.com/';
-            details.requestHeaders['Origin'] = 'https://www.youtube.com';
-            callback({ requestHeaders: details.requestHeaders });
-        }
-    );
-
-    // Strip frame and CSP restrictions for embedded windows
-    session.defaultSession.webRequest.onHeadersReceived(
-        { urls: ['*://*.youtube.com/*', '*://*.youtube-nocookie.com/*'] },
-        (details, callback) => {
-            if (details.responseHeaders) {
-                delete details.responseHeaders['x-frame-options'];
-                delete details.responseHeaders['X-Frame-Options'];
-                delete details.responseHeaders['content-security-policy'];
-                delete details.responseHeaders['Content-Security-Policy'];
-            }
-            callback({ responseHeaders: details.responseHeaders });
-        }
-    );
     protocol.handle('media', (request) => {
         try {
             let rawPath = decodeURIComponent(request.url.replace(/^media:\/\//, ''));
