@@ -42,6 +42,17 @@ function openInFinder(targetPath) {
 }
 
 /**
+ * Directly opens / launches a file in its default system application
+ */
+function openFile(targetPath) {
+    if (fs.existsSync(targetPath)) {
+        shell.openPath(targetPath);
+        return true;
+    }
+    return false;
+}
+
+/**
  * Scans directory for local media files
  */
 function getLibraryFiles(dirPath) {
@@ -85,5 +96,6 @@ module.exports = {
     selectFolder,
     selectFileToSend,
     openInFinder,
+    openFile,
     getLibraryFiles
 };

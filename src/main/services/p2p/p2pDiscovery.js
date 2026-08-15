@@ -61,26 +61,20 @@ function startDiscoverySocket(options = {}) {
         console.warn('[P2P Discovery] UDP init failed, relying on HTTP engine:', err.message);
     }
 
-    // Broadcast UDP heartbeat every 3 seconds
+    // Broadcast UDP heartbeat every 4 seconds (lightweight & 0% CPU)
     broadcastTimer = setInterval(() => {
         broadcastDiscovery({ getHttpPort, getActiveSend });
-    }, 3000);
+    }, 4000);
 
     // Initial broadcast
     broadcastDiscovery({ getHttpPort, getActiveSend });
 
-    // --- Engine 2: Active HTTP Subnet Scanner (Bypasses all router multicast blocks) ---
-    sweepSubnetForPeers({ getHttpPort, onPeersUpdated });
-    httpSweepTimer = setInterval(() => {
-        sweepSubnetForPeers({ getHttpPort, onPeersUpdated });
-    }, 3500);
-
-    // Prune stale peers (unseen for > 6.5 seconds)
+    // Prune stale peers (unseen for > 10 seconds)
     pruneTimer = setInterval(() => {
         const now = Date.now();
         let changed = false;
         for (const [key, peer] of discoveredPeers.entries()) {
-            if (now - peer.lastSeen > 6500) {
+            if (now - peer.lastSeen > 10000) {
                 discoveredPeers.delete(key);
                 changed = true;
             }
@@ -88,7 +82,7 @@ function startDiscoverySocket(options = {}) {
         if (changed) {
             onPeersUpdated(getDiscoveredPeers());
         }
-    }, 2500);
+    }, 3000);
 }
 
 function registerPeer(peerId, peerData, onPeersUpdated) {

@@ -16,6 +16,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
         return file?.path || '';
     },
     openInFinder: (filePath) => ipcRenderer.invoke('open-in-finder', filePath),
+    openFile: (filePath) => ipcRenderer.invoke('open-file', filePath),
     getDefaultSavePath: () => ipcRenderer.invoke('get-default-save-path'),
     getLibraryFiles: (dirPath) => ipcRenderer.invoke('get-library-files', dirPath),
     onDownloadProgress: (callback) => {

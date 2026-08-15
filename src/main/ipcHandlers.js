@@ -1,7 +1,7 @@
 const { ipcMain } = require('electron');
 const { searchYouTube, getStreamUrl } = require('./services/youtubeService');
 const { startDownload, cancelDownload } = require('./services/downloadService');
-const { selectFolder, selectFileToSend, openInFinder, getDefaultSavePath, getLibraryFiles } = require('./services/libraryService');
+const { selectFolder, selectFileToSend, openInFinder, openFile, getDefaultSavePath, getLibraryFiles } = require('./services/libraryService');
 const {
     initP2PService,
     startSendingFile,
@@ -57,6 +57,10 @@ function registerIpcHandlers(getMainWindow) {
 
     ipcMain.handle('open-in-finder', async (event, targetPath) => {
         return openInFinder(targetPath);
+    });
+
+    ipcMain.handle('open-file', async (event, targetPath) => {
+        return openFile(targetPath);
     });
 
     ipcMain.handle('get-default-save-path', () => {

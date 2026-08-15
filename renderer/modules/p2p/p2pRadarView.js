@@ -7,8 +7,13 @@ export function initP2PRadarView(options = {}) {
     const peersList = document.getElementById('toffee-peers-list');
     const countEl = document.getElementById('ds-peers-count');
 
+    let lastRenderedHash = '';
     function renderPeers(peers) {
         if (!peersList) return;
+        const currentHash = JSON.stringify(peers || []);
+        if (currentHash === lastRenderedHash) return;
+        lastRenderedHash = currentHash;
+
         if (countEl) countEl.textContent = `${peers ? peers.length : 0} nearby`;
 
         if (!peers || peers.length === 0) {
@@ -66,10 +71,6 @@ export function initP2PRadarView(options = {}) {
                 const token = btn.getAttribute('data-token');
                 const name = btn.getAttribute('data-name');
                 const size = btn.getAttribute('data-size');
-
-                // Switch to Receive tab
-                const btnModeReceive = document.getElementById('btn-mode-receive');
-                if (btnModeReceive) btnModeReceive.click();
 
                 if (onSelectPeer) {
                     onSelectPeer({

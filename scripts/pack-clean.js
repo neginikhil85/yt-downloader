@@ -63,7 +63,7 @@ function updateInfoPlist(plistPath, updates) {
     fs.writeFileSync(plistPath, content, 'utf8');
 }
 
-const filesToCopy = ['package.json', 'main.js', 'preload.js', 'src', 'renderer', 'assets', 'venv'];
+const filesToCopy = ['package.json', 'main.js', 'preload.js', 'src', 'renderer', 'assets'];
 const binSrc = path.join(rootDir, 'bin');
 
 // ==========================================================================
@@ -181,10 +181,11 @@ if (fs.existsSync(electronAppTemplate)) {
         copyRecursive(binSrc, path.join(resourcesDir, 'bin'));
     }
 
-    // Codesign
+    // Clear quarantine and apply ad-hoc codesign
     try {
+        execSync(`xattr -cr "${destApp}"`, { stdio: 'ignore' });
         execSync(`codesign --force --deep --sign - "${destApp}"`, { stdio: 'ignore' });
-        console.log(' - macOS codesign applied successfully.');
+        console.log(' - macOS xattr stripped & codesign applied successfully.');
     } catch {}
 
     console.log(`✓ macOS Standalone ready: ${path.join(macOutputDir, 'bruno.app')}`);

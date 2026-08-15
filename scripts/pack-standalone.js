@@ -156,7 +156,7 @@ if (isMac) {
 console.log('2. Copying Application Source Code & Standalone Binaries...');
 fs.mkdirSync(appDir, { recursive: true });
 
-const filesToCopy = ['package.json', 'main.js', 'preload.js', 'src', 'renderer', 'assets', 'venv'];
+const filesToCopy = ['package.json', 'main.js', 'preload.js', 'src', 'renderer', 'assets'];
 filesToCopy.forEach((item) => {
     const srcPath = path.join(rootDir, item);
     if (fs.existsSync(srcPath)) {
@@ -179,6 +179,7 @@ if (isMac) {
     console.log('3. Applying ad-hoc codesign signature...');
     try {
         const destApp = path.join(outputDir, `${appName}.app`);
+        execSync(`xattr -cr "${destApp}"`, { stdio: 'ignore' });
         execSync(`codesign --force --deep --sign - "${destApp}"`, { stdio: 'inherit' });
         console.log(' - Codesign completed successfully.');
     } catch (err) {

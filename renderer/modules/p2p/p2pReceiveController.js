@@ -1,275 +1,231 @@
 // ==========================================================================
-// YT Studio Pro — P2P Receiver Controller
-// Token inspection, destination folder selection, and direct stream downloader
+// YT Studio Pro — P2P Receiver Controller (Unified Zero-Friction)
+// Auto-connect via 6-digit PIN or 1-tap radar, direct stream download & instant actions
 // ==========================================================================
 
-export function initP2PReceiveController() {
-    const tokenInput = document.getElementById('toffee-receive-code-input');
-    const btnPasteClipboard = document.getElementById('btn-paste-clipboard');
-    const btnConnectCode = document.getElementById('btn-connect-code');
+export function initP2PReceiveController(options = {}) {
+    const { onStateChange = () => {} } = options;
+
+    const pinInput = document.getElementById('toffee-receive-code-input');
+    const btnConnect = document.getElementById('btn-connect-code');
     const receiveError = document.getElementById('toffee-receive-error');
 
-    // Token Preview & Destination Card Elements
-    const previewCard = document.getElementById('ds-token-preview-card');
-    const previewFilename = document.getElementById('ds-preview-filename');
-    const previewFilesize = document.getElementById('ds-preview-filesize');
-    const previewTypeIcon = document.getElementById('ds-preview-type-icon');
-    const destPathLabel = document.getElementById('ds-receive-dest-path');
-    const btnChangeDest = document.getElementById('btn-change-receive-dest');
-    const btnStartDownload = document.getElementById('btn-start-receive-download');
+    const idleCard = document.getElementById('ds-idle-card');
+    const sendSessionCard = document.getElementById('toffee-send-session-card');
 
-    // Telemetry & Completion Elements
-    const receiveProgressWrap = document.getElementById('toffee-receive-progress-wrap');
-    const receiveFilename = document.getElementById('toffee-receive-filename');
-    const receivePercent = document.getElementById('toffee-receive-percent');
-    const receiveBar = document.getElementById('toffee-receive-bar');
-    const receiveSpeed = document.getElementById('toffee-receive-speed');
-    const receiveEta = document.getElementById('toffee-receive-eta');
-    const receiveCompleteBox = document.getElementById('toffee-receive-complete-box');
-    const savedPathLabel = document.getElementById('toffee-saved-path');
-    const btnOpenReceivedFolder = document.getElementById('btn-open-received-folder');
+    // Transfer Progress Hero Card
+    const transferHeroCard = document.getElementById('ds-transfer-hero-card');
+    const transferFilename = document.getElementById('ds-transfer-filename');
+    const transferTypeIcon = document.getElementById('ds-transfer-type-icon');
+    const transferMetricsText = document.getElementById('ds-transfer-metrics-text');
+    const transferBar = document.getElementById('ds-transfer-bar');
+    const transferSpeed = document.getElementById('ds-transfer-speed');
+    const transferCounter = document.getElementById('ds-transfer-counter');
+    const transferEta = document.getElementById('ds-transfer-eta');
+    const btnCancelActiveTransfer = document.getElementById('btn-cancel-active-transfer');
 
-    let inspectedSession = null;
-    let selectedDestFolder = '';
-    let currentLastReceivedFile = null;
+    // Completion Card
+    const completeHeroCard = document.getElementById('ds-complete-hero-card');
+    const completeTitle = document.getElementById('ds-complete-title');
+    const completeSubtitle = document.getElementById('ds-complete-subtitle');
+    const btnCompleteOpenFile = document.getElementById('btn-complete-open-file');
+    const btnCompleteShowFolder = document.getElementById('btn-complete-show-folder');
+    const btnCompleteReset = document.getElementById('btn-complete-reset');
 
-    // Load initial default save folder
-    if (window.electronAPI && window.electronAPI.getDefaultSavePath) {
-        window.electronAPI.getDefaultSavePath().then(p => {
-            if (p) {
-                selectedDestFolder = p;
-                if (destPathLabel) destPathLabel.textContent = p;
+    let currentReceivedFilePath = '';
+    let isTransferring = false;
+
+    // PIN Input Handlers
+    if (pinInput) {
+        // Filter input to alphanumeric / uppercase / digits only
+        pinInput.addEventListener('input', () => {
+            const raw = pinInput.value.replace(/\s+/g, '').trim();
+            if (raw.length === 6 && /^\d{6}$/.test(raw)) {
+                // Auto-submit on 6th digit input!
+                handleStartReceive(raw);
             }
-        }).catch(() => {});
-    }
+        });
 
-    // Paste from Clipboard Button
-    if (btnPasteClipboard) {
-        btnPasteClipboard.addEventListener('click', async () => {
-            try {
-                const text = await navigator.clipboard.readText();
-                if (text && tokenInput) {
-                    tokenInput.value = text.trim();
-                    await handleInspectToken();
-                }
-            } catch (err) {
-                showError('Could not read clipboard. Please paste manually.');
+        pinInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const raw = pinInput.value.replace(/\s+/g, '').trim();
+                if (raw) handleStartReceive(raw);
             }
         });
     }
 
-    if (tokenInput) {
-        tokenInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') handleInspectToken();
+    if (btnConnect) {
+        btnConnect.addEventListener('click', () => {
+            const raw = pinInput ? pinInput.value.replace(/\s+/g, '').trim() : '';
+            if (raw) handleStartReceive(raw);
         });
     }
 
-    if (btnConnectCode) {
-        btnConnectCode.addEventListener('click', handleInspectToken);
-    }
-
-    // Change Destination Directory Picker
-    if (btnChangeDest) {
-        btnChangeDest.addEventListener('click', async () => {
-            if (window.electronAPI && window.electronAPI.selectFolder) {
-                try {
-                    const chosen = await window.electronAPI.selectFolder();
-                    if (chosen) {
-                        selectedDestFolder = chosen;
-                        if (destPathLabel) destPathLabel.textContent = chosen;
-                    }
-                } catch (e) {}
-            }
-        });
-    }
-
-    // Inspect Token & Show Confirmation Card
-    async function handleInspectToken() {
-        if (!tokenInput) return;
-        const rawToken = tokenInput.value.trim();
-        if (!rawToken) {
-            showError('Please enter or paste a valid connection token');
-            return;
-        }
-
-        hideError();
-        if (receiveCompleteBox) receiveCompleteBox.style.display = 'none';
-        if (previewCard) previewCard.style.display = 'none';
-        btnConnectCode.disabled = true;
-        btnConnectCode.textContent = 'Inspecting...';
-
-        try {
-            // Check if it's a short 6-digit legacy PIN or full token
-            if (/^\d{6}$/.test(rawToken)) {
-                await handleStartDownloadWithCode(rawToken);
-                btnConnectCode.disabled = false;
-                btnConnectCode.textContent = 'Inspect & Connect';
-                return;
-            }
-
-            const res = await window.electronAPI.p2pInspectToken(rawToken);
-            if (!res.success) {
-                showError(res.error || 'Invalid or corrupted connection token');
-                btnConnectCode.disabled = false;
-                btnConnectCode.textContent = 'Inspect & Connect';
-                return;
-            }
-
-            inspectedSession = {
-                token: rawToken,
-                file: res.file
-            };
-
-            // Populate preview card
-            if (previewFilename) previewFilename.textContent = res.file.name;
-            if (previewFilesize) previewFilesize.textContent = res.file.formattedSize;
-
-            // Icon by extension
-            const ext = (res.file.name.split('.').pop() || '').toLowerCase();
-            if (previewTypeIcon) {
-                if (['mp4', 'mkv', 'mov', 'webm', 'avi'].includes(ext)) {
-                    previewTypeIcon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>`;
-                } else if (['mp3', 'wav', 'flac', 'aac', 'm4a'].includes(ext)) {
-                    previewTypeIcon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>`;
-                } else {
-                    previewTypeIcon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>`;
-                }
-            }
-
-            if (previewCard) previewCard.style.display = 'flex';
-            btnConnectCode.disabled = false;
-            btnConnectCode.textContent = 'Inspect & Connect';
-        } catch (err) {
-            showError(err.message);
-            btnConnectCode.disabled = false;
-            btnConnectCode.textContent = 'Inspect & Connect';
-        }
-    }
-
-    // Direct configuration when user clicks "Download" on radar peer
-    function prepareReceivePeer(peerData) {
+    // Direct 1-Tap Download from Radar Peer
+    async function startReceivePeer(peerData) {
         const { ip, port, code, token, file } = peerData;
-        inspectedSession = {
-            ip,
-            port,
-            code,
-            token,
-            file: file || { name: 'incoming_file' }
-        };
-
-        if (tokenInput) {
-            tokenInput.value = token || code || '';
-        }
-
-        if (previewFilename) previewFilename.textContent = inspectedSession.file.name;
-        if (previewFilesize) previewFilesize.textContent = inspectedSession.file.formattedSize || '';
-
-        const ext = (inspectedSession.file.name.split('.').pop() || '').toLowerCase();
-        if (previewTypeIcon) {
-            if (['mp4', 'mkv', 'mov', 'webm', 'avi'].includes(ext)) {
-                previewTypeIcon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>`;
-            } else if (['mp3', 'wav', 'flac', 'aac', 'm4a'].includes(ext)) {
-                previewTypeIcon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>`;
-            } else {
-                previewTypeIcon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>`;
-            }
-        }
-
         hideError();
-        if (receiveCompleteBox) receiveCompleteBox.style.display = 'none';
-        if (receiveProgressWrap) receiveProgressWrap.style.display = 'none';
-        if (previewCard) previewCard.style.display = 'flex';
-    }
 
-    // Start Download CTA from Preview Card
-    if (btnStartDownload) {
-        btnStartDownload.addEventListener('click', async () => {
-            if (!inspectedSession) return;
+        if (idleCard) idleCard.style.display = 'none';
+        if (sendSessionCard) sendSessionCard.style.display = 'none';
+        if (completeHeroCard) completeHeroCard.style.display = 'none';
+        if (transferHeroCard) transferHeroCard.style.display = 'flex';
 
-            hideError();
-            if (previewCard) previewCard.style.display = 'none';
-            if (receiveProgressWrap) receiveProgressWrap.style.display = 'block';
-            if (receiveFilename) receiveFilename.textContent = `Connecting to ${inspectedSession.file.name}...`;
+        const fileName = file?.name || 'Incoming file';
+        if (transferFilename) transferFilename.textContent = fileName;
+        if (transferMetricsText) transferMetricsText.textContent = `Connecting to ${peerData.name || 'sender'}...`;
+        if (transferBar) transferBar.style.width = '0%';
+        setFileTypeIcon(transferTypeIcon, fileName);
 
-            try {
-                let res;
-                if (inspectedSession.token) {
-                    res = await window.electronAPI.p2pReceiveToken({
-                        token: inspectedSession.token,
-                        targetDir: selectedDestFolder
-                    });
-                } else if (inspectedSession.ip) {
-                    res = await window.electronAPI.p2pReceivePeer({
-                        ip: inspectedSession.ip,
-                        port: inspectedSession.port || 9876,
-                        code: inspectedSession.code,
-                        targetDir: selectedDestFolder
-                    });
-                } else {
-                    res = await window.electronAPI.p2pReceiveCode({
-                        code: inspectedSession.code,
-                        targetDir: selectedDestFolder
-                    });
-                }
-
-                if (res && res.success) {
-                    onReceiveComplete(res);
-                } else {
-                    showError(res?.error || 'Connection to sender failed');
-                    if (receiveProgressWrap) receiveProgressWrap.style.display = 'none';
-                    if (previewCard) previewCard.style.display = 'flex';
-                }
-            } catch (err) {
-                showError(err.message);
-                if (receiveProgressWrap) receiveProgressWrap.style.display = 'none';
-                if (previewCard) previewCard.style.display = 'flex';
-            }
-        });
-    }
-
-    async function handleStartDownloadWithCode(code) {
-        hideError();
-        if (receiveProgressWrap) receiveProgressWrap.style.display = 'block';
-        if (receiveFilename) receiveFilename.textContent = 'Resolving host...';
+        isTransferring = true;
+        onStateChange('RECEIVING');
 
         try {
-            const res = await window.electronAPI.p2pReceiveCode({
-                code,
-                targetDir: selectedDestFolder
-            });
+            let res;
+            if (ip && port && code) {
+                res = await window.electronAPI.p2pReceivePeer({ ip, port, code });
+            } else if (token) {
+                res = await window.electronAPI.p2pReceiveToken({ token });
+            } else {
+                res = await window.electronAPI.p2pReceiveCode({ code });
+            }
+
             if (res && res.success) {
                 onReceiveComplete(res);
             } else {
-                showError(res?.error || 'Connection failed');
-                if (receiveProgressWrap) receiveProgressWrap.style.display = 'none';
+                showError(res?.error || 'Connection failed. Ensure sender is online.');
+                resetToIdle();
             }
         } catch (err) {
-            showError(err.message);
-            if (receiveProgressWrap) receiveProgressWrap.style.display = 'none';
+            showError(err.message || 'Transfer failed');
+            resetToIdle();
         }
     }
 
-    function onReceiveProgress(data) {
-        if (receiveProgressWrap) receiveProgressWrap.style.display = 'block';
-        if (receiveFilename) receiveFilename.textContent = data.fileName;
-        if (receivePercent) receivePercent.textContent = `${Math.round(data.progress)}%`;
-        if (receiveBar) receiveBar.style.width = `${data.progress}%`;
-        if (receiveSpeed) receiveSpeed.textContent = `${data.speedMBps} MB/s`;
-        if (receiveEta) receiveEta.textContent = `${data.etaSeconds}s remaining`;
+    // Connect via PIN Code Input
+    async function handleStartReceive(code) {
+        if (!code || isTransferring) return;
+        hideError();
+
+        if (btnConnect) {
+            btnConnect.disabled = true;
+            btnConnect.textContent = 'Connecting...';
+        }
+
+        if (idleCard) idleCard.style.display = 'none';
+        if (sendSessionCard) sendSessionCard.style.display = 'none';
+        if (completeHeroCard) completeHeroCard.style.display = 'none';
+        if (transferHeroCard) transferHeroCard.style.display = 'flex';
+
+        if (transferFilename) transferFilename.textContent = `Connecting with PIN ${code}...`;
+        if (transferMetricsText) transferMetricsText.textContent = 'Locating sender on local network...';
+        if (transferBar) transferBar.style.width = '0%';
+
+        isTransferring = true;
+        onStateChange('RECEIVING');
+
+        try {
+            const res = await window.electronAPI.p2pReceiveCode(code);
+            if (res && res.success) {
+                onReceiveComplete(res);
+            } else {
+                showError(res?.error || 'No active share found for this PIN code.');
+                resetToIdle();
+            }
+        } catch (err) {
+            showError(err.message || 'Transfer error');
+            resetToIdle();
+        } finally {
+            if (btnConnect) {
+                btnConnect.disabled = false;
+                btnConnect.textContent = 'Connect & Download';
+            }
+        }
     }
 
+    // Telemetry Progress Update (Receiver side)
+    function onReceiveProgress(data) {
+        if (transferHeroCard) transferHeroCard.style.display = 'flex';
+        if (idleCard) idleCard.style.display = 'none';
+        if (completeHeroCard) completeHeroCard.style.display = 'none';
+
+        if (transferFilename) transferFilename.textContent = data.fileName;
+        if (transferMetricsText) transferMetricsText.textContent = `Direct TCP Socket Stream • ${Math.round(data.progress)}%`;
+        if (transferBar) transferBar.style.width = `${data.progress}%`;
+        if (transferSpeed) transferSpeed.textContent = `${data.speedMBps} MB/s`;
+
+        const recvMb = (data.receivedBytes / (1024 * 1024)).toFixed(1);
+        const totalMb = (data.totalBytes / (1024 * 1024)).toFixed(1);
+        if (transferCounter) transferCounter.textContent = `${recvMb} MB / ${totalMb} MB`;
+        if (transferEta) transferEta.textContent = data.etaSeconds > 0 ? `~${data.etaSeconds}s remaining` : 'Finalizing...';
+
+        setFileTypeIcon(transferTypeIcon, data.fileName);
+    }
+
+    // Receiver Completion Handler
     function onReceiveComplete(data) {
-        currentLastReceivedFile = data.filePath;
-        inspectedSession = null;
-        if (receiveProgressWrap) receiveProgressWrap.style.display = 'none';
-        if (previewCard) previewCard.style.display = 'none';
-        if (receiveCompleteBox) receiveCompleteBox.style.display = 'flex';
-        if (savedPathLabel) savedPathLabel.textContent = `Saved to: ${data.filePath}`;
+        isTransferring = false;
+        currentReceivedFilePath = data.filePath;
+
+        if (transferHeroCard) transferHeroCard.style.display = 'none';
+        if (idleCard) idleCard.style.display = 'none';
+        if (completeHeroCard) completeHeroCard.style.display = 'flex';
+
+        if (completeTitle) completeTitle.textContent = 'File Received Successfully!';
+        if (completeSubtitle && data) {
+            completeSubtitle.textContent = `Saved ${data.fileName} (${data.formattedSize || ''}) to Downloads`;
+        }
+
+        // Show Action Buttons for Receiver
+        if (btnCompleteOpenFile) btnCompleteOpenFile.style.display = 'inline-flex';
+        if (btnCompleteShowFolder) btnCompleteShowFolder.style.display = 'inline-flex';
+
+        onStateChange('COMPLETE');
     }
 
     function onReceiveError(data) {
-        if (receiveProgressWrap) receiveProgressWrap.style.display = 'none';
-        showError(data.error || 'Download failed');
+        isTransferring = false;
+        showError(data.error || 'Transfer connection lost');
+        resetToIdle();
+    }
+
+    function resetToIdle() {
+        isTransferring = false;
+        if (window.electronAPI && window.electronAPI.p2pCancelReceive) {
+            window.electronAPI.p2pCancelReceive().catch(() => {});
+        }
+        if (idleCard) idleCard.style.display = 'flex';
+        if (sendSessionCard) sendSessionCard.style.display = 'none';
+        if (transferHeroCard) transferHeroCard.style.display = 'none';
+        if (completeHeroCard) completeHeroCard.style.display = 'none';
+        if (pinInput) pinInput.value = '';
+
+        onStateChange('IDLE');
+    }
+
+    // Action 1: Instant Launch / Open File
+    if (btnCompleteOpenFile) {
+        btnCompleteOpenFile.addEventListener('click', async () => {
+            if (currentReceivedFilePath && window.electronAPI && window.electronAPI.openFile) {
+                await window.electronAPI.openFile(currentReceivedFilePath);
+            }
+        });
+    }
+
+    // Action 2: Show in Finder / Folder
+    if (btnCompleteShowFolder) {
+        btnCompleteShowFolder.addEventListener('click', async () => {
+            if (currentReceivedFilePath && window.electronAPI && window.electronAPI.openInFinder) {
+                await window.electronAPI.openInFinder(currentReceivedFilePath);
+            }
+        });
+    }
+
+    // Action 3: Reset / Receive Another File
+    if (btnCompleteReset) {
+        btnCompleteReset.addEventListener('click', () => {
+            resetToIdle();
+        });
     }
 
     function showError(msg) {
@@ -283,33 +239,25 @@ export function initP2PReceiveController() {
         if (receiveError) receiveError.style.display = 'none';
     }
 
-    // Open Folder
-    if (btnOpenReceivedFolder) {
-        btnOpenReceivedFolder.addEventListener('click', async () => {
-            if (currentLastReceivedFile && window.electronAPI && window.electronAPI.openInFinder) {
-                await window.electronAPI.openInFinder(currentLastReceivedFile);
-            }
-        });
-    }
-
-    // Receive Another File Button
-    const btnReceiveAnother = document.getElementById('btn-receive-another');
-    if (btnReceiveAnother) {
-        btnReceiveAnother.addEventListener('click', () => {
-            currentLastReceivedFile = null;
-            inspectedSession = null;
-            if (tokenInput) tokenInput.value = '';
-            if (receiveCompleteBox) receiveCompleteBox.style.display = 'none';
-            if (previewCard) previewCard.style.display = 'none';
-            if (receiveProgressWrap) receiveProgressWrap.style.display = 'none';
-            hideError();
-        });
+    function setFileTypeIcon(iconEl, fileName) {
+        if (!iconEl) return;
+        const ext = ((fileName || '').split('.').pop() || '').toLowerCase();
+        if (['mp4', 'mkv', 'mov', 'webm', 'avi'].includes(ext)) {
+            iconEl.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>`;
+        } else if (['mp3', 'wav', 'flac', 'aac', 'm4a'].includes(ext)) {
+            iconEl.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>`;
+        } else if (['zip', 'rar', '7z', 'tar', 'gz', 'dmg'].includes(ext)) {
+            iconEl.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`;
+        } else {
+            iconEl.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>`;
+        }
     }
 
     return {
-        prepareReceivePeer,
+        startReceivePeer,
         onReceiveProgress,
         onReceiveComplete,
-        onReceiveError
+        onReceiveError,
+        resetToIdle
     };
 }

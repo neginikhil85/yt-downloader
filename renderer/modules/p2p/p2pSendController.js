@@ -1,35 +1,46 @@
 // ==========================================================================
-// YT Studio Pro — P2P Sender Controller
-// Manages file dropzone, token generation, copy actions, telemetry, and completion
+// YT Studio Pro — P2P Sender Controller (Unified Zero-Friction)
+// Manages file selection, 6-digit PIN display, copy actions, and telemetry
 // ==========================================================================
 
-export function initP2PSendController() {
+export function initP2PSendController(options = {}) {
+    const { onStateChange = () => {} } = options;
+
     const dropzone = document.getElementById('toffee-dropzone');
     const btnBrowse = document.getElementById('btn-toffee-browse');
-    const senderIdleView = document.getElementById('ds-sender-idle-view');
+    const fileInput = document.getElementById('toffee-file-input');
+
+    const idleCard = document.getElementById('ds-idle-card');
     const sendSessionCard = document.getElementById('toffee-send-session-card');
     const sendingFileName = document.getElementById('toffee-sending-filename');
     const sendingFileSize = document.getElementById('toffee-sending-filesize');
-    const btnCancelSend = document.getElementById('btn-cancel-send');
-    const tokenStage = document.getElementById('send-token-stage');
-    const tokenOutput = document.getElementById('ds-token-output');
-    const btnCopySendToken = document.getElementById('btn-copy-send-token');
+    const heroPinDisplay = document.getElementById('ds-hero-pin-display');
+    const btnCopySendPin = document.getElementById('btn-copy-send-token');
     const btnCopyTokenText = document.getElementById('btn-copy-token-text');
-    const sendRadar = document.getElementById('toffee-send-radar');
-    const sendRadarText = document.getElementById('toffee-send-radar-text');
-    const sendProgressWrap = document.getElementById('toffee-send-progress-wrap');
-    const sendSpeed = document.getElementById('toffee-send-speed');
-    const sendPercent = document.getElementById('toffee-send-percent');
-    const sendBar = document.getElementById('toffee-send-bar');
-    const sendEta = document.getElementById('toffee-send-eta');
+    const btnCancelSend = document.getElementById('btn-cancel-send');
 
-    // Sender Completion Banner
-    const sendCompleteBox = document.getElementById('toffee-send-complete-box');
-    const sentPathLabel = document.getElementById('toffee-sent-path');
-    const btnSendAnother = document.getElementById('btn-send-another');
+    // Transfer Progress Hero Card
+    const transferHeroCard = document.getElementById('ds-transfer-hero-card');
+    const transferFilename = document.getElementById('ds-transfer-filename');
+    const transferTypeIcon = document.getElementById('ds-transfer-type-icon');
+    const transferMetricsText = document.getElementById('ds-transfer-metrics-text');
+    const transferBar = document.getElementById('ds-transfer-bar');
+    const transferSpeed = document.getElementById('ds-transfer-speed');
+    const transferCounter = document.getElementById('ds-transfer-counter');
+    const transferEta = document.getElementById('ds-transfer-eta');
+    const btnCancelActiveTransfer = document.getElementById('btn-cancel-active-transfer');
+
+    // Completion Card
+    const completeHeroCard = document.getElementById('ds-complete-hero-card');
+    const completeTitle = document.getElementById('ds-complete-title');
+    const completeSubtitle = document.getElementById('ds-complete-subtitle');
+    const btnCompleteOpenFile = document.getElementById('btn-complete-open-file');
+    const btnCompleteShowFolder = document.getElementById('btn-complete-show-folder');
+    const btnCompleteReset = document.getElementById('btn-complete-reset');
 
     let currentActiveFile = null;
-    let currentRawToken = '';
+    let currentPin = '';
+    let sendStartTime = 0;
 
     // File Drag & Drop Handlers
     if (dropzone) {
@@ -96,103 +107,134 @@ export function initP2PSendController() {
             }
 
             currentActiveFile = res.file;
-            currentRawToken = res.token || res.code;
+            currentPin = res.code || res.token || '';
+            sendStartTime = Date.now();
 
-            if (senderIdleView) senderIdleView.style.display = 'none';
+            if (idleCard) idleCard.style.display = 'none';
             if (sendSessionCard) sendSessionCard.style.display = 'flex';
-            if (tokenStage) tokenStage.style.display = 'flex';
-            if (sendCompleteBox) sendCompleteBox.style.display = 'none';
+            if (transferHeroCard) transferHeroCard.style.display = 'none';
+            if (completeHeroCard) completeHeroCard.style.display = 'none';
+
             if (sendingFileName) sendingFileName.textContent = res.file.name;
             if (sendingFileSize) sendingFileSize.textContent = res.file.formattedSize;
-            if (tokenOutput) tokenOutput.value = currentRawToken;
-
-            // Smart File Type SVG Icon
-            const ext = (res.file.name.split('.').pop() || '').toLowerCase();
-            const iconEl = document.getElementById('p2p-send-type-icon');
-            if (iconEl) {
-                if (['mp4', 'mkv', 'mov', 'webm', 'avi'].includes(ext)) {
-                    iconEl.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>`;
-                } else if (['mp3', 'wav', 'flac', 'aac', 'm4a'].includes(ext)) {
-                    iconEl.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>`;
-                } else if (['zip', 'rar', '7z', 'tar', 'gz', 'dmg', 'iso'].includes(ext)) {
-                    iconEl.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`;
-                } else {
-                    iconEl.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>`;
-                }
+            if (heroPinDisplay) {
+                // Format PIN with space in middle: e.g. "482 917"
+                const pinStr = String(currentPin);
+                heroPinDisplay.textContent = pinStr.length === 6 ? `${pinStr.slice(0, 3)} ${pinStr.slice(3)}` : pinStr;
             }
 
-            if (sendRadar) sendRadar.style.display = 'flex';
-            if (sendRadarText) sendRadarText.textContent = 'Ready & listening for recipient connection...';
-            if (sendProgressWrap) sendProgressWrap.style.display = 'none';
+            // File icon resolver
+            setFileTypeIcon(document.getElementById('p2p-send-type-icon'), res.file.name);
+
+            onStateChange('SENDING_WAITING');
         } catch (err) {
             console.error('P2P Start Send Error:', err);
             alert(`Error: ${err.message}`);
         }
     }
 
-    // Cancel Session
+    // Cancel Active Send Session
     if (btnCancelSend) {
         btnCancelSend.addEventListener('click', async () => {
-            resetToIdle();
+            await resetToIdle();
         });
     }
 
-    // Share Another File Button
-    if (btnSendAnother) {
-        btnSendAnother.addEventListener('click', async () => {
-            resetToIdle();
+    if (btnCancelActiveTransfer) {
+        btnCancelActiveTransfer.addEventListener('click', async () => {
+            await resetToIdle();
+        });
+    }
+
+    if (btnCompleteReset) {
+        btnCompleteReset.addEventListener('click', async () => {
+            await resetToIdle();
         });
     }
 
     async function resetToIdle() {
-        if (window.electronAPI) {
+        if (window.electronAPI && window.electronAPI.p2pCancelSend) {
             await window.electronAPI.p2pCancelSend();
         }
-        if (senderIdleView) senderIdleView.style.display = 'flex';
+        if (idleCard) idleCard.style.display = 'flex';
         if (sendSessionCard) sendSessionCard.style.display = 'none';
-        if (sendCompleteBox) sendCompleteBox.style.display = 'none';
-        if (tokenStage) tokenStage.style.display = 'flex';
-        if (sendProgressWrap) sendProgressWrap.style.display = 'none';
+        if (transferHeroCard) transferHeroCard.style.display = 'none';
+        if (completeHeroCard) completeHeroCard.style.display = 'none';
+
         currentActiveFile = null;
-        currentRawToken = '';
+        currentPin = '';
+        onStateChange('IDLE');
     }
 
-    // 1-Click Copy Token Button
-    if (btnCopySendToken) {
-        btnCopySendToken.addEventListener('click', () => {
-            if (currentRawToken) {
-                navigator.clipboard.writeText(currentRawToken);
+    // 1-Click Copy PIN Button
+    if (btnCopySendPin) {
+        btnCopySendPin.addEventListener('click', () => {
+            if (currentPin) {
+                navigator.clipboard.writeText(String(currentPin));
                 if (btnCopyTokenText) btnCopyTokenText.textContent = '✓ Copied!';
                 setTimeout(() => {
-                    if (btnCopyTokenText) btnCopyTokenText.textContent = 'Copy Token';
+                    if (btnCopyTokenText) btnCopyTokenText.textContent = 'Copy PIN';
                 }, 2000);
             }
         });
     }
 
-    // Telemetry Progress Update
+    // Live Telemetry Updates (Sender side)
     function onSendProgress(data) {
-        if (sendRadar) sendRadar.style.display = 'none';
-        if (sendProgressWrap) sendProgressWrap.style.display = 'block';
-        if (sendSpeed) sendSpeed.textContent = `${data.speedMBps} MB/s`;
-        if (sendPercent) sendPercent.textContent = `${Math.round(data.progress)}%`;
-        if (sendBar) sendBar.style.width = `${data.progress}%`;
-        if (sendEta) sendEta.textContent = `Direct Socket Streaming • ${data.etaSeconds}s remaining`;
+        if (sendSessionCard) sendSessionCard.style.display = 'none';
+        if (transferHeroCard) transferHeroCard.style.display = 'flex';
+        if (completeHeroCard) completeHeroCard.style.display = 'none';
+
+        if (transferFilename) transferFilename.textContent = data.fileName;
+        if (transferMetricsText) transferMetricsText.textContent = `Streaming directly to recipient • ${Math.round(data.progress)}%`;
+        if (transferBar) transferBar.style.width = `${data.progress}%`;
+        if (transferSpeed) transferSpeed.textContent = `${data.speedMBps} MB/s`;
+
+        const sentMb = (data.sentBytes / (1024 * 1024)).toFixed(1);
+        const totalMb = (data.totalBytes / (1024 * 1024)).toFixed(1);
+        if (transferCounter) transferCounter.textContent = `${sentMb} MB / ${totalMb} MB`;
+        if (transferEta) transferEta.textContent = data.etaSeconds > 0 ? `~${data.etaSeconds}s remaining` : 'Completing...';
+
+        setFileTypeIcon(transferTypeIcon, data.fileName);
+        onStateChange('TRANSFERRING');
     }
 
     // Send Complete Handler
     function onSendComplete(data) {
-        if (sendRadar) sendRadar.style.display = 'none';
-        if (sendProgressWrap) sendProgressWrap.style.display = 'none';
-        if (tokenStage) tokenStage.style.display = 'none';
-        if (sendCompleteBox) sendCompleteBox.style.display = 'flex';
-        if (sentPathLabel && data) {
-            sentPathLabel.textContent = `Transferred ${data.fileName} (${data.formattedSize || ''}) successfully`;
+        if (transferHeroCard) transferHeroCard.style.display = 'none';
+        if (sendSessionCard) sendSessionCard.style.display = 'none';
+        if (completeHeroCard) completeHeroCard.style.display = 'flex';
+
+        const durationSec = ((Date.now() - sendStartTime) / 1000).toFixed(1);
+        if (completeTitle) completeTitle.textContent = 'File Sent Successfully!';
+        if (completeSubtitle && data) {
+            completeSubtitle.textContent = `Delivered ${data.fileName} (${data.formattedSize || ''}) in ${durationSec}s`;
+        }
+
+        // On sender side, hide Open File button (sender already has file)
+        if (btnCompleteOpenFile) btnCompleteOpenFile.style.display = 'none';
+        if (btnCompleteShowFolder) btnCompleteShowFolder.style.display = 'none';
+
+        onStateChange('COMPLETE');
+    }
+
+    function setFileTypeIcon(iconEl, fileName) {
+        if (!iconEl) return;
+        const ext = ((fileName || '').split('.').pop() || '').toLowerCase();
+        if (['mp4', 'mkv', 'mov', 'webm', 'avi'].includes(ext)) {
+            iconEl.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>`;
+        } else if (['mp3', 'wav', 'flac', 'aac', 'm4a'].includes(ext)) {
+            iconEl.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>`;
+        } else if (['zip', 'rar', '7z', 'tar', 'gz', 'dmg'].includes(ext)) {
+            iconEl.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`;
+        } else {
+            iconEl.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>`;
         }
     }
 
     return {
         onSendProgress,
-        onSendComplete
+        onSendComplete,
+        resetToIdle
     };
 }

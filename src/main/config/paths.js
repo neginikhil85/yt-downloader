@@ -139,24 +139,7 @@ function getFfmpegInfo() {
         }
     }
 
-    // 2. Check dynamic venv or static-ffmpeg
-    const venvPath = path.join(PROJECT_ROOT, 'venv');
-    let found = findFileRecursive(venvPath, ffmpegExe);
-
-    if (!found) {
-        const staticFfmpegHome = path.join(os.homedir(), '.static_ffmpeg');
-        found = findFileRecursive(staticFfmpegHome, ffmpegExe);
-    }
-
-    if (found) {
-        ensureExecutable(found);
-        return {
-            dir: path.dirname(found),
-            path: found
-        };
-    }
-
-    // 3. Search common system directories
+    // 2. Search common system directories (fast exact paths)
     if (!isWin) {
         const standardLocations = [
             `/opt/homebrew/bin/${ffmpegExe}`,
@@ -172,12 +155,29 @@ function getFfmpegInfo() {
         }
     }
 
-    // 4. Fallback to system PATH
+    // 3. Fallback to system PATH
     const systemFound = findInSystemPath(ffmpegExe);
     if (systemFound) {
         return {
             dir: path.dirname(systemFound),
             path: systemFound
+        };
+    }
+
+    // 4. Last resort: Check dynamic venv or static-ffmpeg
+    const venvPath = path.join(PROJECT_ROOT, 'venv');
+    let found = findFileRecursive(venvPath, ffmpegExe);
+
+    if (!found) {
+        const staticFfmpegHome = path.join(os.homedir(), '.static_ffmpeg');
+        found = findFileRecursive(staticFfmpegHome, ffmpegExe);
+    }
+
+    if (found) {
+        ensureExecutable(found);
+        return {
+            dir: path.dirname(found),
+            path: found
         };
     }
 

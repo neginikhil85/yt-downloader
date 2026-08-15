@@ -1,6 +1,6 @@
 // ==========================================================================
-// YT Studio Pro — Master Direct P2P Share Coordinator
-// Modular architecture coordinating Radar, Sender, and Receiver components
+// YT Studio Pro — Master Direct P2P Share Coordinator (Unified Architecture)
+// Coordinates Sender, Receiver, Radar, and real-time Electron IPC events
 // ==========================================================================
 
 import { initP2PRadarView } from './p2p/p2pRadarView.js';
@@ -8,38 +8,26 @@ import { initP2PSendController } from './p2p/p2pSendController.js';
 import { initP2PReceiveController } from './p2p/p2pReceiveController.js';
 
 export function initP2PShareManager() {
-    const btnModeSend = document.getElementById('btn-mode-send');
-    const btnModeReceive = document.getElementById('btn-mode-receive');
-    const sendPanel = document.getElementById('toffee-send-panel');
-    const receivePanel = document.getElementById('toffee-receive-panel');
+    let currentGlobalState = 'IDLE';
 
     // Initialize sub-controllers
-    const receiveController = initP2PReceiveController();
-    const sendController = initP2PSendController();
-    const radarView = initP2PRadarView({
-        onSelectPeer: (peerData) => {
-            receiveController.prepareReceivePeer(peerData);
+    const receiveController = initP2PReceiveController({
+        onStateChange: (state) => {
+            currentGlobalState = state;
         }
     });
 
-    // Mode Switching (Send vs Receive)
-    if (btnModeSend && btnModeReceive) {
-        btnModeSend.addEventListener('click', () => {
-            btnModeSend.classList.add('active');
-            btnModeReceive.classList.remove('active');
-            if (sendPanel) sendPanel.classList.add('active');
-            if (receivePanel) receivePanel.classList.remove('active');
-            pollPeers();
-        });
+    const sendController = initP2PSendController({
+        onStateChange: (state) => {
+            currentGlobalState = state;
+        }
+    });
 
-        btnModeReceive.addEventListener('click', () => {
-            btnModeReceive.classList.add('active');
-            btnModeSend.classList.remove('active');
-            if (receivePanel) receivePanel.classList.add('active');
-            if (sendPanel) sendPanel.classList.remove('active');
-            pollPeers();
-        });
-    }
+    const radarView = initP2PRadarView({
+        onSelectPeer: (peerData) => {
+            receiveController.startReceivePeer(peerData);
+        }
+    });
 
     // Real-Time Event Listeners from Electron Main Process
     if (window.electronAPI) {
@@ -77,19 +65,24 @@ export function initP2PShareManager() {
         }
     }
 
-    // Continuous auto-refresh every 2.5 seconds
-    setInterval(pollPeers, 2500);
-
-    // Fetch initial local info & active peers on startup
-    if (window.electronAPI && window.electronAPI.p2pGetLocalInfo) {
-        window.electronAPI.p2pGetLocalInfo().then(info => {
-            if (info) {
-                const ipEl = document.getElementById('ds-local-ip');
-                const devEl = document.getElementById('ds-local-device-name');
-                if (ipEl && info.localIp) ipEl.textContent = `${info.localIp}:${info.port}`;
-                if (devEl && info.name) devEl.textContent = info.name;
+    // Refresh when view-share tab is active
+    let peerPollTimer = null;
+    const shareView = document.getElementById('view-share');
+    if (shareView) {
+        const observer = new MutationObserver(() => {
+            if (shareView.classList.contains('active')) {
+                pollPeers();
+                if (!peerPollTimer) {
+                    peerPollTimer = setInterval(pollPeers, 6000);
+                }
+            } else {
+                if (peerPollTimer) {
+                    clearInterval(peerPollTimer);
+                    peerPollTimer = null;
+                }
             }
-        }).catch(() => {});
+        });
+        observer.observe(shareView, { attributes: true, attributeFilter: ['class'] });
     }
 
     pollPeers();
