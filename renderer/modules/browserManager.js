@@ -610,13 +610,23 @@ export function initBrowserManager() {
                 const iconWrapHtml = getBrandIconHtml(app.url, app.name, true);
 
                 card.innerHTML = `
-                    <button class="home-app-menu-btn" title="Remove shortcut">✕</button>
+                    <div class="home-app-actions">
+                        <button class="home-app-action-btn edit-btn" title="Edit shortcut">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </button>
+                        <button class="home-app-action-btn delete-btn" title="Remove shortcut">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                    </div>
                     ${iconWrapHtml}
                     <span class="home-app-name">${app.name}</span>
                 `;
 
                 card.addEventListener('click', (e) => {
-                    if (e.target.closest('.home-app-menu-btn')) {
+                    if (e.target.closest('.edit-btn')) {
+                        e.stopPropagation();
+                        openPinModal(app.name, app.url, idx);
+                    } else if (e.target.closest('.delete-btn')) {
                         e.stopPropagation();
                         deletePinnedApp(idx);
                     } else {
@@ -645,7 +655,13 @@ export function initBrowserManager() {
         if (!url) return;
         const cleanUrl = parseUrl(url);
         const cleanName = (name || '').trim() || new URL(cleanUrl).hostname;
-        const newApps = [...pinnedApps, { name: cleanName, url: cleanUrl }];
+        let newApps = [...pinnedApps];
+        if (editingPinIndex !== null && editingPinIndex >= 0 && editingPinIndex < newApps.length) {
+            newApps[editingPinIndex] = { name: cleanName, url: cleanUrl };
+        } else {
+            newApps.push({ name: cleanName, url: cleanUrl });
+        }
+        editingPinIndex = null;
         savePinnedApps(newApps);
     }
 
@@ -670,13 +686,27 @@ export function initBrowserManager() {
         }
     }
 
-    function openPinModal(defaultName = '', defaultUrl = '') {
+    let editingPinIndex = null;
+    const pinModalTitle = document.getElementById('pin-modal-title');
+
+    function openPinModal(defaultName = '', defaultUrl = '', editIndex = null) {
+        editingPinIndex = editIndex;
+        if (pinModalTitle) {
+            pinModalTitle.textContent = editIndex !== null ? '✏️ Edit Shortcut' : '📌 Pin Web App / Shortcut';
+        }
+        if (btnPinSave) {
+            btnPinSave.textContent = editIndex !== null ? 'Save Changes' : 'Save Shortcut';
+        }
         if (pinNameInput) pinNameInput.value = defaultName;
         if (pinUrlInput) pinUrlInput.value = defaultUrl;
         if (pinAppModal) pinAppModal.style.display = 'flex';
+        setTimeout(() => {
+            if (pinNameInput) pinNameInput.focus();
+        }, 50);
     }
 
     function closePinModal() {
+        editingPinIndex = null;
         if (pinAppModal) pinAppModal.style.display = 'none';
     }
 

@@ -812,7 +812,7 @@
     <div class="modal-overlay" id="pin-app-modal" style="display: none;">
         <div class="modal-card">
             <div class="modal-header">
-                <h3>📌 Pin Web App / Shortcut</h3>
+                <h3 id="pin-modal-title">📌 Pin Web App / Shortcut</h3>
                 <button class="btn-close-modal" id="btn-close-pin-modal">✕</button>
             </div>
             <div class="modal-body">
@@ -824,14 +824,10 @@
                     <label for="pin-url-input">Website URL:</label>
                     <input type="text" id="pin-url-input" class="modal-input" placeholder="https://chat.deepseek.com" autocomplete="off" />
                 </div>
-                <div class="input-group">
-                    <label for="pin-emoji-input">Icon / Emoji (Optional):</label>
-                    <input type="text" id="pin-emoji-input" class="modal-input" placeholder="e.g. 🤖, 🎬, 🚀, 💻 (or leave blank for auto favicon)" autocomplete="off" />
-                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn-secondary" id="btn-pin-cancel">Cancel</button>
-                <button class="btn-primary" id="btn-pin-save">Pin Shortcut</button>
+                <button class="btn-primary" id="btn-pin-save">Save Shortcut</button>
             </div>
         </div>
     </div>

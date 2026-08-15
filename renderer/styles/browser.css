@@ -890,31 +890,51 @@
     color: #ffffff;
 }
 
-.home-app-menu-btn {
+.home-app-actions {
     position: absolute;
-    top: 6px;
-    right: 6px;
+    top: 4px;
+    right: 4px;
+    display: none;
+    align-items: center;
+    gap: 3px;
+    z-index: 10;
+}
+
+.home-app-card:hover .home-app-actions {
+    display: flex;
+}
+
+.home-app-action-btn {
     width: 20px;
     height: 20px;
-    background: rgba(0, 0, 0, 0.6);
-    border: none;
+    background: rgba(0, 0, 0, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.16);
     border-radius: 50%;
-    color: #bdc1c6;
-    font-size: 11px;
-    display: none;
+    color: #9aa0a6;
+    display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.12s ease;
+    padding: 0;
 }
 
-.home-app-card:hover .home-app-menu-btn {
-    display: flex;
+.home-app-action-btn svg {
+    pointer-events: none;
 }
 
-.home-app-menu-btn:hover {
-    background: #ef4444;
+.home-app-action-btn.edit-btn:hover {
+    background: #2563eb;
+    border-color: #3b82f6;
     color: #ffffff;
+    transform: scale(1.1);
+}
+
+.home-app-action-btn.delete-btn:hover {
+    background: #dc2626;
+    border-color: #ef4444;
+    color: #ffffff;
+    transform: scale(1.1);
 }
 
 .home-app-card.add-card .home-app-icon-wrap {
