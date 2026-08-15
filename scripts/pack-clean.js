@@ -66,6 +66,21 @@ function updateInfoPlist(plistPath, updates) {
 const filesToCopy = ['package.json', 'main.js', 'preload.js', 'src', 'renderer', 'assets'];
 const binSrc = path.join(rootDir, 'bin');
 
+function bundleProdDependencies(targetAppDir) {
+    const targetNodeModules = path.join(targetAppDir, 'node_modules');
+    fs.mkdirSync(targetNodeModules, { recursive: true });
+    
+    // Copy production dependencies needed at runtime
+    const depsToCopy = ['qrcode', 'dijkstrajs', 'pngjs', 'yargs', 'yargs-parser', 'string-width', 'strip-ansi', 'ansi-regex', 'is-fullwidth-code-point', 'emoji-regex'];
+    depsToCopy.forEach(dep => {
+        const srcPath = path.join(rootDir, 'node_modules', dep);
+        const destPath = path.join(targetNodeModules, dep);
+        if (fs.existsSync(srcPath)) {
+            copyRecursive(srcPath, destPath);
+        }
+    });
+}
+
 // ==========================================================================
 // 2. Package macOS Standalone (bruno.app)
 // ==========================================================================
@@ -176,6 +191,9 @@ if (fs.existsSync(electronAppTemplate)) {
         }
     });
 
+    // Bundle production dependencies (qrcode, etc.)
+    bundleProdDependencies(appDir);
+
     // Copy binaries
     if (fs.existsSync(binSrc)) {
         copyRecursive(binSrc, path.join(resourcesDir, 'bin'));
@@ -232,6 +250,9 @@ if (fs.existsSync(winZip)) {
             copyRecursive(srcPath, path.join(winAppDir, item));
         }
     });
+
+    // Bundle production dependencies (qrcode, etc.)
+    bundleProdDependencies(winAppDir);
 
     // Copy standalone binaries to resources/bin
     if (fs.existsSync(binSrc)) {
