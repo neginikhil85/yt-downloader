@@ -37,8 +37,8 @@ function setupSessionSecurity(sess) {
     sess.webRequest.onBeforeSendHeaders((details, callback) => {
         const url = details.url || '';
         const isGoogleAuth = url.includes('accounts.google.com') ||
-                             url.includes('accounts.youtube.com') ||
-                             url.includes('oauth2.googleapis.com');
+            url.includes('accounts.youtube.com') ||
+            url.includes('oauth2.googleapis.com');
 
         // Always strip Electron and app identifiers from request headers
         if (details.requestHeaders['User-Agent']) {
