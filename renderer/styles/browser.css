@@ -954,3 +954,51 @@
     top: 0;
     left: 0;
 }
+
+/* ==========================================================================
+   Responsive Research Browser Rules
+   ========================================================================== */
+@media (max-width: 880px) {
+    .browser-tabs-header {
+        padding: 6px 10px 0 10px;
+    }
+
+    .browser-toolbar {
+        padding: 6px 10px;
+    }
+
+    .browser-tab {
+        min-width: 90px;
+        max-width: 150px;
+    }
+
+    .browser-home-content {
+        padding: 24px 16px;
+    }
+
+    .home-apps-grid {
+        grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+        gap: 12px;
+    }
+}
+
+@media (max-width: 640px) {
+    .browser-tab {
+        min-width: 50px;
+        max-width: 100px;
+        padding: 0 4px 0 6px;
+    }
+
+    .tab-title {
+        font-size: 10.5px;
+    }
+
+    .browser-address-bar {
+        height: 30px;
+    }
+
+    .browser-btn {
+        width: 26px;
+        height: 26px;
+    }
+}

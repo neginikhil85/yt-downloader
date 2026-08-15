@@ -1,6 +1,6 @@
 // ==========================================================================
-// YT Studio Pro — P2P Sender Controller (Unified + QR Code Integration)
-// Manages file selection, 6-digit PIN display, QR Code generator, and telemetry
+// YT Studio Pro — P2P Sender Controller (Unified + Phone Modal + QR Code)
+// Manages file selection, 6-digit PIN display, QR Code popover, and telemetry
 // ==========================================================================
 
 export function initP2PSendController(options = {}) {
@@ -9,7 +9,11 @@ export function initP2PSendController(options = {}) {
     const dropzone = document.getElementById('toffee-dropzone');
     const btnBrowse = document.getElementById('btn-toffee-browse');
     const btnToggleIdleQr = document.getElementById('btn-toggle-idle-qr');
-    const idleMobileQrCard = document.getElementById('ds-idle-mobile-qr-card');
+
+    // Phone Modal Elements
+    const phoneModal = document.getElementById('modal-connect-phone');
+    const btnClosePhoneModal = document.getElementById('btn-close-phone-modal');
+    const btnPhoneModalDone = document.getElementById('btn-phone-modal-done');
     const idleQrSvg = document.getElementById('ds-idle-qr-svg');
     const idleQrUrl = document.getElementById('ds-idle-qr-url');
 
@@ -49,29 +53,37 @@ export function initP2PSendController(options = {}) {
     let currentPin = '';
     let sendStartTime = 0;
 
-    // Toggle Idle Mobile Connect QR Card
+    // Open Phone Modal Popover
     if (btnToggleIdleQr) {
         btnToggleIdleQr.addEventListener('click', async (e) => {
             e.stopPropagation();
-            if (!idleMobileQrCard) return;
-
-            const isShown = idleMobileQrCard.style.display !== 'none';
-            if (isShown) {
-                idleMobileQrCard.style.display = 'none';
-            } else {
-                idleMobileQrCard.style.display = 'flex';
-                if (window.electronAPI && window.electronAPI.p2pGetPortalInfo) {
-                    try {
-                        const info = await window.electronAPI.p2pGetPortalInfo();
-                        if (info) {
-                            if (idleQrSvg) idleQrSvg.innerHTML = info.qrSvg || '';
-                            if (idleQrUrl) idleQrUrl.textContent = info.url || `http://${info.ip}:${info.port}/`;
-                        }
-                    } catch (err) {
-                        console.error('Error fetching portal info:', err);
+            if (phoneModal) {
+                phoneModal.style.display = 'flex';
+            }
+            if (window.electronAPI && window.electronAPI.p2pGetPortalInfo) {
+                try {
+                    const info = await window.electronAPI.p2pGetPortalInfo();
+                    if (info) {
+                        if (idleQrSvg) idleQrSvg.innerHTML = info.qrSvg || '';
+                        if (idleQrUrl) idleQrUrl.textContent = info.url || `http://${info.ip}:${info.port}/`;
                     }
+                } catch (err) {
+                    console.error('Error fetching portal info:', err);
                 }
             }
+        });
+    }
+
+    // Close Phone Modal Handlers
+    function closePhoneModal() {
+        if (phoneModal) phoneModal.style.display = 'none';
+    }
+
+    if (btnClosePhoneModal) btnClosePhoneModal.addEventListener('click', closePhoneModal);
+    if (btnPhoneModalDone) btnPhoneModalDone.addEventListener('click', closePhoneModal);
+    if (phoneModal) {
+        phoneModal.addEventListener('click', (e) => {
+            if (e.target === phoneModal) closePhoneModal();
         });
     }
 
@@ -197,7 +209,6 @@ export function initP2PSendController(options = {}) {
             await window.electronAPI.p2pCancelSend();
         }
         if (idleCard) idleCard.style.display = 'flex';
-        if (idleMobileQrCard) idleMobileQrCard.style.display = 'none';
         if (sendSessionCard) sendSessionCard.style.display = 'none';
         if (transferHeroCard) transferHeroCard.style.display = 'none';
         if (completeHeroCard) completeHeroCard.style.display = 'none';

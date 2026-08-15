@@ -1,6 +1,6 @@
 /* ==========================================================================
-   YT Studio Pro — Master Direct Share Stylesheet (Unified + Radar Visualizer + QR)
-   Apple / Linear Native Desktop Utility Grade
+   YT Studio Pro — Master Direct Share Stylesheet
+   Compact Zero-Scroll Layout + Authentic Full-Circular Radar (Image 2 style)
    ========================================================================== */
 
 #view-share {
@@ -20,7 +20,7 @@
    1. Window Titlebar Header
    ========================================================================== */
 .ds-topbar {
-    height: 60px;
+    height: 52px;
     padding: 0 24px;
     border-bottom: 1px solid var(--border-subtle);
     display: flex;
@@ -35,14 +35,14 @@
 .ds-topbar-left {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     -webkit-app-region: no-drag;
 }
 
 .ds-title {
     margin: 0;
     font-family: 'Outfit', sans-serif;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
     letter-spacing: -0.3px;
     color: var(--text-primary);
@@ -54,7 +54,7 @@
     background: rgba(59, 130, 246, 0.12);
     color: #60a5fa;
     border: 1px solid rgba(59, 130, 246, 0.25);
-    padding: 2px 8px;
+    padding: 1px 7px;
     border-radius: var(--radius-full);
     letter-spacing: 0.3px;
 }
@@ -66,18 +66,33 @@
 }
 
 /* ==========================================================================
-   2. Main Content Canvas
+   2. Main Content Canvas (Strictly Fitted - Zero Vertical Scrolling)
    ========================================================================== */
 .ds-main-content {
     flex: 1;
-    overflow-y: auto;
-    padding: 24px 20px 32px 20px;
-    max-width: 700px;
+    height: calc(100vh - 52px);
+    max-height: calc(100vh - 52px);
+    overflow: hidden;
+    padding: 12px 20px 14px 20px;
+    max-width: 680px;
     width: 100%;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    justify-content: flex-start;
+    gap: 8px;
+}
+
+/* Custom subtle scrollbar */
+.ds-main-content::-webkit-scrollbar {
+    width: 5px;
+}
+.ds-main-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+.ds-main-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
 }
 
 /* Common Card Base */
@@ -87,11 +102,12 @@
 .ds-complete-hero-card {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--border-subtle);
-    border-radius: 14px;
-    padding: 20px;
+    border-radius: 12px;
+    padding: 14px 16px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 10px;
+    flex-shrink: 0;
     animation: dsFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -106,8 +122,8 @@
 .ds-drop-zone {
     background: rgba(255, 255, 255, 0.02);
     border: 1.5px dashed rgba(255, 255, 255, 0.14);
-    border-radius: 12px;
-    padding: 28px 20px;
+    border-radius: 10px;
+    padding: 16px 14px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -120,44 +136,37 @@
 .ds-drop-zone:hover, .ds-drop-zone.dragover {
     border-color: rgba(59, 130, 246, 0.6);
     background: rgba(59, 130, 246, 0.04);
-    transform: scale(1.005);
 }
 
 .ds-drop-icon-wrap {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--border-subtle);
     display: flex;
     align-items: center;
     justify-content: center;
     color: #38bdf8;
-    margin-bottom: 10px;
-    transition: all var(--transition-fast);
-}
-
-.ds-drop-zone:hover .ds-drop-icon-wrap {
-    background: rgba(59, 130, 246, 0.15);
-    transform: translateY(-2px);
+    margin-bottom: 6px;
 }
 
 .ds-drop-text h3 {
-    margin: 0 0 4px 0;
-    font-size: 15px;
+    margin: 0 0 2px 0;
+    font-size: 14px;
     font-weight: 600;
     color: #ffffff;
 }
 
 .ds-drop-text p {
-    margin: 0 0 14px 0;
-    font-size: 12px;
+    margin: 0 0 10px 0;
+    font-size: 11.5px;
     color: var(--text-secondary);
 }
 
 .ds-drop-actions-row {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     align-items: center;
 }
 
@@ -166,34 +175,33 @@
     background: #3b82f6;
     color: #ffffff;
     border: none;
-    padding: 8px 18px;
+    padding: 7px 15px;
     border-radius: var(--radius-sm);
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 600;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    transition: background var(--transition-fast), transform 0.1s ease;
+    gap: 5px;
+    transition: background var(--transition-fast);
 }
 
 .ds-btn-primary:hover {
     background: #2563eb;
-    transform: translateY(-1px);
 }
 
 .ds-btn-secondary {
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid var(--border-subtle);
     color: #ffffff;
-    padding: 7px 14px;
+    padding: 6px 12px;
     border-radius: var(--radius-sm);
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 500;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     transition: background var(--transition-fast);
 }
 
@@ -201,68 +209,12 @@
     background: rgba(255, 255, 255, 0.12);
 }
 
-/* Mobile Connect Expandable Card (Idle) */
-.ds-mobile-connect-card {
-    background: #0f1013;
-    border: 1px solid rgba(56, 189, 248, 0.25);
-    border-radius: 12px;
-    padding: 16px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    animation: dsFadeIn 0.2s ease-out;
-}
-
-.ds-qr-preview-box {
-    width: 110px;
-    height: 110px;
-    border-radius: 8px;
-    background: #000;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    overflow: hidden;
-}
-
-.ds-qr-preview-box svg {
-    width: 100%;
-    height: 100%;
-}
-
-.ds-qr-instructions h4 {
-    margin: 0 0 4px 0;
-    font-size: 13.5px;
-    font-weight: 600;
-    color: #ffffff;
-}
-
-.ds-qr-instructions p {
-    margin: 0 0 8px 0;
-    font-size: 11.5px;
-    color: var(--text-secondary);
-    line-height: 1.4;
-}
-
-.ds-qr-url-badge {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    color: #38bdf8;
-    background: rgba(56, 189, 248, 0.08);
-    border: 1px solid rgba(56, 189, 248, 0.2);
-    padding: 3px 8px;
-    border-radius: 4px;
-    display: inline-block;
-    user-select: all;
-}
-
 /* Divider */
 .ds-divider-row {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin: 2px 0;
+    gap: 10px;
+    margin: 0;
 }
 
 .ds-divider-line {
@@ -272,7 +224,7 @@
 }
 
 .ds-divider-label {
-    font-size: 10px;
+    font-size: 9.5px;
     font-weight: 700;
     letter-spacing: 0.8px;
     color: var(--text-muted);
@@ -282,7 +234,7 @@
 .ds-pin-entry-wrap {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
 }
 
 .ds-pin-input-row {
@@ -296,9 +248,9 @@
     background: #0f1013;
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 8px;
-    padding: 10px 14px;
+    padding: 8px 12px;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     color: #ffffff;
     letter-spacing: 2px;
@@ -308,21 +260,20 @@
 
 .ds-pin-quick-input:focus {
     border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
 .ds-btn-connect {
     white-space: nowrap;
-    padding: 0 18px;
-    height: 40px;
+    padding: 0 16px;
+    height: 36px;
 }
 
 .ds-alert-error {
     background: rgba(239, 68, 68, 0.08);
     border: 1px solid rgba(239, 68, 68, 0.25);
     color: #f87171;
-    font-size: 11.5px;
-    padding: 8px 12px;
+    font-size: 11px;
+    padding: 6px 10px;
     border-radius: 6px;
     text-align: center;
 }
@@ -333,14 +284,14 @@
 .ds-file-header {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding-bottom: 12px;
+    gap: 10px;
+    padding-bottom: 8px;
     border-bottom: 1px solid var(--border-subtle);
 }
 
 .ds-file-icon-box {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--border-subtle);
     border-radius: 8px;
@@ -357,8 +308,8 @@
 }
 
 .ds-file-info h3 {
-    margin: 0 0 3px 0;
-    font-size: 14px;
+    margin: 0 0 2px 0;
+    font-size: 13.5px;
     font-weight: 600;
     color: #ffffff;
     white-space: nowrap;
@@ -373,10 +324,10 @@
 }
 
 .ds-tag {
-    font-size: 11px;
+    font-size: 10.5px;
     color: var(--text-secondary);
     background: rgba(255, 255, 255, 0.06);
-    padding: 1px 6px;
+    padding: 1px 5px;
     border-radius: 4px;
 }
 
@@ -390,7 +341,7 @@
     background: transparent;
     border: 1px solid var(--border-subtle);
     color: var(--text-secondary);
-    padding: 5px 10px;
+    padding: 4px 8px;
     border-radius: 6px;
     font-size: 11px;
     font-weight: 500;
@@ -404,34 +355,27 @@
     color: #f87171;
 }
 
-/* Dual Pairing Grid */
 .ds-sender-pairing-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
-}
-
-@media (max-width: 580px) {
-    .ds-sender-pairing-grid {
-        grid-template-columns: 1fr;
-    }
+    gap: 10px;
 }
 
 .ds-pin-hero-stage, .ds-sender-qr-stage {
     background: #0f1013;
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 10px;
-    padding: 18px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
     justify-content: center;
-    gap: 10px;
+    gap: 6px;
 }
 
 .ds-pin-hero-label, .ds-qr-stage-title {
-    font-size: 10px;
+    font-size: 9.5px;
     font-weight: 700;
     letter-spacing: 0.8px;
     color: var(--text-muted);
@@ -441,47 +385,72 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .ds-pin-hero-number {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 800;
-    letter-spacing: 4px;
+    letter-spacing: 3px;
     color: #38bdf8;
-    text-shadow: 0 0 20px rgba(56, 189, 248, 0.35);
+    text-shadow: 0 0 16px rgba(56, 189, 248, 0.35);
 }
 
 .ds-btn-copy-pin {
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.15);
     color: #ffffff;
-    padding: 5px 12px;
+    padding: 4px 10px;
     border-radius: 6px;
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 500;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    transition: background var(--transition-fast);
-}
-
-.ds-btn-copy-pin:hover {
-    background: rgba(255, 255, 255, 0.14);
+    gap: 4px;
 }
 
 .ds-pin-subtext {
     margin: 0;
-    font-size: 11px;
+    font-size: 10.5px;
     color: var(--text-muted);
 }
 
+.ds-qr-preview-box {
+    width: 96px;
+    height: 96px;
+    border-radius: 8px;
+    background: #ffffff;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.ds-qr-preview-box svg {
+    width: 100%;
+    height: 100%;
+}
+
 .ds-sender-qr-details p {
-    margin: 2px 0 6px 0;
-    font-size: 11px;
+    margin: 1px 0 4px 0;
+    font-size: 10.5px;
     color: var(--text-secondary);
+}
+
+.ds-qr-url-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-block;
+    user-select: all;
 }
 
 /* ==========================================================================
@@ -490,25 +459,25 @@
 .ds-transfer-hero-header {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
 
 .ds-transfer-metrics-sub {
-    font-size: 11.5px;
+    font-size: 11px;
     color: var(--text-muted);
 }
 
 .ds-progress-hero-wrap {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 6px;
 }
 
 .ds-progress-hero-track {
     width: 100%;
-    height: 8px;
+    height: 7px;
     background: rgba(255, 255, 255, 0.08);
-    border-radius: 8px;
+    border-radius: 7px;
     overflow: hidden;
 }
 
@@ -516,8 +485,8 @@
     height: 100%;
     width: 0%;
     background: linear-gradient(90deg, #3b82f6, #60a5fa);
-    border-radius: 8px;
-    box-shadow: 0 0 12px rgba(59, 130, 246, 0.5);
+    border-radius: 7px;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
     transition: width 0.15s ease-out;
 }
 
@@ -525,7 +494,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 12px;
+    font-size: 11px;
 }
 
 .ds-stat-speed {
@@ -549,19 +518,18 @@
 .ds-complete-hero-card {
     background: #0f1013;
     border: 1px solid rgba(16, 185, 129, 0.3);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
 .ds-complete-badge-row {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
 }
 
 .ds-complete-check-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
     background: rgba(16, 185, 129, 0.12);
     border: 1px solid rgba(16, 185, 129, 0.3);
     display: flex;
@@ -572,88 +540,75 @@
 }
 
 .ds-complete-text-wrap h3 {
-    margin: 0 0 3px 0;
-    font-size: 15px;
+    margin: 0 0 2px 0;
+    font-size: 14px;
     font-weight: 700;
     color: #ffffff;
 }
 
 .ds-complete-text-wrap p {
     margin: 0;
-    font-size: 12px;
+    font-size: 11.5px;
     color: var(--text-muted);
 }
 
 .ds-complete-action-buttons {
     display: flex;
-    gap: 10px;
-    margin-top: 4px;
+    gap: 8px;
+    margin-top: 2px;
 }
 
 .ds-btn-hero-primary {
     background: #10b981;
     color: #ffffff;
     border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-size: 12.5px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 12px;
     font-weight: 600;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    transition: background var(--transition-fast), transform 0.1s ease;
+    gap: 5px;
 }
 
 .ds-btn-hero-primary:hover {
     background: #059669;
-    transform: translateY(-1px);
 }
 
 .ds-btn-hero-secondary {
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.14);
     color: #ffffff;
-    padding: 10px 16px;
-    border-radius: 8px;
-    font-size: 12px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 11.5px;
     font-weight: 500;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    transition: background var(--transition-fast);
-}
-
-.ds-btn-hero-secondary:hover {
-    background: rgba(255, 255, 255, 0.12);
+    gap: 5px;
 }
 
 .ds-btn-hero-ghost {
     background: transparent;
-    border: 1px solid transparent;
+    border: none;
     color: var(--text-muted);
-    padding: 10px 14px;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 500;
+    padding: 8px 12px;
+    font-size: 11.5px;
     cursor: pointer;
     margin-left: auto;
-    transition: color var(--transition-fast);
-}
-
-.ds-btn-hero-ghost:hover {
-    color: #ffffff;
 }
 
 /* ==========================================================================
-   7. Dynamic Circular Radar Visualizer Canvas
+   7. Authentic Full-Circular Radar Sphere (Matching Reference Image 2)
    ========================================================================== */
 .ds-nearby-radar-section {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin-top: 4px;
+    gap: 8px;
+    flex: 1;
+    min-height: 0;
 }
 
 .ds-section-header {
@@ -665,26 +620,26 @@
 .ds-section-title {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .ds-live-dot {
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background: #10b981;
-    box-shadow: 0 0 8px #10b981;
+    box-shadow: 0 0 6px #10b981;
     animation: dsPulseDot 2s infinite;
 }
 
 @keyframes dsPulseDot {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.4; transform: scale(0.85); }
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
 }
 
 .ds-section-title h4 {
     margin: 0;
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 600;
     color: var(--text-secondary);
 }
@@ -694,57 +649,98 @@
     color: var(--text-muted);
 }
 
-/* Circular Radar Canvas */
-.ds-radar-canvas-container {
+/* Radar Center Wrapper */
+.ds-radar-sphere-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+}
+
+/* Full Circular Radar Disc (Balanced 360px + Rich Frosted Glassmorphism) */
+.ds-circular-radar {
     position: relative;
-    height: 270px;
-    width: 100%;
-    border-radius: 16px;
-    background: radial-gradient(circle at center, rgba(15, 23, 42, 0.6) 0%, rgba(9, 10, 15, 0.95) 75%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    width: 360px;
+    height: 360px;
+    max-width: 90vw;
+    max-height: calc(100vh - 350px);
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    background: radial-gradient(circle at center, rgba(37, 99, 235, 0.26) 0%, rgba(29, 78, 216, 0.15) 35%, rgba(15, 23, 42, 0.65) 70%, rgba(8, 12, 22, 0.88) 100%);
+    backdrop-filter: blur(28px) saturate(190%);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
+    border: 1.8px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(37, 99, 235, 0.14), inset 0 1px 2px rgba(255, 255, 255, 0.3), inset 0 -2px 14px rgba(0, 0, 0, 0.5);
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
-/* Concentric Animated Radar Rings */
-.ds-radar-rings-wrap {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 260px;
-    height: 260px;
-    pointer-events: none;
-}
-
-.ds-radar-ring {
+/* Concentric Range Rings (4-Tier Frosted Grid) */
+.ds-radar-circle {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     border-radius: 50%;
-    border: 1px solid rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    pointer-events: none;
 }
 
-.ds-radar-ring.ring-1 { width: 70px; height: 70px; }
-.ds-radar-ring.ring-2 { width: 130px; height: 130px; }
-.ds-radar-ring.ring-3 { width: 190px; height: 190px; }
-.ds-radar-ring.ring-4 { width: 250px; height: 250px; }
+.ds-radar-circle.ring-outer { width: 100%; height: 100%; border-color: rgba(255, 255, 255, 0.24); }
+.ds-radar-circle.ring-3 { width: 75%; height: 75%; }
+.ds-radar-circle.ring-2 { width: 50%; height: 50%; }
+.ds-radar-circle.ring-1 { width: 25%; height: 25%; }
 
-/* 360-Degree Rotating Sweep Beam */
-.ds-radar-sweep-beam {
+/* Crosshairs (Full Horizontal & Vertical intersecting lines) */
+.ds-radar-crosshair-h {
     position: absolute;
     top: 50%;
-    left: 50%;
-    width: 130px;
-    height: 130px;
-    transform-origin: top left;
-    background: conic-gradient(from 0deg, rgba(56, 189, 248, 0.25) 0deg, rgba(56, 189, 248, 0.05) 45deg, transparent 70deg);
-    border-radius: 130px 0 0 0;
-    animation: dsRadarSweep 4s linear infinite;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.14);
     pointer-events: none;
+}
+
+.ds-radar-crosshair-v {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.14);
+    pointer-events: none;
+}
+
+/* 360-Degree Sweeping Beam (Smooth Glassy Sweep) */
+.ds-radar-sweep-beam {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    transform-origin: 50% 50%;
+    background: conic-gradient(from 0deg at 50% 50%, rgba(255, 255, 255, 0.32) 0deg, rgba(96, 165, 250, 0.14) 18deg, rgba(30, 58, 138, 0.02) 48deg, transparent 65deg);
+    animation: dsRadarSweep 3.8s linear infinite;
+    pointer-events: none;
+}
+
+/* Sharp Luminous Radial Beam Line from Center to Outer Edge */
+.ds-radar-sweep-beam::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 1.5px;
+    height: 50%;
+    background: linear-gradient(to top, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.4) 100%);
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
+    transform: translateX(-50%);
 }
 
 @keyframes dsRadarSweep {
@@ -752,162 +748,279 @@
     to { transform: rotate(360deg); }
 }
 
-/* Center Local Host Node */
-.ds-radar-center-host {
-    position: relative;
-    z-index: 3;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-}
-
-.ds-host-pulse-beacon {
+/* Center Origin Dot */
+.ds-radar-center-origin {
     position: absolute;
-    width: 44px;
-    height: 44px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
-    background: rgba(56, 189, 248, 0.2);
-    animation: dsBeaconPulse 2s infinite;
-    z-index: -1;
-}
-
-@keyframes dsBeaconPulse {
-    0% { transform: scale(1); opacity: 0.8; }
-    100% { transform: scale(2.2); opacity: 0; }
-}
-
-.ds-host-avatar {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    background: #1e293b;
-    border: 1.5px solid #38bdf8;
-    box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #ffffff;
-}
-
-.ds-host-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: #94a3b8;
-    background: rgba(0, 0, 0, 0.6);
-    padding: 2px 8px;
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 0 6px rgba(56, 189, 248, 0.6);
+    pointer-events: none;
+    z-index: 2;
 }
 
 /* Orbiting / Discovered Peer Nodes Layer */
-.ds-radar-peers-layer {
+.ds-radar-nodes-layer {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 4;
+    z-index: 5;
     pointer-events: auto;
 }
 
-.ds-radar-empty-state {
+.ds-radar-scanning-indicator {
     width: 100%;
     height: 100%;
     display: flex;
     align-items: flex-end;
     justify-content: center;
     padding-bottom: 12px;
-    color: var(--text-muted);
-    font-size: 11.5px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 10.5px;
+    font-weight: 500;
     pointer-events: none;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
-/* Discovered Peer Floating Node Card */
-.ds-radar-peer-node {
+/* Discovered Peer Circular Node */
+.ds-peer-circle-node {
     position: absolute;
-    background: rgba(18, 20, 28, 0.88);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 12px;
-    padding: 8px 12px;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 10px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
-    animation: dsPeerFloat 3s ease-in-out infinite alternate;
-    transition: transform 0.15s ease, border-color 0.15s ease;
-    cursor: default;
+    cursor: pointer;
+    transform: translate(-50%, -50%);
+    transition: transform 0.15s ease;
 }
 
-.ds-radar-peer-node:hover {
-    transform: scale(1.04);
-    border-color: #38bdf8;
-    box-shadow: 0 6px 20px rgba(56, 189, 248, 0.25);
+.ds-peer-circle-node:hover {
+    transform: translate(-50%, -50%) scale(1.08);
 }
 
-@keyframes dsPeerFloat {
-    0% { transform: translateY(0px); }
-    100% { transform: translateY(-4px); }
-}
-
-.ds-radar-peer-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+.ds-peer-avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(30, 41, 59, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1.8px solid rgba(255, 255, 255, 0.45);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.25);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #38bdf8;
-    flex-shrink: 0;
+    color: #ffffff;
+    position: relative;
 }
 
-.ds-radar-peer-info {
+.ds-peer-sharing-badge {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #10b981;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 6px #10b981;
+}
+
+.ds-peer-circle-name {
+    margin-top: 4px;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: #ffffff;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+    max-width: 80px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+}
+
+.ds-peer-active-file-tag {
+    font-size: 9px;
+    color: #38bdf8;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 1px 4px;
+    border-radius: 4px;
+    margin-top: 2px;
+    white-space: nowrap;
+    text-shadow: none;
+    border: 0.5px solid rgba(56, 189, 248, 0.4);
+}
+
+/* ==========================================================================
+   8. Connect Phone Popover / Modal (Zero Layout Shift)
+   ========================================================================== */
+.ds-phone-modal-card {
+    max-width: 380px;
+    background: #10121a;
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-radius: 14px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+}
+
+.ds-phone-modal-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ds-phone-modal-title h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.ds-modal-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 8px #10b981;
+}
+
+.ds-phone-modal-body {
     display: flex;
     flex-direction: column;
-    min-width: 0;
-    max-width: 140px;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+    padding: 20px;
 }
 
-.ds-radar-peer-name {
-    font-size: 12px;
+.ds-modal-qr-box {
+    width: 150px;
+    height: 150px;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.ds-modal-qr-box svg {
+    width: 100%;
+    height: 100%;
+}
+
+.ds-modal-qr-lead {
+    margin: 0 0 4px 0;
+    font-size: 13px;
     font-weight: 600;
     color: #ffffff;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
-.ds-radar-peer-status {
-    font-size: 10.5px;
-    color: var(--text-muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.ds-radar-peer-status strong {
-    color: #38bdf8;
-}
-
-.btn-radar-peer-download {
-    background: #3b82f6;
-    color: #ffffff;
-    border: none;
-    padding: 5px 12px;
-    border-radius: 6px;
+.ds-modal-qr-desc {
+    margin: 0 0 10px 0;
     font-size: 11px;
-    font-weight: 600;
-    cursor: pointer;
-    display: inline-flex;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.ds-modal-url-box {
+    display: flex;
+    flex-direction: column;
     align-items: center;
     gap: 4px;
-    flex-shrink: 0;
-    transition: background 0.12s ease;
 }
 
-.btn-radar-peer-download:hover {
-    background: #2563eb;
+.ds-modal-url-label {
+    font-size: 10px;
+    color: var(--text-muted);
+}
+
+/* ==========================================================================
+   Responsive Direct Share Rules & Dynamic Viewport Scaling
+   ========================================================================== */
+
+/* 1. Fluid Radar Scaling for Variable Screen Heights & Widths */
+.ds-circular-radar {
+    width: clamp(250px, min(42vh, 48vw), 360px);
+    height: clamp(250px, min(42vh, 48vw), 360px);
+}
+
+/* 2. Compact Viewports & Short Screens (<= 720px Height) */
+@media (max-height: 720px) {
+    .ds-main-content {
+        padding: 8px 16px;
+        gap: 6px;
+    }
+
+    .ds-unified-idle-card {
+        padding: 10px 14px;
+        gap: 6px;
+    }
+
+    .ds-drop-zone {
+        padding: 12px 10px;
+    }
+
+    .ds-drop-icon-box {
+        width: 30px;
+        height: 30px;
+        margin-bottom: 2px;
+    }
+
+    .ds-drop-text h3 {
+        font-size: 13px;
+        margin-bottom: 1px;
+    }
+
+    .ds-drop-text p {
+        display: none;
+    }
+
+    .ds-circular-radar {
+        width: clamp(200px, 32vh, 270px);
+        height: clamp(200px, 32vh, 270px);
+    }
+}
+
+/* 3. Narrow & Mobile Screens (<= 640px Width) */
+@media (max-width: 640px) {
+    .ds-sender-pairing-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .ds-drop-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .ds-drop-actions button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .ds-pin-input-group {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .ds-pin-quick-input {
+        width: 100%;
+        text-align: center;
+    }
+
+    .ds-btn-connect {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .ds-phone-modal-card {
+        width: 94vw;
+        padding: 16px;
+    }
 }

@@ -322,3 +322,32 @@
     0% { transform: translate(-50%, -50%) scale(0.7); opacity: 0; }
     100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
 }
+
+/* ==========================================================================
+   Responsive Video Player Rules
+   ========================================================================== */
+@media (max-width: 768px) {
+    .player-meta-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .download-presets {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .volume-box {
+        display: none;
+    }
+
+    .speed-selector {
+        display: none;
+    }
+
+    .video-screen-wrapper {
+        max-height: calc(100vh - 240px);
+    }
+}

@@ -496,104 +496,165 @@ function renderMobilePortalHtml(context) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Direct Share — ${escapeHtml(deviceName)}</title>
+    <title>Direct Share</title>
     <style>
         :root {
-            --bg: #090a0f;
-            --card: #12141c;
-            --border: rgba(255, 255, 255, 0.1);
+            --bg-base: #0a0b0e;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --border-subtle: rgba(255, 255, 255, 0.08);
             --primary: #3b82f6;
+            --primary-hover: #2563eb;
             --accent: #38bdf8;
-            --success: #10b981;
-            --text: #f8fafc;
-            --muted: #94a3b8;
+            --text-primary: #ffffff;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
         }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body {
-            margin: 0;
-            padding: 20px 16px 40px 16px;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: var(--bg);
-            color: var(--text);
+            background: var(--bg-base);
+            color: var(--text-primary);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
+            padding: 16px 14px 40px 14px;
         }
-        .app-container {
+        .ds-app-wrap {
             width: 100%;
-            max-width: 440px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-        .header {
-            text-align: center;
-            padding: 12px 0 6px 0;
-        }
-        .header h1 {
-            margin: 0 0 4px 0;
-            font-size: 20px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        .header p {
-            margin: 0;
-            font-size: 13px;
-            color: var(--muted);
-        }
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(16, 185, 129, 0.12);
-            color: #34d399;
-            border: 1px solid rgba(16, 185, 129, 0.25);
-            font-size: 11px;
-            font-weight: 600;
-            padding: 3px 10px;
-            border-radius: 999px;
-            margin-top: 8px;
-        }
-        .pulse-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: #34d399;
-            box-shadow: 0 0 6px #34d399;
-        }
-        .card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 20px;
+            max-width: 480px;
             display: flex;
             flex-direction: column;
             gap: 14px;
         }
-        .card-title {
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.8px;
-            color: var(--muted);
-            text-transform: uppercase;
+        /* 1. Header (Matching Desktop) */
+        .ds-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 4px 4px 4px;
         }
-        .file-box {
+        .ds-topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .ds-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.3px;
+        }
+        .ds-subtitle-badge {
+            font-size: 10px;
+            font-weight: 600;
+            background: rgba(59, 130, 246, 0.12);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            padding: 2px 8px;
+            border-radius: 999px;
+            letter-spacing: 0.3px;
+        }
+        .ds-connected-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+        .ds-live-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 6px #10b981;
+        }
+
+        /* 2. Unified Card Container (Matching Desktop) */
+        .ds-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            padding: 18px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        /* Dropzone Box */
+        .ds-drop-zone {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1.5px dashed rgba(255, 255, 255, 0.14);
+            border-radius: 12px;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            cursor: pointer;
+        }
+        .ds-drop-zone:active {
+            border-color: rgba(59, 130, 246, 0.6);
+            background: rgba(59, 130, 246, 0.04);
+        }
+        .ds-drop-icon-wrap {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+        .ds-drop-text h3 {
+            font-size: 14.5px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 3px;
+        }
+        .ds-drop-text p {
+            font-size: 11.5px;
+            color: var(--text-secondary);
+            margin-bottom: 14px;
+        }
+        .ds-btn-primary {
+            background: var(--primary);
+            color: #ffffff;
+            border: none;
+            padding: 9px 18px;
+            border-radius: 8px;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+        }
+        .ds-btn-primary:active { transform: scale(0.98); }
+
+        /* Available File Download Box (if active) */
+        .ds-file-download-box {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .ds-file-meta-row {
             display: flex;
             align-items: center;
             gap: 12px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 14px;
         }
-        .file-icon {
-            width: 44px;
-            height: 44px;
+        .ds-file-icon {
+            width: 38px;
+            height: 38px;
             border-radius: 10px;
             background: rgba(56, 189, 248, 0.12);
             border: 1px solid rgba(56, 189, 248, 0.25);
@@ -603,161 +664,222 @@ function renderMobilePortalHtml(context) {
             color: var(--accent);
             flex-shrink: 0;
         }
-        .file-meta { flex: 1; min-width: 0; }
-        .file-name {
-            font-size: 14px;
+        .ds-file-meta-text {
+            flex: 1;
+            min-width: 0;
+        }
+        .ds-file-meta-name {
+            font-size: 13.5px;
             font-weight: 600;
-            color: #fff;
+            color: #ffffff;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            margin-bottom: 2px;
         }
-        .file-size { font-size: 12px; color: var(--muted); }
-        .btn-download {
-            background: #2563eb;
-            color: #fff;
+        .ds-file-meta-size {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 1px;
+        }
+        .ds-btn-download-full {
+            background: var(--primary);
+            color: #ffffff;
             text-decoration: none;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            padding: 14px;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
-        }
-        .btn-download:active { transform: scale(0.98); }
-        .upload-dropzone {
-            border: 2px dashed rgba(255, 255, 255, 0.15);
-            border-radius: 12px;
-            padding: 24px 16px;
-            text-align: center;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-        }
-        .upload-dropzone:active { border-color: var(--accent); background: rgba(56, 189, 248, 0.05); }
-        .btn-upload-file {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid var(--border);
-            color: #fff;
-            padding: 10px 18px;
-            border-radius: 10px;
+            gap: 6px;
+            padding: 11px;
+            border-radius: 8px;
             font-size: 13px;
             font-weight: 600;
-            cursor: pointer;
+            border: none;
         }
-        .progress-wrap {
+
+        /* Divider (Matching Desktop) */
+        .ds-divider-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 2px 0;
+        }
+        .ds-divider-line {
+            flex: 1;
+            height: 1px;
+            background: var(--border-subtle);
+        }
+        .ds-divider-label {
+            font-size: 9.5px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+        }
+
+        /* 6-Digit PIN Quick Box (Matching Desktop) */
+        .ds-pin-entry-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .ds-pin-input-row {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+        }
+        .ds-pin-quick-input {
+            flex: 1;
+            background: #0f1013;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 8px;
+            padding: 9px 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13.5px;
+            font-weight: 600;
+            color: #ffffff;
+            letter-spacing: 2px;
+            outline: none;
+        }
+        .ds-pin-quick-input:focus {
+            border-color: var(--primary);
+        }
+        .ds-btn-connect {
+            white-space: nowrap;
+            padding: 0 16px;
+            height: 38px;
+        }
+
+        /* Progress Card */
+        .ds-progress-box {
             display: none;
             flex-direction: column;
             gap: 8px;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
         }
-        .progress-bar-track {
+        .ds-progress-track {
             width: 100%;
-            height: 8px;
+            height: 7px;
             background: rgba(255, 255, 255, 0.08);
-            border-radius: 8px;
+            border-radius: 7px;
             overflow: hidden;
         }
-        .progress-bar-fill {
+        .ds-progress-fill {
             width: 0%;
             height: 100%;
             background: linear-gradient(90deg, #3b82f6, #38bdf8);
             transition: width 0.15s;
         }
-        .progress-status {
+        .ds-progress-labels {
             display: flex;
             justify-content: space-between;
-            font-size: 12px;
-            color: var(--muted);
+            font-size: 11.5px;
+            color: var(--text-secondary);
         }
-        .success-box {
+        .ds-success-banner {
             display: none;
             background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            border-radius: 10px;
-            padding: 12px;
-            text-align: center;
-            font-size: 13px;
+            border: 1px solid rgba(16, 185, 129, 0.25);
             color: #34d399;
+            font-size: 12px;
             font-weight: 500;
-        }
-        .empty-wait {
+            padding: 10px 14px;
+            border-radius: 8px;
             text-align: center;
-            padding: 16px;
-            color: var(--muted);
-            font-size: 13px;
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 10px;
-            border: 1px solid var(--border);
         }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <header class="header">
-            <h1>⚡ Direct Share</h1>
-            <p>Connected to <strong>${escapeHtml(deviceName)}</strong></p>
-            <div class="status-badge"><span class="pulse-dot"></span> Local Wi-Fi Stream Active</div>
+    <div class="ds-app-wrap">
+        <!-- 1. Header -->
+        <header class="ds-topbar">
+            <div class="ds-topbar-left">
+                <h2 class="ds-title">Direct Share</h2>
+                <span class="ds-subtitle-badge">Peer-to-Peer LAN</span>
+            </div>
+            <div class="ds-connected-badge">
+                <span class="ds-live-dot"></span>
+                <span>${escapeHtml(deviceName)}</span>
+            </div>
         </header>
 
-        <!-- 1. Download Card (Desktop to Mobile) -->
-        <section class="card" id="download-card">
-            <span class="card-title">📥 Available from Computer</span>
+        <!-- 2. Main Action Card -->
+        <main class="ds-card">
             ${hasFile ? `
-                <div class="file-box">
-                    <div class="file-icon">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                <!-- File Ready for Download -->
+                <div class="ds-file-download-box">
+                    <div class="ds-file-meta-row">
+                        <div class="ds-file-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                        </div>
+                        <div class="ds-file-meta-text">
+                            <div class="ds-file-meta-name">${escapeHtml(fileName)}</div>
+                            <div class="ds-file-meta-size">${escapeHtml(fileSize)} • Ready from ${escapeHtml(deviceName)}</div>
+                        </div>
                     </div>
-                    <div class="file-meta">
-                        <div class="file-name">${escapeHtml(fileName)}</div>
-                        <div class="file-size">${escapeHtml(fileSize)}</div>
-                    </div>
+                    <a href="/api/p2p/download?code=${encodeURIComponent(code)}" class="ds-btn-download-full" download="${escapeHtml(fileName)}">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+                        <span>Download to Phone (${escapeHtml(fileSize)})</span>
+                    </a>
                 </div>
-                <a href="/api/p2p/download?code=${encodeURIComponent(code)}" class="btn-download" download="${escapeHtml(fileName)}">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
-                    <span>Download to Phone (${escapeHtml(fileSize)})</span>
-                </a>
-            ` : `
-                <div class="empty-wait">
-                    <span>Waiting for computer to select a file...</span>
-                </div>
-            `}
-        </section>
 
-        <!-- 2. Upload Card (Mobile to Desktop) -->
-        <section class="card">
-            <span class="card-title">📤 Send Photos / Files to Computer</span>
-            <div class="upload-dropzone" id="mobile-dropzone" onclick="document.getElementById('mobile-file-input').click();">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                <button type="button" class="btn-upload-file">Choose Photo, Video or File</button>
+                <div class="ds-divider-row">
+                    <span class="ds-divider-line"></span>
+                    <span class="ds-divider-label">OR SEND FILES TO COMPUTER</span>
+                    <span class="ds-divider-line"></span>
+                </div>
+            ` : ''}
+
+            <!-- Send Photos/Files Dropzone -->
+            <div class="ds-drop-zone" id="mobile-dropzone" onclick="document.getElementById('mobile-file-input').click();">
+                <div class="ds-drop-icon-wrap">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                </div>
+                <div class="ds-drop-text">
+                    <h3>Send Photos & Files</h3>
+                    <p>Direct peer-to-peer Wi-Fi transfer with zero cloud limits</p>
+                </div>
+                <button type="button" class="ds-btn-primary">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    <span>Choose Photos or Files</span>
+                </button>
                 <input type="file" id="mobile-file-input" style="display: none;" onchange="handleMobileUpload(event)" />
             </div>
 
-            <!-- Upload Progress -->
-            <div class="progress-wrap" id="upload-progress-wrap">
-                <div class="progress-status">
+            <!-- Upload Live Progress -->
+            <div class="ds-progress-box" id="upload-progress-wrap">
+                <div class="ds-progress-labels">
                     <span id="upload-filename">Uploading...</span>
                     <span id="upload-percent">0%</span>
                 </div>
-                <div class="progress-bar-track">
-                    <div class="progress-bar-fill" id="upload-progress-bar"></div>
-                </div>
-                <div class="progress-status" style="justify-content: flex-end;">
-                    <span id="upload-speed">Direct Wi-Fi</span>
+                <div class="ds-progress-track">
+                    <div class="ds-progress-fill" id="upload-progress-bar"></div>
                 </div>
             </div>
 
-            <div class="success-box" id="upload-success-box">
+            <!-- Upload Complete Banner -->
+            <div class="ds-success-banner" id="upload-success-box">
                 ✓ File received and saved to Computer!
             </div>
-        </section>
+
+            <!-- Divider -->
+            <div class="ds-divider-row">
+                <span class="ds-divider-line"></span>
+                <span class="ds-divider-label">OR RECEIVE VIA PIN</span>
+                <span class="ds-divider-line"></span>
+            </div>
+
+            <!-- 6-Digit PIN Entry -->
+            <div class="ds-pin-entry-wrap">
+                <div class="ds-pin-input-row">
+                    <input type="text" class="ds-pin-quick-input" id="mobile-pin-input" placeholder="Enter 6-digit PIN..." maxlength="6" autocomplete="off" />
+                    <button class="ds-btn-primary ds-btn-connect" onclick="handlePinDownload()">
+                        <span>Download</span>
+                    </button>
+                </div>
+            </div>
+        </main>
     </div>
 
     <script>
@@ -783,9 +905,6 @@ function renderMobilePortalHtml(context) {
             xhr.open('POST', uploadUrl, true);
             xhr.setRequestHeader('X-File-Name', encodeURIComponent(file.name));
             xhr.setRequestHeader('X-File-Size', file.size);
-
-            let startTime = Date.now();
-            let lastBytes = 0;
 
             xhr.upload.onprogress = (e) => {
                 if (e.lengthComputable) {
@@ -818,13 +937,23 @@ function renderMobilePortalHtml(context) {
             xhr.send(file);
         }
 
+        function handlePinDownload() {
+            const pinInput = document.getElementById('mobile-pin-input');
+            const pin = (pinInput.value || '').trim();
+            if (pin.length !== 6) {
+                alert('Please enter a valid 6-digit PIN');
+                return;
+            }
+            window.location.href = '/api/p2p/download?code=' + encodeURIComponent(pin);
+        }
+
         // Live Poll if waiting for file
         setInterval(async () => {
             try {
                 const res = await fetch('/api/p2p/info');
                 if (res.ok) {
                     const data = await res.json();
-                    if (data.activeSend && !document.querySelector('.btn-download')) {
+                    if (data.activeSend && !document.querySelector('.ds-file-download-box')) {
                         location.reload();
                     }
                 }

@@ -283,3 +283,83 @@ body.platform-win32 .browser-tabs-header {
     font-size: 12px;
     color: var(--text-muted);
 }
+
+/* ==========================================================================
+   Responsive Breakpoints & Fluid Adaptive Layout
+   ========================================================================== */
+
+/* 1. Tablet & Medium Displays (<= 880px): Compact Icon Sidebar Rail */
+@media (max-width: 880px) {
+    .sidebar {
+        width: 68px;
+    }
+
+    .sidebar-header {
+        padding: 42px 10px 10px 10px;
+        justify-content: center;
+    }
+
+    body.platform-win32 .sidebar-header,
+    body.platform-linux .sidebar-header {
+        padding: 14px 10px 10px 10px;
+    }
+
+    .brand-text,
+    .user-details,
+    .gear-svg,
+    .nav-counter {
+        display: none !important;
+    }
+
+    .nav-item {
+        justify-content: center;
+        padding: 12px 0;
+        gap: 0;
+    }
+
+    .nav-item span:not(.nav-counter) {
+        display: none;
+    }
+
+    .nav-svg {
+        margin: 0;
+    }
+
+    .user-profile-card {
+        justify-content: center;
+        padding: 8px 4px;
+    }
+
+    .topbar {
+        padding: 0 14px;
+        gap: 10px;
+    }
+
+    .view-panel {
+        padding: 14px;
+    }
+}
+
+/* 2. Compact Screens (<= 640px) */
+@media (max-width: 640px) {
+    .sidebar {
+        width: 58px;
+    }
+
+    .topbar {
+        height: 54px;
+        padding: 0 10px;
+    }
+
+    .topbar-drag-spacer {
+        width: 20px;
+    }
+
+    .view-panel {
+        padding: 10px;
+    }
+
+    #view-player.active {
+        padding: 8px 10px;
+    }
+}

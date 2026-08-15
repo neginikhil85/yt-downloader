@@ -64,12 +64,12 @@ async function initP2PService(onProgress) {
 /**
  * Gets local portal info (URL + SVG QR Code)
  */
-function getPortalInfo(pin) {
+async function getPortalInfo(pin) {
     const ip = getPrimaryIp();
     const port = getHttpPort();
     const activePin = pin || currentSendSession?.code || '';
     const portalUrl = activePin ? `http://${ip}:${port}/?pin=${encodeURIComponent(activePin)}` : `http://${ip}:${port}/`;
-    const qrSvg = generateQrSvg(portalUrl, { size: 140, color: '#38bdf8', bg: '#090a0f' });
+    const qrSvg = await generateQrSvg(portalUrl, { margin: 2, dark: '#000000', light: '#ffffff' });
 
     return {
         url: portalUrl,
@@ -131,7 +131,7 @@ async function startSendSession(filePath) {
     });
 
     const portalUrl = `http://${primaryIp}:${port}/?pin=${encodeURIComponent(code)}`;
-    const qrSvg = generateQrSvg(portalUrl, { size: 140, color: '#38bdf8', bg: '#090a0f' });
+    const qrSvg = await generateQrSvg(portalUrl, { margin: 2, dark: '#000000', light: '#ffffff' });
 
     return {
         success: true,

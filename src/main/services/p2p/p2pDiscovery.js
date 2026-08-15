@@ -35,7 +35,8 @@ function startDiscoverySocket(options = {}) {
         udpSocket.on('message', (msg, rinfo) => {
             try {
                 const data = JSON.parse(msg.toString());
-                if (data.type === 'P2P_LAN_BEACON' && data.peerId !== localPeerId) {
+                const localIps = new Set(getLocalIpAddresses());
+                if (data.type === 'P2P_LAN_BEACON' && data.peerId !== localPeerId && !localIps.has(rinfo.address) && data.name !== localDeviceName) {
                     registerPeer(data.peerId, {
                         id: data.peerId,
                         name: data.name,
@@ -87,6 +88,14 @@ function startDiscoverySocket(options = {}) {
 
 function registerPeer(peerId, peerData, onPeersUpdated) {
     if (!peerId || peerId === localPeerId) return;
+
+    const localIps = new Set(getLocalIpAddresses());
+    if (peerData.ip && (localIps.has(peerData.ip) || peerData.ip === '127.0.0.1' || peerData.ip === 'localhost')) {
+        return;
+    }
+    if (peerData.name && peerData.name === localDeviceName) {
+        return;
+    }
 
     const existing = discoveredPeers.get(peerId);
     const wasSharing = existing?.activeSend?.code;
