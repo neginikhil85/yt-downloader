@@ -10,6 +10,7 @@ const { localPeerId, localDeviceName, generateTransferCode, getLocalIpAddresses,
 const { encodeSessionToken, decodeSessionToken, compressToken, decompressToken } = require('./p2p/p2pTokenCodec');
 const { startDiscoverySocket, broadcastDiscovery, stopDiscoverySocket, getDiscoveredPeers, findPeerByTransferCode } = require('./p2p/p2pDiscovery');
 const { startHttpServer, abortActiveStreams, getHttpPort, stopHttpServer, downloadFileFromPeer } = require('./p2p/p2pHttpServer');
+const { generateQrSvg } = require('./p2p/qrCodeGenerator');
 const { getDefaultSavePath } = require('./libraryService');
 
 // Active Outgoing Share Session (Sender state)
@@ -42,7 +43,9 @@ async function initP2PService(onProgress) {
         localDeviceName,
         getActiveSend: () => currentSendSession,
         onSendProgress: (data) => notifyRenderer('p2p:send-progress', data),
-        onSendComplete: (data) => notifyRenderer('p2p:send-complete', data)
+        onSendComplete: (data) => notifyRenderer('p2p:send-complete', data),
+        onReceiveProgress: (data) => notifyRenderer('p2p:receive-progress', data),
+        onReceiveComplete: (data) => notifyRenderer('p2p:receive-complete', data)
     });
 
     startDiscoverySocket({
@@ -59,7 +62,26 @@ async function initP2PService(onProgress) {
 }
 
 /**
- * Starts sharing a local file and generates a unified compressed token
+ * Gets local portal info (URL + SVG QR Code)
+ */
+function getPortalInfo(pin) {
+    const ip = getPrimaryIp();
+    const port = getHttpPort();
+    const activePin = pin || currentSendSession?.code || '';
+    const portalUrl = activePin ? `http://${ip}:${port}/?pin=${encodeURIComponent(activePin)}` : `http://${ip}:${port}/`;
+    const qrSvg = generateQrSvg(portalUrl, { size: 140, color: '#38bdf8', bg: '#090a0f' });
+
+    return {
+        url: portalUrl,
+        ip,
+        port,
+        pin: activePin,
+        qrSvg
+    };
+}
+
+/**
+ * Starts sharing a local file and generates a unified compressed token + QR Code
  */
 async function startSendSession(filePath) {
     if (!fs.existsSync(filePath)) {
@@ -71,6 +93,7 @@ async function startSendSession(filePath) {
     const code = generateTransferCode();
     const port = getHttpPort();
     const lanIps = getLocalIpAddresses();
+    const primaryIp = getPrimaryIp();
 
     const fileMeta = {
         name: fileName,
@@ -107,12 +130,17 @@ async function startSendSession(filePath) {
         })
     });
 
+    const portalUrl = `http://${primaryIp}:${port}/?pin=${encodeURIComponent(code)}`;
+    const qrSvg = generateQrSvg(portalUrl, { size: 140, color: '#38bdf8', bg: '#090a0f' });
+
     return {
         success: true,
         token,
         code,
-        localIp: getPrimaryIp(),
+        localIp: primaryIp,
         port,
+        portalUrl,
+        qrSvg,
         deviceName: localDeviceName,
         file: currentSendSession.file
     };
@@ -300,6 +328,7 @@ module.exports = {
     receiveByCodeOrPeer,
     inspectToken,
     getLocalP2PInfo,
+    getPortalInfo,
     setProgressCallback,
     cancelReceiving,
     sendClipboardToPeer,

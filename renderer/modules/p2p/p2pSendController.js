@@ -1,6 +1,6 @@
 // ==========================================================================
-// YT Studio Pro — P2P Sender Controller (Unified Zero-Friction)
-// Manages file selection, 6-digit PIN display, copy actions, and telemetry
+// YT Studio Pro — P2P Sender Controller (Unified + QR Code Integration)
+// Manages file selection, 6-digit PIN display, QR Code generator, and telemetry
 // ==========================================================================
 
 export function initP2PSendController(options = {}) {
@@ -8,7 +8,10 @@ export function initP2PSendController(options = {}) {
 
     const dropzone = document.getElementById('toffee-dropzone');
     const btnBrowse = document.getElementById('btn-toffee-browse');
-    const fileInput = document.getElementById('toffee-file-input');
+    const btnToggleIdleQr = document.getElementById('btn-toggle-idle-qr');
+    const idleMobileQrCard = document.getElementById('ds-idle-mobile-qr-card');
+    const idleQrSvg = document.getElementById('ds-idle-qr-svg');
+    const idleQrUrl = document.getElementById('ds-idle-qr-url');
 
     const idleCard = document.getElementById('ds-idle-card');
     const sendSessionCard = document.getElementById('toffee-send-session-card');
@@ -18,6 +21,10 @@ export function initP2PSendController(options = {}) {
     const btnCopySendPin = document.getElementById('btn-copy-send-token');
     const btnCopyTokenText = document.getElementById('btn-copy-token-text');
     const btnCancelSend = document.getElementById('btn-cancel-send');
+
+    // Sender QR Elements
+    const senderQrSvg = document.getElementById('ds-sender-qr-svg');
+    const senderQrUrl = document.getElementById('ds-sender-qr-url');
 
     // Transfer Progress Hero Card
     const transferHeroCard = document.getElementById('ds-transfer-hero-card');
@@ -41,6 +48,32 @@ export function initP2PSendController(options = {}) {
     let currentActiveFile = null;
     let currentPin = '';
     let sendStartTime = 0;
+
+    // Toggle Idle Mobile Connect QR Card
+    if (btnToggleIdleQr) {
+        btnToggleIdleQr.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            if (!idleMobileQrCard) return;
+
+            const isShown = idleMobileQrCard.style.display !== 'none';
+            if (isShown) {
+                idleMobileQrCard.style.display = 'none';
+            } else {
+                idleMobileQrCard.style.display = 'flex';
+                if (window.electronAPI && window.electronAPI.p2pGetPortalInfo) {
+                    try {
+                        const info = await window.electronAPI.p2pGetPortalInfo();
+                        if (info) {
+                            if (idleQrSvg) idleQrSvg.innerHTML = info.qrSvg || '';
+                            if (idleQrUrl) idleQrUrl.textContent = info.url || `http://${info.ip}:${info.port}/`;
+                        }
+                    } catch (err) {
+                        console.error('Error fetching portal info:', err);
+                    }
+                }
+            }
+        });
+    }
 
     // File Drag & Drop Handlers
     if (dropzone) {
@@ -118,9 +151,16 @@ export function initP2PSendController(options = {}) {
             if (sendingFileName) sendingFileName.textContent = res.file.name;
             if (sendingFileSize) sendingFileSize.textContent = res.file.formattedSize;
             if (heroPinDisplay) {
-                // Format PIN with space in middle: e.g. "482 917"
                 const pinStr = String(currentPin);
                 heroPinDisplay.textContent = pinStr.length === 6 ? `${pinStr.slice(0, 3)} ${pinStr.slice(3)}` : pinStr;
+            }
+
+            // Populate Sender QR Code
+            if (senderQrSvg && res.qrSvg) {
+                senderQrSvg.innerHTML = res.qrSvg;
+            }
+            if (senderQrUrl && res.portalUrl) {
+                senderQrUrl.textContent = res.portalUrl;
             }
 
             // File icon resolver
@@ -157,6 +197,7 @@ export function initP2PSendController(options = {}) {
             await window.electronAPI.p2pCancelSend();
         }
         if (idleCard) idleCard.style.display = 'flex';
+        if (idleMobileQrCard) idleMobileQrCard.style.display = 'none';
         if (sendSessionCard) sendSessionCard.style.display = 'none';
         if (transferHeroCard) transferHeroCard.style.display = 'none';
         if (completeHeroCard) completeHeroCard.style.display = 'none';
@@ -182,11 +223,12 @@ export function initP2PSendController(options = {}) {
     // Live Telemetry Updates (Sender side)
     function onSendProgress(data) {
         if (sendSessionCard) sendSessionCard.style.display = 'none';
+        if (idleCard) idleCard.style.display = 'none';
         if (transferHeroCard) transferHeroCard.style.display = 'flex';
         if (completeHeroCard) completeHeroCard.style.display = 'none';
 
         if (transferFilename) transferFilename.textContent = data.fileName;
-        if (transferMetricsText) transferMetricsText.textContent = `Streaming directly to recipient • ${Math.round(data.progress)}%`;
+        if (transferMetricsText) transferMetricsText.textContent = `Direct Streaming to Recipient • ${Math.round(data.progress)}%`;
         if (transferBar) transferBar.style.width = `${data.progress}%`;
         if (transferSpeed) transferSpeed.textContent = `${data.speedMBps} MB/s`;
 
@@ -211,7 +253,7 @@ export function initP2PSendController(options = {}) {
             completeSubtitle.textContent = `Delivered ${data.fileName} (${data.formattedSize || ''}) in ${durationSec}s`;
         }
 
-        // On sender side, hide Open File button (sender already has file)
+        // On sender side, hide Open File button
         if (btnCompleteOpenFile) btnCompleteOpenFile.style.display = 'none';
         if (btnCompleteShowFolder) btnCompleteShowFolder.style.display = 'none';
 

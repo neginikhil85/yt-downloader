@@ -12,7 +12,8 @@ const {
     cancelReceiving,
     sendClipboardToPeer,
     setProgressCallback,
-    getLocalInfo
+    getLocalInfo,
+    getPortalInfo
 } = require('./services/p2pShareService');
 const { getDiscoveredPeers } = require('./services/p2p/p2pDiscovery');
 
@@ -76,6 +77,10 @@ function registerIpcHandlers(getMainWindow) {
     // ======================================================================
     ipcMain.handle('p2p-get-local-info', () => {
         return getLocalInfo();
+    });
+
+    ipcMain.handle('p2p-get-portal-info', (event, pin) => {
+        return getPortalInfo(pin);
     });
 
     ipcMain.handle('p2p-get-peers', () => {

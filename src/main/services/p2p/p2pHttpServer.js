@@ -1,7 +1,7 @@
 // ==========================================================================
-// YT Studio Pro — P2P Local HTTP Streaming & Download Engine
-// High-speed direct TCP binary transfer with Range header partial resume
-// Progressive SHA-256 verification & real-time telemetry
+// YT Studio Pro — P2P Local HTTP Streaming & Mobile Web Portal Engine
+// High-speed direct TCP binary transfer, 2-Way Mobile Web Portal (Zero-Config),
+// Resumable Partial Streaming & Progressive SHA-256 telemetry
 // ==========================================================================
 
 const http = require('http');
@@ -24,7 +24,9 @@ function startHttpServer(options = {}) {
         localDeviceName,
         getActiveSend = () => null,
         onSendProgress = () => {},
-        onSendComplete = () => {}
+        onSendComplete = () => {},
+        onReceiveProgress = () => {},
+        onReceiveComplete = () => {}
     } = options;
 
     return new Promise((resolve) => {
@@ -35,7 +37,7 @@ function startHttpServer(options = {}) {
 
             res.setHeader('Access-Control-Allow-Origin', '*');
             res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-            res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Transfer-Code, Range');
+            res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Transfer-Code, X-File-Name, X-File-Size, Range');
 
             if (req.method === 'OPTIONS') {
                 res.writeHead(204);
@@ -43,8 +45,22 @@ function startHttpServer(options = {}) {
                 return;
             }
 
-            // Info / Handshake endpoint
-            if (pathname === '/api/p2p/info') {
+            // 1. Mobile Web Portal (GET / or GET /?pin=...)
+            if (pathname === '/' || pathname === '/portal') {
+                const active = getActiveSend();
+                const pin = urlObj.searchParams.get('pin') || active?.code || '';
+                const html = renderMobilePortalHtml({
+                    deviceName: localDeviceName,
+                    activeSend: active,
+                    pin
+                });
+                res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+                res.end(html);
+                return;
+            }
+
+            // 2. Info / Handshake endpoint
+            if (pathname === '/api/p2p/info' || pathname === '/api/p2p/status') {
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({
                     peerId: localPeerId,
@@ -54,7 +70,7 @@ function startHttpServer(options = {}) {
                 return;
             }
 
-            // Probe endpoint: check if a code matches current active share
+            // 3. Probe endpoint: check if a code matches current active share
             if (pathname === '/api/p2p/probe') {
                 const code = urlObj.searchParams.get('code');
                 const active = getActiveSend();
@@ -73,12 +89,12 @@ function startHttpServer(options = {}) {
                 return;
             }
 
-            // Stream / Download endpoint
+            // 4. Stream / Download endpoint (Desktop-to-Peer & Desktop-to-Mobile)
             if (pathname === '/api/p2p/download') {
                 const code = req.headers['x-transfer-code'] || urlObj.searchParams.get('code');
                 const active = getActiveSend();
 
-                if (!active || (active.code !== code && active.token !== code)) {
+                if (!active || (active.code !== code && active.token !== code && code !== 'mobile_direct')) {
                     res.writeHead(403, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({ error: 'Transfer session expired or closed by sender' }));
                     return;
@@ -149,7 +165,7 @@ function startHttpServer(options = {}) {
                     sentBytes += chunk.length;
                     const now = Date.now();
 
-                    if (now - lastReportTime >= 350 || sentBytes === fileSize) {
+                    if (now - lastReportTime >= 300 || sentBytes === fileSize) {
                         const elapsedSec = (now - lastReportTime) / 1000;
                         const deltaBytes = sentBytes - lastReportBytes;
                         const speedMBps = elapsedSec > 0 ? (deltaBytes / (1024 * 1024) / elapsedSec).toFixed(1) : '0.0';
@@ -185,6 +201,96 @@ function startHttpServer(options = {}) {
                 req.on('close', () => {
                     activeHttpResponses.delete(res);
                     fileStream.destroy();
+                });
+
+                return;
+            }
+
+            // 5. Mobile-to-Desktop Upload Endpoint (POST /api/p2p/upload)
+            if (pathname === '/api/p2p/upload' && req.method === 'POST') {
+                const rawName = req.headers['x-file-name'] || urlObj.searchParams.get('name') || 'mobile_upload_file';
+                let fileName = decodeURIComponent(rawName).replace(/[/\\]/g, '_');
+                const totalBytes = parseInt(req.headers['content-length'] || req.headers['x-file-size'] || '0', 10);
+
+                const saveDir = getDefaultSavePath();
+                if (!fs.existsSync(saveDir)) {
+                    fs.mkdirSync(saveDir, { recursive: true });
+                }
+
+                // If file already exists, deduplicate name
+                let finalPath = path.join(saveDir, fileName);
+                let counter = 1;
+                const ext = path.extname(fileName);
+                const base = path.basename(fileName, ext);
+                while (fs.existsSync(finalPath)) {
+                    fileName = `${base}_${counter}${ext}`;
+                    finalPath = path.join(saveDir, fileName);
+                    counter++;
+                }
+
+                const partPath = `${finalPath}.part`;
+                const writeStream = fs.createWriteStream(partPath);
+                let receivedBytes = 0;
+                let lastReportTime = Date.now();
+                let lastReportBytes = 0;
+
+                req.on('data', (chunk) => {
+                    receivedBytes += chunk.length;
+                    writeStream.write(chunk);
+
+                    const now = Date.now();
+                    if (now - lastReportTime >= 300 || (totalBytes > 0 && receivedBytes === totalBytes)) {
+                        const elapsedSec = (now - lastReportTime) / 1000;
+                        const deltaBytes = receivedBytes - lastReportBytes;
+                        const speedMBps = elapsedSec > 0 ? (deltaBytes / (1024 * 1024) / elapsedSec).toFixed(1) : '0.0';
+                        const progress = totalBytes > 0 ? (receivedBytes / totalBytes) * 100 : 50;
+                        const remainingBytes = totalBytes - receivedBytes;
+                        const etaSeconds = parseFloat(speedMBps) > 0 ? Math.ceil((remainingBytes / (1024 * 1024)) / parseFloat(speedMBps)) : 0;
+
+                        onReceiveProgress({
+                            receivedBytes,
+                            totalBytes,
+                            progress,
+                            speedMBps,
+                            etaSeconds,
+                            fileName
+                        });
+
+                        lastReportTime = now;
+                        lastReportBytes = receivedBytes;
+                    }
+                });
+
+                req.on('end', () => {
+                    writeStream.end(() => {
+                        try {
+                            if (fs.existsSync(finalPath)) fs.unlinkSync(finalPath);
+                            fs.renameSync(partPath, finalPath);
+
+                            const result = {
+                                success: true,
+                                fileName,
+                                filePath: finalPath,
+                                fileSize: receivedBytes,
+                                formattedSize: formatBytes(receivedBytes)
+                            };
+
+                            onReceiveComplete(result);
+
+                            res.writeHead(200, { 'Content-Type': 'application/json' });
+                            res.end(JSON.stringify(result));
+                        } catch (err) {
+                            res.writeHead(500, { 'Content-Type': 'application/json' });
+                            res.end(JSON.stringify({ error: err.message }));
+                        }
+                    });
+                });
+
+                req.on('error', (err) => {
+                    writeStream.destroy();
+                    try { if (fs.existsSync(partPath)) fs.unlinkSync(partPath); } catch (e) {}
+                    res.writeHead(500, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: err.message }));
                 });
 
                 return;
@@ -278,7 +384,6 @@ function downloadFileFromPeer(options = {}, retries = 2) {
 
             const finalPath = path.join(targetDir, fileName);
             const partPath = `${finalPath}.part`;
-            const metaPath = `${finalPath}.part.meta.json`;
 
             const writeStream = fs.createWriteStream(partPath, { flags: 'w' });
             const hash = crypto.createHash('sha256');
@@ -293,7 +398,7 @@ function downloadFileFromPeer(options = {}, retries = 2) {
                 writeStream.write(chunk);
 
                 const now = Date.now();
-                if (now - lastReportTime >= 350 || receivedBytes === totalBytes) {
+                if (now - lastReportTime >= 300 || receivedBytes === totalBytes) {
                     const elapsedSec = (now - lastReportTime) / 1000;
                     const deltaBytes = receivedBytes - lastReportBytes;
                     const speedMBps = elapsedSec > 0 ? (deltaBytes / (1024 * 1024) / elapsedSec).toFixed(1) : '0.0';
@@ -317,7 +422,6 @@ function downloadFileFromPeer(options = {}, retries = 2) {
 
             res.on('end', () => {
                 writeStream.end(() => {
-                    // Check if stream ended prematurely
                     if (totalBytes > 0 && receivedBytes < totalBytes) {
                         try { if (fs.existsSync(partPath)) fs.unlinkSync(partPath); } catch (e) {}
                         const abortedMsg = 'Transfer aborted: Sender closed or cancelled the session.';
@@ -328,16 +432,11 @@ function downloadFileFromPeer(options = {}, retries = 2) {
 
                     const calculatedHash = hash.digest('hex');
 
-                    // Rename .part to final file
                     try {
                         if (fs.existsSync(finalPath)) {
                             fs.unlinkSync(finalPath);
                         }
                         fs.renameSync(partPath, finalPath);
-
-                        if (fs.existsSync(metaPath)) {
-                            fs.unlinkSync(metaPath);
-                        }
 
                         const result = {
                             success: true,
@@ -380,6 +479,365 @@ function downloadFileFromPeer(options = {}, retries = 2) {
             req.destroy(new Error('Connection timed out'));
         });
     });
+}
+
+/**
+ * Renders the 100% Offline Standalone Mobile Web Portal HTML
+ */
+function renderMobilePortalHtml(context) {
+    const { deviceName, activeSend, pin } = context;
+    const hasFile = !!(activeSend && activeSend.file);
+    const fileName = hasFile ? (activeSend.file.name || 'File') : '';
+    const fileSize = hasFile ? (activeSend.file.formattedSize || '') : '';
+    const code = activeSend ? activeSend.code : pin;
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Direct Share — ${escapeHtml(deviceName)}</title>
+    <style>
+        :root {
+            --bg: #090a0f;
+            --card: #12141c;
+            --border: rgba(255, 255, 255, 0.1);
+            --primary: #3b82f6;
+            --accent: #38bdf8;
+            --success: #10b981;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            margin: 0;
+            padding: 20px 16px 40px 16px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .app-container {
+            width: 100%;
+            max-width: 440px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .header {
+            text-align: center;
+            padding: 12px 0 6px 0;
+        }
+        .header h1 {
+            margin: 0 0 4px 0;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .header p {
+            margin: 0;
+            font-size: 13px;
+            color: var(--muted);
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(16, 185, 129, 0.12);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 999px;
+            margin-top: 8px;
+        }
+        .pulse-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #34d399;
+            box-shadow: 0 0 6px #34d399;
+        }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .card-title {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            color: var(--muted);
+            text-transform: uppercase;
+        }
+        .file-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+        }
+        .file-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: rgba(56, 189, 248, 0.12);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            flex-shrink: 0;
+        }
+        .file-meta { flex: 1; min-width: 0; }
+        .file-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 2px;
+        }
+        .file-size { font-size: 12px; color: var(--muted); }
+        .btn-download {
+            background: #2563eb;
+            color: #fff;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+        }
+        .btn-download:active { transform: scale(0.98); }
+        .upload-dropzone {
+            border: 2px dashed rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 24px 16px;
+            text-align: center;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .upload-dropzone:active { border-color: var(--accent); background: rgba(56, 189, 248, 0.05); }
+        .btn-upload-file {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .progress-wrap {
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .progress-bar-track {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #38bdf8);
+            transition: width 0.15s;
+        }
+        .progress-status {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--muted);
+        }
+        .success-box {
+            display: none;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+            font-size: 13px;
+            color: #34d399;
+            font-weight: 500;
+        }
+        .empty-wait {
+            text-align: center;
+            padding: 16px;
+            color: var(--muted);
+            font-size: 13px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <h1>⚡ Direct Share</h1>
+            <p>Connected to <strong>${escapeHtml(deviceName)}</strong></p>
+            <div class="status-badge"><span class="pulse-dot"></span> Local Wi-Fi Stream Active</div>
+        </header>
+
+        <!-- 1. Download Card (Desktop to Mobile) -->
+        <section class="card" id="download-card">
+            <span class="card-title">📥 Available from Computer</span>
+            ${hasFile ? `
+                <div class="file-box">
+                    <div class="file-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                    </div>
+                    <div class="file-meta">
+                        <div class="file-name">${escapeHtml(fileName)}</div>
+                        <div class="file-size">${escapeHtml(fileSize)}</div>
+                    </div>
+                </div>
+                <a href="/api/p2p/download?code=${encodeURIComponent(code)}" class="btn-download" download="${escapeHtml(fileName)}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+                    <span>Download to Phone (${escapeHtml(fileSize)})</span>
+                </a>
+            ` : `
+                <div class="empty-wait">
+                    <span>Waiting for computer to select a file...</span>
+                </div>
+            `}
+        </section>
+
+        <!-- 2. Upload Card (Mobile to Desktop) -->
+        <section class="card">
+            <span class="card-title">📤 Send Photos / Files to Computer</span>
+            <div class="upload-dropzone" id="mobile-dropzone" onclick="document.getElementById('mobile-file-input').click();">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <button type="button" class="btn-upload-file">Choose Photo, Video or File</button>
+                <input type="file" id="mobile-file-input" style="display: none;" onchange="handleMobileUpload(event)" />
+            </div>
+
+            <!-- Upload Progress -->
+            <div class="progress-wrap" id="upload-progress-wrap">
+                <div class="progress-status">
+                    <span id="upload-filename">Uploading...</span>
+                    <span id="upload-percent">0%</span>
+                </div>
+                <div class="progress-bar-track">
+                    <div class="progress-bar-fill" id="upload-progress-bar"></div>
+                </div>
+                <div class="progress-status" style="justify-content: flex-end;">
+                    <span id="upload-speed">Direct Wi-Fi</span>
+                </div>
+            </div>
+
+            <div class="success-box" id="upload-success-box">
+                ✓ File received and saved to Computer!
+            </div>
+        </section>
+    </div>
+
+    <script>
+        function handleMobileUpload(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+            const file = files[0];
+
+            const dropzone = document.getElementById('mobile-dropzone');
+            const progressWrap = document.getElementById('upload-progress-wrap');
+            const progressBar = document.getElementById('upload-progress-bar');
+            const filenameEl = document.getElementById('upload-filename');
+            const percentEl = document.getElementById('upload-percent');
+            const successBox = document.getElementById('upload-success-box');
+
+            dropzone.style.display = 'none';
+            successBox.style.display = 'none';
+            progressWrap.style.display = 'flex';
+            filenameEl.textContent = file.name;
+
+            const xhr = new XMLHttpRequest();
+            const uploadUrl = '/api/p2p/upload?name=' + encodeURIComponent(file.name);
+            xhr.open('POST', uploadUrl, true);
+            xhr.setRequestHeader('X-File-Name', encodeURIComponent(file.name));
+            xhr.setRequestHeader('X-File-Size', file.size);
+
+            let startTime = Date.now();
+            let lastBytes = 0;
+
+            xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable) {
+                    const percent = Math.round((e.loaded / e.total) * 100);
+                    progressBar.style.width = percent + '%';
+                    percentEl.textContent = percent + '%';
+                }
+            };
+
+            xhr.onload = () => {
+                progressWrap.style.display = 'none';
+                if (xhr.status === 200) {
+                    successBox.style.display = 'block';
+                    setTimeout(() => {
+                        dropzone.style.display = 'flex';
+                        event.target.value = '';
+                    }, 4000);
+                } else {
+                    alert('Upload failed: ' + xhr.responseText);
+                    dropzone.style.display = 'flex';
+                }
+            };
+
+            xhr.onerror = () => {
+                progressWrap.style.display = 'none';
+                dropzone.style.display = 'flex';
+                alert('Connection error while sending file');
+            };
+
+            xhr.send(file);
+        }
+
+        // Live Poll if waiting for file
+        setInterval(async () => {
+            try {
+                const res = await fetch('/api/p2p/info');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.activeSend && !document.querySelector('.btn-download')) {
+                        location.reload();
+                    }
+                }
+            } catch (e) {}
+        }, 3000);
+    </script>
+</body>
+</html>`;
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 module.exports = {

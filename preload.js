@@ -26,6 +26,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     },
     // Direct P2P Transfer APIs
     p2pGetLocalInfo: () => ipcRenderer.invoke('p2p-get-local-info'),
+    p2pGetPortalInfo: (pin) => ipcRenderer.invoke('p2p-get-portal-info', pin),
     p2pGetPeers: () => ipcRenderer.invoke('p2p-get-peers'),
     p2pStartSend: (filePath) => ipcRenderer.invoke('p2p-start-send', filePath),
     p2pCancelSend: () => ipcRenderer.invoke('p2p-cancel-send'),
