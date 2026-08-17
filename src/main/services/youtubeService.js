@@ -92,6 +92,7 @@ function searchInnerTube(query, page = 1, pageSize = 20) {
             hostname: 'www.youtube.com',
             path: '/youtubei/v1/search',
             method: 'POST',
+            rejectUnauthorized: false,
             headers: {
                 'Content-Type': 'application/json',
                 'Content-Length': Buffer.byteLength(postData),

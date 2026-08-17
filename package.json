@@ -4,6 +4,7 @@
   "description": "Professional YouTube Downloader & Cinema Streamer Desktop App",
   "main": "main.js",
   "scripts": {
+    "postinstall": "node scripts/setup-dev-bruno.js",
     "start": "electron .",
     "dist": "electron-builder",
     "dist:mac": "electron-builder --mac",

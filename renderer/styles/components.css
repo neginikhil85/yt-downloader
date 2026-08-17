@@ -313,15 +313,33 @@
 .dl-card-badge {
     font-size: 10px;
     font-weight: 700;
-    padding: 2px 7px;
+    padding: 2px 8px;
     border-radius: var(--radius-full);
     background-color: var(--brand-red-subtle);
     color: var(--brand-red);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .dl-card-badge.completed {
     background-color: rgba(34, 197, 94, 0.15);
     color: #4ade80;
+}
+
+.dl-card-badge.paused {
+    background-color: rgba(234, 179, 8, 0.15);
+    color: #facc15;
+}
+
+.dl-card-badge.cancelled {
+    background-color: rgba(148, 163, 184, 0.15);
+    color: #94a3b8;
+}
+
+.dl-card-badge.error {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: #f87171;
 }
 
 .progress-track {
@@ -340,6 +358,10 @@
     transition: width 0.2s ease;
 }
 
+.progress-fill.paused {
+    background: linear-gradient(90deg, #ca8a04, #facc15);
+}
+
 .dl-stats-row {
     display: flex;
     align-items: center;
@@ -350,8 +372,113 @@
 
 .dl-actions {
     display: flex;
+    align-items: center;
     gap: 6px;
-    margin-top: 2px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+}
+
+.btn-card-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-highlight);
+    color: var(--text-primary);
+    transition: var(--transition-fast);
+}
+
+.btn-card-action:hover {
+    background-color: var(--bg-surface-hover);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-card-action.play {
+    background-color: var(--brand-red);
+    border-color: var(--brand-red);
+    color: #ffffff;
+}
+
+.btn-card-action.play:hover {
+    background-color: #e60000;
+}
+
+.btn-card-action.pause {
+    background-color: rgba(234, 179, 8, 0.12);
+    border-color: rgba(234, 179, 8, 0.3);
+    color: #facc15;
+}
+
+.btn-card-action.pause:hover {
+    background-color: rgba(234, 179, 8, 0.22);
+}
+
+.btn-card-action.resume {
+    background-color: rgba(34, 197, 94, 0.12);
+    border-color: rgba(34, 197, 94, 0.3);
+    color: #4ade80;
+}
+
+.btn-card-action.resume:hover {
+    background-color: rgba(34, 197, 94, 0.22);
+}
+
+.btn-card-action.cancel {
+    background-color: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.25);
+    color: #f87171;
+}
+
+.btn-card-action.cancel:hover {
+    background-color: rgba(239, 68, 68, 0.22);
+}
+
+.btn-card-action.delete {
+    background-color: transparent;
+    border-color: transparent;
+    color: var(--text-secondary);
+}
+
+.btn-card-action.delete:hover {
+    background-color: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #f87171;
+}
+
+.btn-card-action.retry {
+    background-color: rgba(59, 130, 246, 0.12);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: #60a5fa;
+}
+
+.btn-card-action.retry:hover {
+    background-color: rgba(59, 130, 246, 0.22);
+}
+
+.btn-clear-completed {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-highlight);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.btn-clear-completed:hover {
+    background-color: var(--bg-surface-hover);
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 .btn-open-folder {

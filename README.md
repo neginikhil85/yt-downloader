@@ -88,12 +88,11 @@ yt_downloader/
 ### 1. Prerequisites
 Ensure you have the following installed on your development machine:
 * **Node.js**: v18.0.0 or higher ([Download Node.js](https://nodejs.org/))
-* **Python**: v3.10 or higher (for `yt-dlp` backend execution)
 * **Git**: ([Download Git](https://git-scm.com/))
 
 ---
 
-### 2. Installation
+### 2. Installation & Quick Start
 
 1. **Clone the repository**:
    ```bash
@@ -106,15 +105,9 @@ Ensure you have the following installed on your development machine:
    npm install
    ```
 
-3. **Set up Python Virtual Environment**:
+3. **Run in Development Mode**:
    ```bash
-   # macOS / Linux
-   python3 -m venv venv
-   ./venv/bin/pip install yt-dlp
-
-   # Windows (PowerShell / Command Prompt)
-   python -m venv venv
-   .\venv\Scripts\pip install yt-dlp
+   npm start
    ```
 
 ---

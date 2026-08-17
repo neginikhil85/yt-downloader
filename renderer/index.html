@@ -277,9 +277,17 @@
 
             <!-- View 3: Active Downloads & Tasks -->
             <section class="view-panel" id="view-downloads">
-                <div class="feed-header">
-                    <h2 class="feed-title">Active Downloads</h2>
-                    <span class="feed-subtitle">Real-time background download tasks and progress</span>
+                <div class="feed-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                    <div>
+                        <h2 class="feed-title">Downloads Manager</h2>
+                        <span class="feed-subtitle" id="downloads-subtitle">Real-time background tasks, downloads & queue</span>
+                    </div>
+                    <div class="downloads-header-actions" style="display: flex; gap: 8px; align-items: center;">
+                        <button class="btn-clear-completed" id="btn-clear-completed" style="display: none;">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            Clear Finished
+                        </button>
+                    </div>
                 </div>
 
                 <div class="downloads-list" id="downloads-list">

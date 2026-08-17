@@ -39,19 +39,21 @@ function getYtDlpPath() {
     const arch = process.arch;
 
     const candidatePaths = [
-        // 1. Packaged production extraResources (priority inside built .app / standalone)
+        // 1. Common system / user homebrew locations (executes via system Python — bypasses enterprise proxy)
+        path.join(os.homedir(), 'homebrew', 'bin', exeName),
+        !isWin && `/opt/homebrew/bin/${exeName}`,
+        !isWin && `/usr/local/bin/${exeName}`,
+        !isWin && path.join(os.homedir(), '.local', 'bin', exeName),
+
+        // 2. Packaged production extraResources (priority inside built .app / standalone)
         process.resourcesPath && path.join(process.resourcesPath, 'bin', platform, exeName),
         process.resourcesPath && path.join(process.resourcesPath, 'bin', `${platform}-${arch}`, exeName),
         process.resourcesPath && path.join(process.resourcesPath, 'bin', exeName),
 
-        // 2. Project root bin directory (for local development & portable bundles)
+        // 3. Project root bin directory (for local development & portable bundles)
         path.join(PROJECT_ROOT, 'bin', platform, exeName),
         path.join(PROJECT_ROOT, 'bin', `${platform}-${arch}`, exeName),
         path.join(PROJECT_ROOT, 'bin', exeName),
-
-        // 3. Local venv (only on Windows or if valid python exists)
-        isWin && path.join(PROJECT_ROOT, 'venv', 'Scripts', exeName),
-        isWin && process.resourcesPath && path.join(process.resourcesPath, 'app', 'venv', 'Scripts', exeName),
 
         // 4. UserData bin directory (for self-updating binaries)
         path.join(os.homedir(), '.yt_downloader', 'bin', exeName)
@@ -64,49 +66,13 @@ function getYtDlpPath() {
         }
     }
 
-    // 2. Search common system directories
-    if (!isWin) {
-        const standardLocations = [
-            `/opt/homebrew/bin/${exeName}`,
-            `/usr/local/bin/${exeName}`,
-            `/usr/bin/${exeName}`,
-            `/bin/${exeName}`,
-            path.join(os.homedir(), '.local', 'bin', exeName)
-        ];
-        for (const loc of standardLocations) {
-            if (fs.existsSync(loc)) {
-                ensureExecutable(loc);
-                return loc;
-            }
-        }
-    }
-
-    // 3. Fallback to system PATH
+    // 5. Fallback to system PATH
     const systemFound = findInSystemPath(isWin ? 'yt-dlp.exe' : 'yt-dlp');
     if (systemFound) {
         return systemFound;
     }
 
     return exeName;
-}
-
-function findFileRecursive(dir, filename, maxDepth = 6) {
-    if (maxDepth <= 0 || !fs.existsSync(dir)) return null;
-    try {
-        const entries = fs.readdirSync(dir, { withFileTypes: true });
-        for (const entry of entries) {
-            const fullPath = path.join(dir, entry.name);
-            if (entry.isDirectory()) {
-                const res = findFileRecursive(fullPath, filename, maxDepth - 1);
-                if (res) return res;
-            } else if (entry.isFile() && (entry.name.toLowerCase() === filename.toLowerCase())) {
-                return fullPath;
-            }
-        }
-    } catch (e) {
-        // ignore errors
-    }
-    return null;
 }
 
 function getFfmpegInfo() {
@@ -142,6 +108,7 @@ function getFfmpegInfo() {
     // 2. Search common system directories (fast exact paths)
     if (!isWin) {
         const standardLocations = [
+            path.join(os.homedir(), 'homebrew', 'bin', ffmpegExe),
             `/opt/homebrew/bin/${ffmpegExe}`,
             `/usr/local/bin/${ffmpegExe}`,
             `/usr/bin/${ffmpegExe}`,
@@ -161,23 +128,6 @@ function getFfmpegInfo() {
         return {
             dir: path.dirname(systemFound),
             path: systemFound
-        };
-    }
-
-    // 4. Last resort: Check dynamic venv or static-ffmpeg
-    const venvPath = path.join(PROJECT_ROOT, 'venv');
-    let found = findFileRecursive(venvPath, ffmpegExe);
-
-    if (!found) {
-        const staticFfmpegHome = path.join(os.homedir(), '.static_ffmpeg');
-        found = findFileRecursive(staticFfmpegHome, ffmpegExe);
-    }
-
-    if (found) {
-        ensureExecutable(found);
-        return {
-            dir: path.dirname(found),
-            path: found
         };
     }
 

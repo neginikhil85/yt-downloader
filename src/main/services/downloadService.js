@@ -5,7 +5,7 @@ const { app } = require('electron');
 const { YT_DLP_PATH, FFMPEG_DIR } = require('../config/paths');
 
 const activeDownloads = new Map();
-const EXTRACTOR_ARGS = ['--extractor-args', 'youtube:player_client=web,android,ios,mweb'];
+const EXTRACTOR_ARGS = ['--no-check-certificates', '--extractor-args', 'youtube:player_client=web,android,ios,mweb'];
 
 /**
  * Spawns yt-dlp download process with real-time progress parsing
@@ -34,6 +34,7 @@ function startDownload(event, { downloadId, url, savePath, formatPreset }) {
     const args = [
         ...EXTRACTOR_ARGS,
         ...formatOption,
+        '-c', // Continue resuming partial downloads
         '--ffmpeg-location', FFMPEG_DIR,
         '-o', path.join(targetDir, '%(title)s.%(ext)s'),
         '--newline',
@@ -42,9 +43,16 @@ function startDownload(event, { downloadId, url, savePath, formatPreset }) {
     ];
 
     const child = spawn(YT_DLP_PATH, args);
-    activeDownloads.set(downloadId, child);
-
-    let downloadedFilePath = '';
+    const taskState = {
+        child,
+        url,
+        savePath: targetDir,
+        formatPreset,
+        downloadedFilePath: '',
+        isPaused: false,
+        isCancelled: false
+    };
+    activeDownloads.set(downloadId, taskState);
 
     child.stdout.on('data', (chunk) => {
         const line = chunk.toString();
@@ -57,8 +65,8 @@ function startDownload(event, { downloadId, url, savePath, formatPreset }) {
             if (!path.isAbsolute(raw)) {
                 raw = path.join(targetDir, raw);
             }
-            if (!/\.f\d+\.(mp4|m4a|webm)$/i.test(raw) || !downloadedFilePath) {
-                downloadedFilePath = raw;
+            if (!/\.f\d+\.(mp4|m4a|webm)$/i.test(raw) || !taskState.downloadedFilePath) {
+                taskState.downloadedFilePath = raw;
             }
         }
 
@@ -85,9 +93,27 @@ function startDownload(event, { downloadId, url, savePath, formatPreset }) {
     });
 
     child.on('close', (code) => {
+        const currentTask = activeDownloads.get(downloadId);
         activeDownloads.delete(downloadId);
+
+        if (currentTask && currentTask.isPaused) {
+            event.sender.send('download-progress', {
+                downloadId,
+                status: 'paused'
+            });
+            return;
+        }
+
+        if (currentTask && currentTask.isCancelled) {
+            event.sender.send('download-progress', {
+                downloadId,
+                status: 'cancelled'
+            });
+            return;
+        }
+
         if (code === 0) {
-            let finalPath = downloadedFilePath;
+            let finalPath = currentTask ? currentTask.downloadedFilePath : '';
             
             // Clean temp extension if present (.f137.mp4 -> .mp4)
             if (finalPath && /\.f\d+\.(mp4|m4a|webm)$/i.test(finalPath)) {
@@ -137,17 +163,47 @@ function startDownload(event, { downloadId, url, savePath, formatPreset }) {
     return { success: true, downloadId, targetDir };
 }
 
+function pauseDownload(downloadId) {
+    if (activeDownloads.has(downloadId)) {
+        const task = activeDownloads.get(downloadId);
+        task.isPaused = true;
+        try {
+            task.child.kill('SIGTERM');
+        } catch (e) {}
+        return true;
+    }
+    return false;
+}
+
 function cancelDownload(downloadId) {
     if (activeDownloads.has(downloadId)) {
-        const child = activeDownloads.get(downloadId);
-        child.kill();
+        const task = activeDownloads.get(downloadId);
+        task.isCancelled = true;
+        try {
+            task.child.kill('SIGKILL');
+        } catch (e) {}
         activeDownloads.delete(downloadId);
         return true;
     }
     return false;
 }
 
+function deleteDownloadFile(filePath) {
+    try {
+        if (filePath && fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+            return { success: true };
+        }
+    } catch (e) {
+        console.error('Delete file error:', e);
+        return { success: false, error: e.message };
+    }
+    return { success: true };
+}
+
 module.exports = {
     startDownload,
-    cancelDownload
+    pauseDownload,
+    cancelDownload,
+    deleteDownloadFile
 };

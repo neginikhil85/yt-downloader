@@ -1,6 +1,6 @@
 const { ipcMain } = require('electron');
 const { searchYouTube, getStreamUrl } = require('./services/youtubeService');
-const { startDownload, cancelDownload } = require('./services/downloadService');
+const { startDownload, pauseDownload, cancelDownload, deleteDownloadFile } = require('./services/downloadService');
 const { selectFolder, selectFileToSend, openInFinder, openFile, getDefaultSavePath, getLibraryFiles } = require('./services/libraryService');
 const {
     initP2PService,
@@ -44,8 +44,16 @@ function registerIpcHandlers(getMainWindow) {
         return startDownload(event, options);
     });
 
+    ipcMain.handle('pause-download', async (event, downloadId) => {
+        return pauseDownload(downloadId);
+    });
+
     ipcMain.handle('cancel-download', async (event, downloadId) => {
         return cancelDownload(downloadId);
+    });
+
+    ipcMain.handle('delete-download-file', async (event, filePath) => {
+        return deleteDownloadFile(filePath);
     });
 
     ipcMain.handle('select-folder', async () => {

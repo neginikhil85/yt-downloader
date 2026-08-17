@@ -5,6 +5,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     searchYouTube: (query, page = 1) => ipcRenderer.invoke('search-youtube', query, page),
     getStreamUrl: (url) => ipcRenderer.invoke('get-stream-url', url),
     startDownload: (options) => ipcRenderer.invoke('start-download', options),
+    pauseDownload: (downloadId) => ipcRenderer.invoke('pause-download', downloadId),
+    cancelDownload: (downloadId) => ipcRenderer.invoke('cancel-download', downloadId),
+    deleteDownloadFile: (filePath) => ipcRenderer.invoke('delete-download-file', filePath),
     selectFolder: () => ipcRenderer.invoke('select-folder'),
     selectFileToSend: () => ipcRenderer.invoke('select-file-to-send'),
     getFilePath: (file) => {
