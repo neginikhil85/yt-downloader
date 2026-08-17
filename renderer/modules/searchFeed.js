@@ -65,6 +65,36 @@ export function initSearchFeed() {
     }
 }
 
+/**
+ * Renders modern animated shimmer skeleton cards while fetching from YouTube
+ */
+export function renderSkeletons(count = 8) {
+    const videoGrid = document.getElementById('video-grid');
+    if (!videoGrid) return;
+    videoGrid.innerHTML = '';
+    for (let i = 0; i < count; i++) {
+        const skeleton = document.createElement('div');
+        skeleton.className = 'skeleton-card';
+        skeleton.innerHTML = `
+            <div class="skeleton-thumb"></div>
+            <div class="skeleton-details">
+                <div class="skeleton-row">
+                    <div class="skeleton-avatar"></div>
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                        <div class="skeleton-line w-full"></div>
+                        <div class="skeleton-line w-80"></div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 4px;">
+                    <div class="skeleton-line w-40"></div>
+                    <div class="skeleton-line w-60" style="width: 30%;"></div>
+                </div>
+            </div>
+        `;
+        videoGrid.appendChild(skeleton);
+    }
+}
+
 export async function performSearch(query) {
     const cleanQuery = query.trim();
     if (!cleanQuery) return;
@@ -72,7 +102,7 @@ export async function performSearch(query) {
     currentQuery = cleanQuery;
     currentPage = 1;
     hasMoreVideos = true;
-    isLoadingMore = false;
+    isLoadingMore = true; // Lock pagination until initial search finishes
     totalVideosLoaded = 0;
 
     const exploreTitle = document.getElementById('explore-title');
@@ -84,13 +114,14 @@ export async function performSearch(query) {
     switchView('explore');
     exploreTitle.textContent = `Results for "${cleanQuery}"`;
     exploreSubtitle.textContent = 'Searching YouTube...';
-    videoGrid.innerHTML = '';
-    exploreLoading.style.display = 'flex';
+    if (exploreLoading) exploreLoading.style.display = 'none';
     if (infiniteLoading) infiniteLoading.style.display = 'none';
+
+    // Render Shimmer Skeleton Grid immediately
+    renderSkeletons(8);
 
     try {
         const response = await window.electronAPI.searchYouTube(cleanQuery, 1);
-        exploreLoading.style.display = 'none';
 
         if (!response.success || !response.results || response.results.length === 0) {
             exploreSubtitle.textContent = 'No videos found. Try different search terms.';
@@ -108,9 +139,16 @@ export async function performSearch(query) {
         exploreSubtitle.textContent = `Showing ${totalVideosLoaded} videos (scroll down for more)`;
         renderVideoCards(response.results, false);
     } catch (err) {
-        exploreLoading.style.display = 'none';
         exploreSubtitle.textContent = 'Error connecting to YouTube engine.';
+        videoGrid.innerHTML = `
+            <div class="empty-state" style="grid-column: 1 / -1;">
+                <svg class="empty-svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <h3>Connection Error</h3>
+                <p>Failed to retrieve video feed. Please try again.</p>
+            </div>`;
         console.error('Search failed:', err);
+    } finally {
+        isLoadingMore = false;
     }
 }
 
@@ -182,13 +220,22 @@ export function renderVideoCards(videos, append = false) {
             </div>
         `;
 
-        card.querySelector('.btn-card-stream').addEventListener('click', () => {
-            streamVideo(video);
-        });
+        const streamBtn = card.querySelector('.btn-card-stream');
+        const dlBtn = card.querySelector('.btn-card-download');
+        const thumbBox = card.querySelector('.thumb-box');
+        const cardTitle = card.querySelector('.card-title');
 
-        card.querySelector('.btn-card-download').addEventListener('click', () => {
-            startDownloadTask(video.url, video.title, state.userSettings.defaultQuality || '1080p');
-        });
+        const triggerStream = () => streamVideo(video);
+        if (streamBtn) streamBtn.addEventListener('click', triggerStream);
+        if (thumbBox) thumbBox.addEventListener('click', triggerStream);
+        if (cardTitle) cardTitle.addEventListener('click', triggerStream);
+
+        if (dlBtn) {
+            dlBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                startDownloadTask(video.url, video.title, '1080p');
+            });
+        }
 
         videoGrid.appendChild(card);
     });

@@ -167,66 +167,110 @@
                 </div>
                 <div class="player-container">
                     <div class="video-screen-wrapper" id="video-screen-wrapper">
-                        <!-- 1. YouTube Cinema Embed Player (Instant HD/4K, Zero buffering) -->
+                        <!-- 1. YouTube Cinema Embed Player (Fallback) -->
                         <iframe id="cinema-iframe" class="player-element" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="width: 100%; height: 100%; border: none;"></iframe>
 
-                        <!-- 2. Hardware Accelerated Offline Local Video Player -->
-                        <video id="cinema-video" class="player-element" preload="metadata" playsinline style="display: none; width: 100%; height: 100%;"></video>
+                        <!-- 2. Hardware Accelerated Stream & Offline Player -->
+                        <video id="cinema-video" class="player-element" preload="auto" playsinline style="display: none; width: 100%; height: 100%;"></video>
+
+                        <!-- Center Play/Pause Ripple -->
+                        <div class="center-action-ripple" id="center-action-ripple">
+                            <div class="ripple-circle">
+                                <svg class="ripple-icon-play" width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>
+                                <svg class="ripple-icon-pause" width="32" height="32" viewBox="0 0 24 24" fill="currentColor" style="display: none;"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                            </div>
+                        </div>
+
+                        <!-- Double Click Seek Ripples -->
+                        <div class="seek-ripple left" id="seek-ripple-left">
+                            <div class="seek-arrow">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="11 19 2 12 11 5 11 19"></polygon><polygon points="22 19 13 12 22 5 22 19"></polygon></svg>
+                            </div>
+                            <span>10 seconds</span>
+                        </div>
+                        <div class="seek-ripple right" id="seek-ripple-right">
+                            <div class="seek-arrow">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="13 19 22 12 13 5 13 19"></polygon><polygon points="2 19 11 12 2 5 2 19"></polygon></svg>
+                            </div>
+                            <span>10 seconds</span>
+                        </div>
                         
-                        <!-- Custom Cinema Controls Overlay (Local Video) -->
+                        <!-- Professional YouTube Player Controls Overlay -->
                         <div class="player-controls-overlay" id="player-controls" style="display: none;">
-                            <!-- Progress Timeline -->
-                            <div class="timeline-container">
-                                <input type="range" class="timeline-slider" id="timeline-slider" min="0" max="100" value="0" step="0.1" />
+                            <!-- YouTube Interactive Scrubber Timeline -->
+                            <div class="yt-timeline-wrap" id="yt-timeline-wrap">
+                                <div class="yt-timeline-hover-time" id="yt-timeline-hover-time">00:00</div>
+                                <div class="yt-timeline-track" id="yt-timeline-track">
+                                    <div class="yt-timeline-hover-bar" id="yt-timeline-hover-bar"></div>
+                                    <div class="yt-timeline-buffer" id="yt-timeline-buffer"></div>
+                                    <div class="yt-timeline-progress" id="yt-timeline-progress"></div>
+                                    <div class="yt-timeline-thumb" id="yt-timeline-thumb"></div>
+                                </div>
                             </div>
 
                             <div class="controls-row">
                                 <div class="controls-left">
-                                    <button class="ctrl-btn" id="btn-play-pause" title="Play/Pause (Space)">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                    <button class="yt-ctrl-btn" id="btn-play-pause" title="Play (k / space)">
+                                        <svg id="icon-play" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>
+                                        <svg id="icon-pause" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="display: none;"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
                                     </button>
-                                    <button class="ctrl-btn" id="btn-rewind-10" title="Rewind 10 seconds (Left Arrow)">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <polyline points="11 17 6 12 11 7"></polyline>
-                                            <polyline points="18 17 13 12 18 7"></polyline>
-                                        </svg>
+                                    <button class="yt-ctrl-btn" id="btn-rewind-10" title="Rewind 10s (j / left arrow)">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="11 17 6 12 11 7"></polyline><polyline points="18 17 13 12 18 7"></polyline></svg>
                                     </button>
-                                    <button class="ctrl-btn" id="btn-forward-10" title="Forward 10 seconds (Right Arrow)">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <polyline points="6 17 11 12 6 7"></polyline>
-                                            <polyline points="13 17 18 12 13 7"></polyline>
-                                        </svg>
+                                    <button class="yt-ctrl-btn" id="btn-forward-10" title="Forward 10s (l / right arrow)">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 17 11 12 6 7"></polyline><polyline points="13 17 18 12 13 7"></polyline></svg>
                                     </button>
                                     
-                                    <div class="volume-box">
-                                        <button class="ctrl-btn" id="btn-mute" title="Mute/Unmute">
-                                            <svg id="vol-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                                            </svg>
+                                    <div class="yt-volume-box" id="yt-volume-box">
+                                        <button class="yt-ctrl-btn" id="btn-mute" title="Mute (m)">
+                                            <svg id="vol-high" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>
+                                            <svg id="vol-low" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display: none;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>
+                                            <svg id="vol-muted" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display: none;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"></line><line x1="17" y1="9" x2="23" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"></line></svg>
                                         </button>
-                                        <input type="range" class="volume-slider" id="volume-slider" min="0" max="1" value="0.9" step="0.05" />
+                                        <div class="yt-volume-slider-wrap">
+                                            <input type="range" class="yt-volume-slider" id="volume-slider" min="0" max="1" value="0.9" step="0.02" />
+                                        </div>
                                     </div>
 
-                                    <div class="time-display">
-                                        <span id="current-time">00:00</span> / <span id="total-duration">00:00</span>
+                                    <div class="yt-time-display" id="yt-time-display" title="Click to toggle remaining time">
+                                        <span id="current-time">0:00</span> / <span id="total-duration">0:00</span>
                                     </div>
                                 </div>
 
                                 <div class="controls-right">
-                                    <select class="speed-selector" id="speed-selector">
-                                        <option value="0.5">0.5x</option>
-                                        <option value="0.75">0.75x</option>
-                                        <option value="1.0" selected>1.0x</option>
-                                        <option value="1.25">1.25x</option>
-                                        <option value="1.5">1.5x</option>
-                                        <option value="2.0">2.0x</option>
-                                    </select>
-                                    <button class="ctrl-btn" id="btn-pip" title="Picture in Picture">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"></rect><rect x="12" y="10" width="8" height="6" rx="1" fill="currentColor"></rect></svg>
+                                    <button class="yt-ctrl-btn" id="btn-loop" title="Toggle Loop (off)">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
                                     </button>
-                                    <button class="ctrl-btn" id="btn-fullscreen" title="Fullscreen">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+                                    
+                                    <!-- Settings Gear with Menu Popup -->
+                                    <div class="yt-settings-wrap">
+                                        <button class="yt-ctrl-btn" id="btn-settings" title="Settings">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                                        </button>
+                                        <div class="yt-settings-menu" id="yt-settings-menu" style="display: none;">
+                                            <div class="yt-menu-header">Playback Speed</div>
+                                            <div class="yt-menu-speed-list" id="yt-speed-list">
+                                                <button class="yt-speed-opt" data-speed="0.25">0.25x</button>
+                                                <button class="yt-speed-opt" data-speed="0.5">0.5x</button>
+                                                <button class="yt-speed-opt" data-speed="0.75">0.75x</button>
+                                                <button class="yt-speed-opt active" data-speed="1.0">Normal (1x)</button>
+                                                <button class="yt-speed-opt" data-speed="1.25">1.25x</button>
+                                                <button class="yt-speed-opt" data-speed="1.5">1.5x</button>
+                                                <button class="yt-speed-opt" data-speed="1.75">1.75x</button>
+                                                <button class="yt-speed-opt" data-speed="2.0">2x</button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button class="yt-ctrl-btn" id="btn-pip" title="Miniplayer (i)">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><rect x="12" y="10" width="8" height="6" rx="1" fill="currentColor"></rect></svg>
+                                    </button>
+                                    <button class="yt-ctrl-btn" id="btn-theater" title="Cinema Mode (t)">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="2" y1="9" x2="22" y2="9"></line></svg>
+                                    </button>
+                                    <button class="yt-ctrl-btn" id="btn-fullscreen" title="Full screen (f)">
+                                        <svg id="icon-fs-enter" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+                                        <svg id="icon-fs-exit" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path></svg>
                                     </button>
                                 </div>
                             </div>
@@ -236,11 +280,6 @@
                         <div class="player-loader" id="player-loader" style="display: none;">
                             <div class="spinner"></div>
                             <span>Connecting Live YouTube Stream...</span>
-                        </div>
-
-                        <!-- Seek Toast Notification Overlay -->
-                        <div class="seek-toast" id="seek-toast" style="display: none;">
-                            <span id="seek-toast-text">+10s</span>
                         </div>
                     </div>
 

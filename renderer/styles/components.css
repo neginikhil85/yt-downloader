@@ -280,184 +280,159 @@
 }
 
 .download-card {
-    background-color: var(--bg-card);
+    background-color: var(--bg-surface);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
-    padding: 14px;
+    padding: 14px 16px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
     transition: var(--transition-fast);
 }
 
 .download-card:hover {
-    border-color: var(--border-highlight);
+    border-color: rgba(255, 255, 255, 0.18);
+    background-color: rgba(255, 255, 255, 0.03);
 }
 
 .dl-card-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 12px;
 }
 
 .dl-card-title {
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 13.5px;
+    font-weight: 500;
     color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 70%;
+    max-width: 75%;
+    letter-spacing: -0.01em;
 }
 
 .dl-card-badge {
-    font-size: 10px;
-    font-weight: 700;
-    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 9px;
     border-radius: var(--radius-full);
-    background-color: var(--brand-red-subtle);
-    color: var(--brand-red);
+    background-color: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
+    font-variant-numeric: tabular-nums;
 }
 
 .dl-card-badge.completed {
-    background-color: rgba(34, 197, 94, 0.15);
-    color: #4ade80;
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
 }
 
 .dl-card-badge.paused {
-    background-color: rgba(234, 179, 8, 0.15);
-    color: #facc15;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
 }
 
 .dl-card-badge.cancelled {
-    background-color: rgba(148, 163, 184, 0.15);
-    color: #94a3b8;
+    background-color: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.06);
+    color: var(--text-muted);
 }
 
 .dl-card-badge.error {
-    background-color: rgba(239, 68, 68, 0.2);
-    color: #f87171;
+    background-color: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #fca5a5;
 }
 
 .progress-track {
     width: 100%;
-    height: 6px;
+    height: 4px;
     background-color: rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-full);
+    border-radius: 2px;
     overflow: hidden;
 }
 
 .progress-fill {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, #ff0000, #ff4d4d);
-    border-radius: var(--radius-full);
-    transition: width 0.2s ease;
+    background: #ffffff;
+    border-radius: 2px;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.35);
+    transition: width 0.2s linear;
 }
 
 .progress-fill.paused {
-    background: linear-gradient(90deg, #ca8a04, #facc15);
+    background: rgba(255, 255, 255, 0.4);
+    box-shadow: none;
 }
 
 .dl-stats-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 11px;
+    font-size: 11.5px;
     color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
 }
 
 .dl-actions {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     flex-wrap: wrap;
-    margin-top: 4px;
+    margin-top: 2px;
 }
 
 .btn-card-action {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 5px 10px;
+    gap: 6px;
+    padding: 6px 12px;
     border-radius: var(--radius-sm);
-    font-size: 11px;
+    font-size: 11.5px;
     font-weight: 500;
     cursor: pointer;
-    background-color: var(--bg-surface);
-    border: 1px solid var(--border-highlight);
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: var(--text-primary);
     transition: var(--transition-fast);
 }
 
 .btn-card-action:hover {
-    background-color: var(--bg-surface-hover);
-    border-color: rgba(255, 255, 255, 0.2);
-}
-
-.btn-card-action.play {
-    background-color: var(--brand-red);
-    border-color: var(--brand-red);
+    background-color: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.22);
     color: #ffffff;
 }
 
-.btn-card-action.play:hover {
-    background-color: #e60000;
+.btn-card-action.primary {
+    background-color: #ffffff;
+    border-color: #ffffff;
+    color: #09090b;
+    font-weight: 600;
 }
 
-.btn-card-action.pause {
-    background-color: rgba(234, 179, 8, 0.12);
-    border-color: rgba(234, 179, 8, 0.3);
-    color: #facc15;
+.btn-card-action.primary:hover {
+    background-color: #e4e4e7;
+    border-color: #e4e4e7;
 }
 
-.btn-card-action.pause:hover {
-    background-color: rgba(234, 179, 8, 0.22);
-}
-
-.btn-card-action.resume {
-    background-color: rgba(34, 197, 94, 0.12);
-    border-color: rgba(34, 197, 94, 0.3);
-    color: #4ade80;
-}
-
-.btn-card-action.resume:hover {
-    background-color: rgba(34, 197, 94, 0.22);
-}
-
-.btn-card-action.cancel {
-    background-color: rgba(239, 68, 68, 0.12);
-    border-color: rgba(239, 68, 68, 0.25);
-    color: #f87171;
-}
-
-.btn-card-action.cancel:hover {
-    background-color: rgba(239, 68, 68, 0.22);
-}
-
-.btn-card-action.delete {
+.btn-card-action.ghost {
     background-color: transparent;
     border-color: transparent;
     color: var(--text-secondary);
 }
 
-.btn-card-action.delete:hover {
-    background-color: rgba(239, 68, 68, 0.15);
-    border-color: rgba(239, 68, 68, 0.3);
-    color: #f87171;
-}
-
-.btn-card-action.retry {
-    background-color: rgba(59, 130, 246, 0.12);
-    border-color: rgba(59, 130, 246, 0.3);
-    color: #60a5fa;
-}
-
-.btn-card-action.retry:hover {
-    background-color: rgba(59, 130, 246, 0.22);
+.btn-card-action.ghost:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: var(--text-primary);
 }
 
 .btn-clear-completed {
@@ -465,19 +440,19 @@
     align-items: center;
     gap: 6px;
     padding: 6px 12px;
-    background-color: var(--bg-surface);
-    border: 1px solid var(--border-highlight);
+    background-color: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-sm);
     color: var(--text-secondary);
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 500;
     cursor: pointer;
     transition: var(--transition-fast);
 }
 
 .btn-clear-completed:hover {
-    background-color: var(--bg-surface-hover);
-    color: var(--text-primary);
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
     border-color: rgba(255, 255, 255, 0.2);
 }
 
@@ -557,15 +532,117 @@
     margin-bottom: 4px;
 }
 
-.loading-spinner, .player-loader {
+/* ==========================================================================
+   Skeleton Shimmer Loading Engine (YouTube Grade)
+   ========================================================================== */
+.skeleton-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow: hidden;
+    position: relative;
+}
+
+.skeleton-thumb {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background-color: rgba(255, 255, 255, 0.04);
+    border-radius: var(--radius-sm);
+    position: relative;
+    overflow: hidden;
+}
+
+.skeleton-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 2px 2px;
+}
+
+.skeleton-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.skeleton-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.04);
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.skeleton-line {
+    height: 11px;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.04);
+    position: relative;
+    overflow: hidden;
+}
+
+.skeleton-line.w-full { width: 100%; }
+.skeleton-line.w-80 { width: 80%; }
+.skeleton-line.w-60 { width: 60%; }
+.skeleton-line.w-40 { width: 40%; }
+
+.skeleton-thumb::after,
+.skeleton-avatar::after,
+.skeleton-line::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.07) 50%, transparent 100%);
+    animation: shimmer 1.5s infinite linear;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* ==========================================================================
+   Spinners & Floating Overlays
+   ========================================================================== */
+.loading-spinner {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-    padding: 60px;
+    gap: 14px;
+    padding: 40px;
     color: var(--text-secondary);
-    font-size: 12px;
+    font-size: 12.5px;
+    width: 100%;
+}
+
+.player-loader {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(12px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    z-index: 40;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
 }
 
 .infinite-scroll-loader {
@@ -580,21 +657,22 @@
 }
 
 .spinner {
-    width: 28px;
-    height: 28px;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-top-color: var(--brand-red);
+    width: 32px;
+    height: 32px;
+    border: 3px solid rgba(255, 255, 255, 0.08);
+    border-top-color: #ff0000;
     border-radius: 50%;
-    animation: spin 0.8s linear infinite;
+    animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    box-shadow: 0 0 16px rgba(255, 0, 0, 0.25);
 }
 
 .spinner-small {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     border: 2px solid rgba(255, 255, 255, 0.1);
-    border-top-color: var(--brand-red);
+    border-top-color: #ffffff;
     border-radius: 50%;
-    animation: spin 0.8s linear infinite;
+    animation: spin 0.75s linear infinite;
 }
 
 @keyframes spin {

@@ -112,33 +112,33 @@ function renderDownloadCard(dl) {
         </div>
         <div class="dl-actions" id="actions-${dl.id}">
             <!-- Active downloading actions -->
-            <button class="btn-card-action pause" id="btn-pause-${dl.id}" title="Pause download">
+            <button class="btn-card-action" id="btn-pause-${dl.id}" title="Pause download">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
                 Pause
             </button>
-            <button class="btn-card-action resume" id="btn-resume-${dl.id}" style="display: none;" title="Resume download">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            <button class="btn-card-action" id="btn-resume-${dl.id}" style="display: none;" title="Resume download">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>
                 Resume
             </button>
-            <button class="btn-card-action cancel" id="btn-cancel-${dl.id}" title="Cancel download">
+            <button class="btn-card-action ghost" id="btn-cancel-${dl.id}" title="Cancel download">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 Cancel
             </button>
-            <button class="btn-card-action retry" id="btn-retry-${dl.id}" style="display: none;" title="Retry download">
+            <button class="btn-card-action" id="btn-retry-${dl.id}" style="display: none;" title="Retry download">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
                 Retry
             </button>
 
             <!-- Completed Actions -->
-            <button class="btn-card-action play" id="btn-play-${dl.id}" style="display: none;" title="Play video">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                Play Now
+            <button class="btn-card-action primary" id="btn-play-${dl.id}" style="display: none;" title="Play video">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>
+                Play Video
             </button>
             <button class="btn-card-action" id="btn-finder-${dl.id}" style="display: none;" title="Show in folder">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
                 ${navigator.userAgent.includes('Mac') ? 'Reveal in Finder' : 'Show in Folder'}
             </button>
-            <button class="btn-card-action delete" id="btn-delete-${dl.id}" style="display: none;" title="Delete item">
+            <button class="btn-card-action ghost" id="btn-delete-${dl.id}" style="display: none;" title="Delete item">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                 Delete
             </button>
