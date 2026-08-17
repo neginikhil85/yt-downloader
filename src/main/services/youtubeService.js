@@ -238,6 +238,14 @@ async function searchYouTube(query, page = 1, pageSize = 20) {
     });
 }
 
+const { getHttpPort } = require('./p2p/p2pHttpServer');
+
+function formatProxiedStreamUrl(rawStreamUrl) {
+    if (!rawStreamUrl || !rawStreamUrl.startsWith('http')) return rawStreamUrl;
+    const port = getHttpPort() || 9876;
+    return `http://127.0.0.1:${port}/api/stream?url=${encodeURIComponent(rawStreamUrl)}`;
+}
+
 /**
  * Resolves direct media stream URL for HTML5 player
  */
@@ -256,12 +264,14 @@ function getStreamUrl(url) {
                 execFile(YT_DLP_PATH, fallbackArgs, (err2, stdout2) => {
                     if (err2) return resolve({ success: false, error: err2.message });
                     const lines = stdout2.trim().split('\n').filter(Boolean);
-                    resolve({ success: true, streamUrl: lines[0] });
+                    const raw = lines[0];
+                    resolve({ success: true, streamUrl: formatProxiedStreamUrl(raw), rawUrl: raw });
                 });
                 return;
             }
             const lines = stdout.trim().split('\n').filter(Boolean);
-            resolve({ success: true, streamUrl: lines[0] });
+            const raw = lines[0];
+            resolve({ success: true, streamUrl: formatProxiedStreamUrl(raw), rawUrl: raw });
         });
     });
 }

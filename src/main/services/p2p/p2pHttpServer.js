@@ -5,6 +5,7 @@
 // ==========================================================================
 
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -42,6 +43,82 @@ function startHttpServer(options = {}) {
             if (req.method === 'OPTIONS') {
                 res.writeHead(204);
                 res.end();
+                return;
+            }
+
+            // 0. Universal Cross-Platform Video Stream Proxy (HTTP Range 206 Support)
+            if (pathname === '/api/stream') {
+                const targetUrl = urlObj.searchParams.get('url');
+                if (!targetUrl) {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    return res.end(JSON.stringify({ error: 'Missing target url parameter' }));
+                }
+
+                try {
+                    const parsedTarget = new URL(targetUrl);
+                    const clientHeaders = {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                        'Accept': '*/*',
+                        'Accept-Encoding': 'identity;q=1, *;q=0',
+                        'Connection': 'keep-alive'
+                    };
+
+                    if (req.headers.range) {
+                        clientHeaders['Range'] = req.headers.range;
+                    }
+
+                    const isHttps = parsedTarget.protocol === 'https:';
+                    const client = isHttps ? https : http;
+
+                    const proxyReq = client.request({
+                        protocol: parsedTarget.protocol,
+                        hostname: parsedTarget.hostname,
+                        port: parsedTarget.port || (isHttps ? 443 : 80),
+                        path: parsedTarget.pathname + parsedTarget.search,
+                        method: 'GET',
+                        headers: clientHeaders,
+                        rejectUnauthorized: false
+                    }, (proxyRes) => {
+                        // Handle redirect if any
+                        if ([301, 302, 303, 307, 308].includes(proxyRes.statusCode) && proxyRes.headers.location) {
+                            res.writeHead(302, { 'Location': `/api/stream?url=${encodeURIComponent(proxyRes.headers.location)}` });
+                            return res.end();
+                        }
+
+                        const responseHeaders = {
+                            'Access-Control-Allow-Origin': '*',
+                            'Content-Type': proxyRes.headers['content-type'] || 'video/mp4',
+                            'Accept-Ranges': 'bytes',
+                            'Cache-Control': 'no-cache'
+                        };
+
+                        if (proxyRes.headers['content-length']) responseHeaders['Content-Length'] = proxyRes.headers['content-length'];
+                        if (proxyRes.headers['content-range']) responseHeaders['Content-Range'] = proxyRes.headers['content-range'];
+
+                        res.writeHead(proxyRes.statusCode || 200, responseHeaders);
+                        proxyRes.pipe(res);
+                    });
+
+                    proxyReq.on('error', (err) => {
+                        console.error('[StreamProxy Error]:', err.message);
+                        if (!res.headersSent) {
+                            res.writeHead(502, { 'Content-Type': 'application/json' });
+                            res.end(JSON.stringify({ error: err.message }));
+                        }
+                    });
+
+                    req.on('close', () => {
+                        proxyReq.destroy();
+                    });
+
+                    proxyReq.end();
+                } catch (err) {
+                    console.error('[StreamProxy Parse Error]:', err.message);
+                    if (!res.headersSent) {
+                        res.writeHead(400, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ error: 'Invalid stream URL' }));
+                    }
+                }
                 return;
             }
 
