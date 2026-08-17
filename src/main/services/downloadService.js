@@ -17,18 +17,16 @@ function startDownload(event, { downloadId, url, savePath, formatPreset }) {
     }
 
     let formatOption = ['-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', '--merge-output-format', 'mp4'];
-    if (formatPreset === '1080p') {
-        formatOption = ['-f', 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080]', '--merge-output-format', 'mp4'];
-    } else if (formatPreset === '720p') {
-        formatOption = ['-f', 'bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720]', '--merge-output-format', 'mp4'];
-    } else if (formatPreset === '480p') {
-        formatOption = ['-f', 'bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480]/best', '--merge-output-format', 'mp4'];
-    } else if (formatPreset === '360p') {
-        formatOption = ['-f', 'bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/best[height<=360]/best', '--merge-output-format', 'mp4'];
-    } else if (formatPreset === '240p') {
-        formatOption = ['-f', 'bestvideo[height<=240][ext=mp4]+bestaudio[ext=m4a]/best[height<=240]/best', '--merge-output-format', 'mp4'];
-    } else if (formatPreset === 'MP3') {
+    if (formatPreset === 'MP3' || formatPreset === 'audio') {
         formatOption = ['-x', '--audio-format', 'mp3', '--audio-quality', '0'];
+    } else if (formatPreset === 'M4A') {
+        formatOption = ['-x', '--audio-format', 'm4a'];
+    } else {
+        const heightMatch = String(formatPreset).match(/(\d+)/);
+        if (heightMatch) {
+            const h = parseInt(heightMatch[1], 10);
+            formatOption = ['-f', `bestvideo[height<=${h}][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=${h}]+bestaudio/best[height<=${h}]/best`, '--merge-output-format', 'mp4'];
+        }
     }
 
     const args = [

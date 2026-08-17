@@ -184,13 +184,12 @@ app.whenReady().then(() => {
 
     registerIpcHandlers(getMainWindow);
 
-    // Route Electron sessions through local Node.js CONNECT forward proxy (Port 9876)
-    // Completely bypasses corporate/Netskope browser category blocks (e.g. Generative AI, UX Pilot, ChatGPT)
+    // Route isolated webview sessions through local Node.js CONNECT forward proxy (Port 9876)
+    // Only applied to Research Browser partition so main app UI/images/fonts are completely unaffected
     const { getHttpPort } = require('./src/main/services/p2p/p2pHttpServer');
     const proxyPort = getHttpPort() || 9876;
     const proxyRules = `http://127.0.0.1:${proxyPort}`;
 
-    session.defaultSession.setProxy({ proxyRules }).catch(err => console.warn('Default session proxy setup:', err.message));
     session.fromPartition('persist:main').setProxy({ proxyRules }).catch(err => console.warn('Webview session proxy setup:', err.message));
 
     createMainWindow();

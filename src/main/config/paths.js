@@ -39,23 +39,23 @@ function getYtDlpPath() {
     const arch = process.arch;
 
     const candidatePaths = [
-        // 1. Common system / user homebrew locations (executes via system Python — bypasses enterprise proxy)
+        // 1. Packaged production extraResources (Priority inside built standalone .app / .exe)
+        process.resourcesPath && path.join(process.resourcesPath, 'bin', platform, exeName),
+        process.resourcesPath && path.join(process.resourcesPath, 'bin', `${platform}-${arch}`, exeName),
+        process.resourcesPath && path.join(process.resourcesPath, 'bin', exeName),
+
+        // 2. System / Homebrew locations (Executes via system Python with root CAs — bypasses corporate proxy on npm start)
         path.join(os.homedir(), 'homebrew', 'bin', exeName),
         !isWin && `/opt/homebrew/bin/${exeName}`,
         !isWin && `/usr/local/bin/${exeName}`,
         !isWin && path.join(os.homedir(), '.local', 'bin', exeName),
 
-        // 2. Packaged production extraResources (priority inside built .app / standalone)
-        process.resourcesPath && path.join(process.resourcesPath, 'bin', platform, exeName),
-        process.resourcesPath && path.join(process.resourcesPath, 'bin', `${platform}-${arch}`, exeName),
-        process.resourcesPath && path.join(process.resourcesPath, 'bin', exeName),
-
-        // 3. Project root bin directory (for local development & portable bundles)
+        // 3. Project root bin directory (For standalone dev testing & portable bundles)
         path.join(PROJECT_ROOT, 'bin', platform, exeName),
         path.join(PROJECT_ROOT, 'bin', `${platform}-${arch}`, exeName),
         path.join(PROJECT_ROOT, 'bin', exeName),
 
-        // 4. UserData bin directory (for self-updating binaries)
+        // 4. UserData directory (For self-updating binaries)
         path.join(os.homedir(), '.yt_downloader', 'bin', exeName)
     ].filter(Boolean);
 
@@ -66,7 +66,7 @@ function getYtDlpPath() {
         }
     }
 
-    // 5. Fallback to system PATH
+    // 5. Dynamic fallback via system PATH
     const systemFound = findInSystemPath(isWin ? 'yt-dlp.exe' : 'yt-dlp');
     if (systemFound) {
         return systemFound;
@@ -81,18 +81,30 @@ function getFfmpegInfo() {
     const platform = process.platform;
     const arch = process.arch;
 
-    // 1. Check bundled standalone binary locations
+    // 1. Packaged standalone and bundled project binary locations
     const candidatePaths = [
         // Electron production packaged resourcesPath
         process.resourcesPath && path.join(process.resourcesPath, 'bin', platform, ffmpegExe),
         process.resourcesPath && path.join(process.resourcesPath, 'bin', `${platform}-${arch}`, ffmpegExe),
         process.resourcesPath && path.join(process.resourcesPath, 'bin', ffmpegExe),
+
+        // System / Homebrew locations
+        path.join(os.homedir(), 'homebrew', 'bin', ffmpegExe),
+        !isWin && `/opt/homebrew/bin/${ffmpegExe}`,
+        !isWin && `/usr/local/bin/${ffmpegExe}`,
+        !isWin && path.join(os.homedir(), '.local', 'bin', ffmpegExe),
+
         // Project root bin directory
         path.join(PROJECT_ROOT, 'bin', platform, ffmpegExe),
         path.join(PROJECT_ROOT, 'bin', `${platform}-${arch}`, ffmpegExe),
         path.join(PROJECT_ROOT, 'bin', ffmpegExe),
+
         // UserData bin directory
-        path.join(os.homedir(), '.yt_downloader', 'bin', ffmpegExe)
+        path.join(os.homedir(), '.yt_downloader', 'bin', ffmpegExe),
+
+        // Standard OS locations
+        !isWin && `/usr/bin/${ffmpegExe}`,
+        !isWin && `/bin/${ffmpegExe}`
     ].filter(Boolean);
 
     for (const candidate of candidatePaths) {
@@ -105,24 +117,7 @@ function getFfmpegInfo() {
         }
     }
 
-    // 2. Search common system directories (fast exact paths)
-    if (!isWin) {
-        const standardLocations = [
-            path.join(os.homedir(), 'homebrew', 'bin', ffmpegExe),
-            `/opt/homebrew/bin/${ffmpegExe}`,
-            `/usr/local/bin/${ffmpegExe}`,
-            `/usr/bin/${ffmpegExe}`,
-            `/bin/${ffmpegExe}`
-        ];
-        for (const loc of standardLocations) {
-            if (fs.existsSync(loc)) {
-                ensureExecutable(loc);
-                return { dir: path.dirname(loc), path: loc };
-            }
-        }
-    }
-
-    // 3. Fallback to system PATH
+    // 2. Dynamic fallback via system PATH
     const systemFound = findInSystemPath(ffmpegExe);
     if (systemFound) {
         return {

@@ -3,7 +3,8 @@ const { contextBridge, ipcRenderer, webUtils } = require('electron');
 contextBridge.exposeInMainWorld('electronAPI', {
     platform: process.platform,
     searchYouTube: (query, page = 1) => ipcRenderer.invoke('search-youtube', query, page),
-    getStreamUrl: (url) => ipcRenderer.invoke('get-stream-url', url),
+    getVideoFormats: (url) => ipcRenderer.invoke('get-video-formats', url),
+    getStreamUrl: (url, quality = 'auto') => ipcRenderer.invoke('get-stream-url', url, quality),
     startDownload: (options) => ipcRenderer.invoke('start-download', options),
     pauseDownload: (downloadId) => ipcRenderer.invoke('pause-download', downloadId),
     cancelDownload: (downloadId) => ipcRenderer.invoke('cancel-download', downloadId),

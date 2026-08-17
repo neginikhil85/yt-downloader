@@ -39,7 +39,6 @@ export function initVideoPlayer() {
     const btnLoop = document.getElementById('btn-loop');
     const btnSettings = document.getElementById('btn-settings');
     const settingsMenu = document.getElementById('yt-settings-menu');
-    const speedOpts = document.querySelectorAll('.yt-speed-opt');
     const btnPip = document.getElementById('btn-pip');
     const btnTheater = document.getElementById('btn-theater');
     const btnFullscreen = document.getElementById('btn-fullscreen');
@@ -54,7 +53,6 @@ export function initVideoPlayer() {
     const seekRippleRight = document.getElementById('seek-ripple-right');
 
     const btnBackPlayer = document.getElementById('btn-back-player');
-    const dlPresets = document.querySelectorAll('.btn-dl-preset');
 
     let isScrubbing = false;
     let showRemainingTime = false;
@@ -296,7 +294,32 @@ export function initVideoPlayer() {
         });
     }
 
-    // 6. Settings Popup Menu (Playback Speed)
+    // 6. Settings Popup Menu (Quality & Playback Speed Tabs)
+    const tabBtnQuality = document.getElementById('tab-btn-quality');
+    const tabBtnSpeed = document.getElementById('tab-btn-speed');
+    const qualityList = document.getElementById('yt-quality-list');
+    const speedList = document.getElementById('yt-speed-list');
+    const qualityOpts = document.querySelectorAll('#yt-quality-list .yt-menu-opt');
+    const speedOpts = document.querySelectorAll('#yt-speed-list .yt-menu-opt');
+
+    if (tabBtnQuality && tabBtnSpeed && qualityList && speedList) {
+        tabBtnQuality.addEventListener('click', (e) => {
+            e.stopPropagation();
+            tabBtnQuality.classList.add('active');
+            tabBtnSpeed.classList.remove('active');
+            qualityList.style.display = 'flex';
+            speedList.style.display = 'none';
+        });
+
+        tabBtnSpeed.addEventListener('click', (e) => {
+            e.stopPropagation();
+            tabBtnSpeed.classList.add('active');
+            tabBtnQuality.classList.remove('active');
+            speedList.style.display = 'flex';
+            qualityList.style.display = 'none';
+        });
+    }
+
     if (btnSettings && settingsMenu) {
         btnSettings.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -310,6 +333,7 @@ export function initVideoPlayer() {
             }
         });
 
+        // Speed options
         speedOpts.forEach(btn => {
             btn.addEventListener('click', () => {
                 const speed = parseFloat(btn.dataset.speed || '1.0');
@@ -317,6 +341,43 @@ export function initVideoPlayer() {
                 speedOpts.forEach(o => o.classList.remove('active'));
                 btn.classList.add('active');
                 settingsMenu.style.display = 'none';
+            });
+        });
+
+        // Quality / Resolution options
+        qualityOpts.forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const quality = btn.dataset.quality || 'auto';
+                qualityOpts.forEach(o => o.classList.remove('active'));
+                btn.classList.add('active');
+                settingsMenu.style.display = 'none';
+
+                if (state.currentVideoData && state.currentVideoData.url) {
+                    const savedTime = videoEl.currentTime || 0;
+                    const wasPlaying = !videoEl.paused;
+
+                    const playerLoader = document.getElementById('player-loader');
+                    if (playerLoader) {
+                        playerLoader.style.display = 'flex';
+                        const span = playerLoader.querySelector('span');
+                        if (span) span.textContent = `Switching to ${btn.textContent.trim()}...`;
+                    }
+
+                    try {
+                        const res = await window.electronAPI.getStreamUrl(state.currentVideoData.url, quality);
+                        if (playerLoader) playerLoader.style.display = 'none';
+                        if (res && res.success && res.streamUrl) {
+                            videoEl.src = res.streamUrl;
+                            videoEl.currentTime = savedTime;
+                            if (wasPlaying) {
+                                videoEl.play().catch(e => console.error('Play error on quality switch:', e));
+                            }
+                        }
+                    } catch (err) {
+                        if (playerLoader) playerLoader.style.display = 'none';
+                        console.error('Quality switch error:', err);
+                    }
+                }
             });
         });
     }
@@ -467,7 +528,7 @@ export function initVideoPlayer() {
         }
     });
 
-    // 13. Back & Download Presets
+    // 13. Back Button
     if (btnBackPlayer) {
         btnBackPlayer.addEventListener('click', () => {
             videoEl.pause();
@@ -476,14 +537,89 @@ export function initVideoPlayer() {
             switchView(state.previousView || 'home');
         });
     }
+}
 
-    dlPresets.forEach((btn) => {
-        btn.addEventListener('click', () => {
-            if (!state.currentVideoData) return;
-            const fmt = btn.getAttribute('data-format') || '1080p';
-            startDownloadTask(state.currentVideoData.url, state.currentVideoData.title, fmt);
+/**
+ * Dynamically updates player quality menu and download presets bar with live YouTube resolutions & sizes
+ */
+export function updateDynamicResolutions(resolutions = []) {
+    const qualityList = document.getElementById('yt-quality-list');
+    const dlPresetsContainer = document.getElementById('player-dl-presets');
+
+    if (qualityList && resolutions.length > 0) {
+        const videoRes = resolutions.filter(r => r.height > 0);
+        let html = `<button class="yt-menu-opt active" data-quality="auto">Auto (Best Quality)</button>`;
+        videoRes.forEach(r => {
+            const sizeLabel = r.sizeStr ? ` (${r.sizeStr})` : '';
+            html += `<button class="yt-menu-opt" data-quality="${r.quality}">${r.label}${sizeLabel}</button>`;
         });
-    });
+        qualityList.innerHTML = html;
+
+        // Attach click listeners to new dynamic quality options
+        const qualityOpts = qualityList.querySelectorAll('.yt-menu-opt');
+        const videoEl = document.getElementById('cinema-video');
+        const settingsMenu = document.getElementById('yt-settings-menu');
+
+        qualityOpts.forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const quality = btn.dataset.quality || 'auto';
+                qualityOpts.forEach(o => o.classList.remove('active'));
+                btn.classList.add('active');
+                if (settingsMenu) settingsMenu.style.display = 'none';
+
+                if (state.currentVideoData && state.currentVideoData.url && videoEl) {
+                    const savedTime = videoEl.currentTime || 0;
+                    const wasPlaying = !videoEl.paused;
+
+                    const playerLoader = document.getElementById('player-loader');
+                    if (playerLoader) {
+                        playerLoader.style.display = 'flex';
+                        const span = playerLoader.querySelector('span');
+                        if (span) span.textContent = `Switching to ${btn.textContent.trim()}...`;
+                    }
+
+                    try {
+                        const res = await window.electronAPI.getStreamUrl(state.currentVideoData.url, quality);
+                        if (playerLoader) playerLoader.style.display = 'none';
+                        if (res && res.success && res.streamUrl) {
+                            videoEl.src = res.streamUrl;
+                            videoEl.currentTime = savedTime;
+                            if (wasPlaying) {
+                                videoEl.play().catch(e => console.error('Play error on quality switch:', e));
+                            }
+                        }
+                    } catch (err) {
+                        if (playerLoader) playerLoader.style.display = 'none';
+                        console.error('Quality switch error:', err);
+                    }
+                }
+            });
+        });
+    }
+
+    if (dlPresetsContainer && resolutions.length > 0) {
+        dlPresetsContainer.innerHTML = '';
+        resolutions.forEach((r, idx) => {
+            const btn = document.createElement('button');
+            const isTop = idx === 0 && r.height > 0;
+            btn.className = `btn-dl-preset ${isTop ? 'primary' : ''} ${r.height === 0 ? 'audio' : ''}`;
+            btn.setAttribute('data-format', r.quality);
+            
+            const sizeLabel = r.sizeStr ? ` • ${r.sizeStr}` : '';
+            if (isTop) {
+                btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> ${r.label}${sizeLabel}`;
+            } else {
+                btn.textContent = `${r.label}${sizeLabel}`;
+            }
+
+            btn.addEventListener('click', () => {
+                if (!state.currentVideoData) return;
+                startDownloadTask(state.currentVideoData.url, state.currentVideoData.title, r.quality);
+            });
+
+            dlPresetsContainer.appendChild(btn);
+        });
+    }
 }
 
 /**
@@ -517,6 +653,15 @@ export async function streamVideo(video) {
         playerLoader.style.display = 'flex';
         const loaderSpan = playerLoader.querySelector('span');
         if (loaderSpan) loaderSpan.textContent = 'Connecting YouTube Stream...';
+    }
+
+    // Query live available formats & resolutions in background to dynamically populate presets
+    if (window.electronAPI && window.electronAPI.getVideoFormats) {
+        window.electronAPI.getVideoFormats(video.url).then(res => {
+            if (res && res.success && res.resolutions && res.resolutions.length > 0) {
+                updateDynamicResolutions(res.resolutions);
+            }
+        }).catch(err => console.warn('Formats query notice:', err));
     }
 
     try {

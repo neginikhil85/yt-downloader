@@ -239,6 +239,7 @@ async function searchYouTube(query, page = 1, pageSize = 20) {
 }
 
 const { getHttpPort } = require('./p2p/p2pHttpServer');
+const { formatBytes } = require('./p2p/p2pUtils');
 
 function formatProxiedStreamUrl(rawStreamUrl) {
     if (!rawStreamUrl || !rawStreamUrl.startsWith('http')) return rawStreamUrl;
@@ -247,14 +248,106 @@ function formatProxiedStreamUrl(rawStreamUrl) {
 }
 
 /**
- * Resolves direct media stream URL for HTML5 player
+ * Dynamically queries YouTube for all supported video resolutions and audio formats with exact file sizes
  */
-function getStreamUrl(url) {
+function getVideoFormats(url) {
     return new Promise((resolve) => {
         const args = [
             ...EXTRACTOR_ARGS,
+            '-J',
+            '--no-warnings',
+            url
+        ];
+
+        execFile(YT_DLP_PATH, args, { maxBuffer: 15 * 1024 * 1024 }, (err, stdout) => {
+            if (err) {
+                return resolve({
+                    success: false,
+                    error: err.message,
+                    resolutions: [
+                        { height: 1080, quality: '1080p', label: '1080p Full HD', sizeStr: '' },
+                        { height: 720, quality: '720p', label: '720p HD', sizeStr: '' },
+                        { height: 480, quality: '480p', label: '480p SD', sizeStr: '' },
+                        { height: 360, quality: '360p', label: '360p', sizeStr: '' },
+                        { height: 0, quality: 'MP3', label: 'Audio MP3', sizeStr: '' }
+                    ]
+                });
+            }
+
+            try {
+                const json = JSON.parse(stdout);
+                const videoFormats = (json.formats || []).filter(f => f.vcodec && f.vcodec !== 'none' && f.protocol && f.protocol.startsWith('http'));
+                const heights = [...new Set(videoFormats.map(f => f.height).filter(Boolean))].sort((a, b) => b - a);
+
+                const resolutions = heights.map(h => {
+                    let label = `${h}p`;
+                    let quality = `${h}p`;
+                    if (h >= 2160) { label = '4K (2160p)'; quality = '2160p'; }
+                    else if (h >= 1440) { label = '2K (1440p)'; quality = '1440p'; }
+                    else if (h === 1080) { label = '1080p Full HD'; quality = '1080p'; }
+                    else if (h === 720) { label = '720p HD'; quality = '720p'; }
+                    else if (h === 480) { label = '480p SD'; quality = '480p'; }
+                    else if (h === 360) { label = '360p'; quality = '360p'; }
+                    else if (h === 240) { label = '240p'; quality = '240p'; }
+                    else if (h === 144) { label = '144p'; quality = '144p'; }
+
+                    const matching = videoFormats.filter(f => f.height === h);
+                    const f = matching.find(vf => vf.filesize || vf.filesize_approx) || matching[0];
+                    const sizeBytes = f ? (f.filesize || f.filesize_approx) : null;
+                    const sizeStr = sizeBytes ? formatBytes(sizeBytes) : '';
+
+                    return {
+                        height: h,
+                        quality,
+                        label,
+                        sizeBytes,
+                        sizeStr,
+                        fps: f?.fps
+                    };
+                });
+
+                // Add Audio option
+                const audioFormats = (json.formats || []).filter(f => f.acodec && f.acodec !== 'none' && (!f.vcodec || f.vcodec === 'none'));
+                const bestAudio = audioFormats.find(f => f.filesize || f.filesize_approx) || audioFormats[0];
+                const audioSize = bestAudio ? (bestAudio.filesize || bestAudio.filesize_approx) : null;
+                resolutions.push({
+                    height: 0,
+                    quality: 'MP3',
+                    label: 'Audio MP3',
+                    sizeBytes: audioSize,
+                    sizeStr: audioSize ? formatBytes(audioSize) : ''
+                });
+
+                resolve({
+                    success: true,
+                    title: json.title,
+                    thumbnail: json.thumbnail,
+                    duration: json.duration,
+                    resolutions
+                });
+            } catch (parseErr) {
+                resolve({ success: false, error: parseErr.message, resolutions: [] });
+            }
+        });
+    });
+}
+
+/**
+ * Resolves direct media stream URL for HTML5 player with dynamic resolution selection
+ */
+function getStreamUrl(url, quality = 'auto') {
+    return new Promise((resolve) => {
+        let formatFilter = 'best[ext=mp4]/best';
+        const heightMatch = String(quality).match(/(\d+)/);
+        if (heightMatch) {
+            const h = parseInt(heightMatch[1], 10);
+            formatFilter = `bestvideo[height<=${h}][ext=mp4]+bestaudio[ext=m4a]/best[height<=${h}][ext=mp4]/best[height<=${h}]/best`;
+        }
+
+        const args = [
+            ...EXTRACTOR_ARGS,
             '-g',
-            '-f', 'best[ext=mp4]/best',
+            '-f', formatFilter,
             '--no-warnings',
             url
         ];
@@ -265,18 +358,19 @@ function getStreamUrl(url) {
                     if (err2) return resolve({ success: false, error: err2.message });
                     const lines = stdout2.trim().split('\n').filter(Boolean);
                     const raw = lines[0];
-                    resolve({ success: true, streamUrl: formatProxiedStreamUrl(raw), rawUrl: raw });
+                    resolve({ success: true, streamUrl: formatProxiedStreamUrl(raw), rawUrl: raw, quality });
                 });
                 return;
             }
             const lines = stdout.trim().split('\n').filter(Boolean);
             const raw = lines[0];
-            resolve({ success: true, streamUrl: formatProxiedStreamUrl(raw), rawUrl: raw });
+            resolve({ success: true, streamUrl: formatProxiedStreamUrl(raw), rawUrl: raw, quality });
         });
     });
 }
 
 module.exports = {
     searchYouTube,
-    getStreamUrl
+    getStreamUrl,
+    getVideoFormats
 };

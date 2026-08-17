@@ -1,5 +1,5 @@
 const { ipcMain } = require('electron');
-const { searchYouTube, getStreamUrl } = require('./services/youtubeService');
+const { searchYouTube, getStreamUrl, getVideoFormats } = require('./services/youtubeService');
 const { startDownload, pauseDownload, cancelDownload, deleteDownloadFile } = require('./services/downloadService');
 const { selectFolder, selectFileToSend, openInFinder, openFile, getDefaultSavePath, getLibraryFiles } = require('./services/libraryService');
 const {
@@ -36,8 +36,12 @@ function registerIpcHandlers(getMainWindow) {
         return searchYouTube(query, page);
     });
 
-    ipcMain.handle('get-stream-url', async (event, url) => {
-        return getStreamUrl(url);
+    ipcMain.handle('get-video-formats', async (event, url) => {
+        return getVideoFormats(url);
+    });
+
+    ipcMain.handle('get-stream-url', async (event, url, quality = 'auto') => {
+        return getStreamUrl(url, quality);
     });
 
     ipcMain.handle('start-download', async (event, options) => {

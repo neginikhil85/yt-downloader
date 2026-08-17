@@ -248,16 +248,32 @@
                                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                                         </button>
                                         <div class="yt-settings-menu" id="yt-settings-menu" style="display: none;">
-                                            <div class="yt-menu-header">Playback Speed</div>
-                                            <div class="yt-menu-speed-list" id="yt-speed-list">
-                                                <button class="yt-speed-opt" data-speed="0.25">0.25x</button>
-                                                <button class="yt-speed-opt" data-speed="0.5">0.5x</button>
-                                                <button class="yt-speed-opt" data-speed="0.75">0.75x</button>
-                                                <button class="yt-speed-opt active" data-speed="1.0">Normal (1x)</button>
-                                                <button class="yt-speed-opt" data-speed="1.25">1.25x</button>
-                                                <button class="yt-speed-opt" data-speed="1.5">1.5x</button>
-                                                <button class="yt-speed-opt" data-speed="1.75">1.75x</button>
-                                                <button class="yt-speed-opt" data-speed="2.0">2x</button>
+                                            <!-- Navigation header / Tabs -->
+                                            <div class="yt-menu-nav">
+                                                <button class="yt-menu-tab active" id="tab-btn-quality">Quality</button>
+                                                <button class="yt-menu-tab" id="tab-btn-speed">Speed</button>
+                                            </div>
+
+                                            <!-- Quality Selection Panel -->
+                                            <div class="yt-menu-list" id="yt-quality-list">
+                                                <button class="yt-menu-opt active" data-quality="auto">Auto (Best)</button>
+                                                <button class="yt-menu-opt" data-quality="1080p">1080p Full HD</button>
+                                                <button class="yt-menu-opt" data-quality="720p">720p HD</button>
+                                                <button class="yt-menu-opt" data-quality="480p">480p</button>
+                                                <button class="yt-menu-opt" data-quality="360p">360p</button>
+                                                <button class="yt-menu-opt" data-quality="240p">240p</button>
+                                            </div>
+
+                                            <!-- Speed Selection Panel -->
+                                            <div class="yt-menu-list" id="yt-speed-list" style="display: none;">
+                                                <button class="yt-menu-opt" data-speed="0.25">0.25x</button>
+                                                <button class="yt-menu-opt" data-speed="0.5">0.5x</button>
+                                                <button class="yt-menu-opt" data-speed="0.75">0.75x</button>
+                                                <button class="yt-menu-opt active" data-speed="1.0">Normal (1x)</button>
+                                                <button class="yt-menu-opt" data-speed="1.25">1.25x</button>
+                                                <button class="yt-menu-opt" data-speed="1.5">1.5x</button>
+                                                <button class="yt-menu-opt" data-speed="1.75">1.75x</button>
+                                                <button class="yt-menu-opt" data-speed="2.0">2x</button>
                                             </div>
                                         </div>
                                     </div>
@@ -298,15 +314,15 @@
                                     </div>
                                 </div>
                                 
-                                <div class="download-presets">
+                                <div class="download-presets" id="player-dl-presets">
                                     <button class="btn-dl-preset primary" data-format="1080p">
                                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                                        1080p
+                                        1080p Full HD
                                     </button>
                                     <button class="btn-dl-preset" data-format="720p">720p HD</button>
                                     <button class="btn-dl-preset" data-format="480p">480p SD</button>
-                                    <button class="btn-dl-preset" data-format="360p">360p Fast</button>
-                                    <button class="btn-dl-preset audio" data-format="MP3">MP3</button>
+                                    <button class="btn-dl-preset" data-format="360p">360p</button>
+                                    <button class="btn-dl-preset audio" data-format="MP3">MP3 Audio</button>
                                 </div>
                             </div>
                         </div>
@@ -786,7 +802,7 @@
             <div class="modal-body">
                 <div class="input-group">
                     <label for="onboarding-name">What should we call you?</label>
-                    <input type="text" id="onboarding-name" class="modal-input" placeholder="Enter your name (e.g. Nikhil)" autocomplete="name" />
+                    <input type="text" id="onboarding-name" class="modal-input" placeholder="Enter your name" autocomplete="name" />
                 </div>
 
                 <div class="input-group">

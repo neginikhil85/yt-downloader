@@ -13,6 +13,14 @@ import { initSettingsModal } from './modules/settingsModal.js';
 import { initBrowserManager } from './modules/browserManager.js';
 import { initP2PShareManager } from './modules/p2pShareManager.js';
 
+window.addEventListener('error', (e) => {
+    console.error('[Window Error]:', e.message, e.filename, e.lineno);
+});
+
+window.addEventListener('unhandledrejection', (e) => {
+    console.error('[Unhandled Rejection]:', e.reason);
+});
+
 document.addEventListener('DOMContentLoaded', async () => {
     // 0. Platform styling class
     const platform = window.electronAPI?.platform || 'darwin';

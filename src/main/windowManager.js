@@ -31,6 +31,12 @@ function createMainWindow() {
 
     mainWindow.loadFile(path.join(__dirname, '..', '..', 'renderer', 'index.html'));
 
+    // Forward renderer console logs and errors directly to terminal stdout
+    mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+        const lvl = level === 3 ? 'ERROR' : (level === 2 ? 'WARN' : 'INFO');
+        console.log(`[Renderer ${lvl} L${line}]: ${message}`);
+    });
+
     mainWindow.on('closed', () => {
         mainWindow = null;
     });
