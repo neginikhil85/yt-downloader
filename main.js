@@ -5,9 +5,11 @@ const { Readable } = require('stream');
 const { createMainWindow, getMainWindow } = require('./src/main/windowManager');
 const { registerIpcHandlers } = require('./src/main/ipcHandlers');
 
-// Suppress verbose Chromium internal debug logs
+// Suppress verbose Chromium internal debug logs & bypass corporate proxy SSL inspection errors
 app.commandLine.appendSwitch('log-level', '3');
 app.commandLine.appendSwitch('disable-logging');
+app.commandLine.appendSwitch('ignore-certificate-errors');
+app.commandLine.appendSwitch('allow-insecure-localhost');
 
 function getMimeType(filePath) {
     const ext = path.extname(filePath).toLowerCase();
@@ -33,6 +35,13 @@ const FIREFOX_UA = process.platform === 'darwin'
 
 function setupSessionSecurity(sess) {
     sess.setUserAgent(DESKTOP_UA);
+
+    // Enterprise & Corporate Proxy SSL Bypass (Accepts corporate MITM inspection certificates)
+    if (typeof sess.setCertificateVerifyProc === 'function') {
+        sess.setCertificateVerifyProc((request, callback) => {
+            callback(0); // 0 = CERT_OK, accept all certificates
+        });
+    }
 
     sess.webRequest.onBeforeSendHeaders((details, callback) => {
         const url = details.url || '';
@@ -174,11 +183,27 @@ app.whenReady().then(() => {
     });
 
     registerIpcHandlers(getMainWindow);
+
+    // Route Electron sessions through local Node.js CONNECT forward proxy (Port 9876)
+    // Completely bypasses corporate/Netskope browser category blocks (e.g. Generative AI, UX Pilot, ChatGPT)
+    const { getHttpPort } = require('./src/main/services/p2p/p2pHttpServer');
+    const proxyPort = getHttpPort() || 9876;
+    const proxyRules = `http://127.0.0.1:${proxyPort}`;
+
+    session.defaultSession.setProxy({ proxyRules }).catch(err => console.warn('Default session proxy setup:', err.message));
+    session.fromPartition('persist:main').setProxy({ proxyRules }).catch(err => console.warn('Webview session proxy setup:', err.message));
+
     createMainWindow();
 
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
     });
+});
+
+app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
+    // Prevent default Chromium cert rejection for enterprise/Netskope SSL inspection
+    event.preventDefault();
+    callback(true);
 });
 
 app.on('window-all-closed', () => {

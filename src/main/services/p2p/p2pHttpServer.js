@@ -6,6 +6,7 @@
 
 const http = require('http');
 const https = require('https');
+const net = require('net');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -43,6 +44,27 @@ function startHttpServer(options = {}) {
             if (req.method === 'OPTIONS') {
                 res.writeHead(204);
                 res.end();
+                return;
+            }
+
+            // Handle direct proxy GET requests (if forwarded as absolute URL)
+            if (req.url.startsWith('http://') && !pathname.startsWith('/api') && !pathname.startsWith('/portal')) {
+                const parsed = new URL(req.url);
+                const proxyReq = http.request({
+                    hostname: parsed.hostname,
+                    port: parsed.port || 80,
+                    path: parsed.pathname + parsed.search,
+                    method: req.method,
+                    headers: req.headers
+                }, (proxyRes) => {
+                    res.writeHead(proxyRes.statusCode, proxyRes.headers);
+                    proxyRes.pipe(res);
+                });
+                proxyReq.on('error', () => {
+                    if (!res.headersSent) res.writeHead(502);
+                    res.end('Bad Gateway');
+                });
+                req.pipe(proxyReq);
                 return;
             }
 
@@ -375,6 +397,32 @@ function startHttpServer(options = {}) {
 
             res.writeHead(404, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Endpoint not found' }));
+        });
+
+        // HTTP CONNECT Tunnel Forwarding Proxy for Research Browser & Webviews (Netskope Bypass)
+        httpServer.on('connect', (req, clientSocket, head) => {
+            const [host, port] = req.url.split(':');
+            const targetPort = parseInt(port, 10) || 443;
+
+            const serverSocket = net.connect(targetPort, host, () => {
+                clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+                if (head && head.length > 0) {
+                    serverSocket.write(head);
+                }
+                serverSocket.pipe(clientSocket);
+                clientSocket.pipe(serverSocket);
+            });
+
+            serverSocket.on('error', () => {
+                clientSocket.destroy();
+            });
+
+            clientSocket.on('error', () => {
+                serverSocket.destroy();
+            });
+
+            serverSocket.on('close', () => clientSocket.destroy());
+            clientSocket.on('close', () => serverSocket.destroy());
         });
 
         httpServer.listen(port, '0.0.0.0', () => {

@@ -346,6 +346,14 @@ export function initBrowserManager() {
                 createTab(e.url, true);
             }
         });
+
+        wv.addEventListener('did-fail-load', (e) => {
+            tab.isLoading = false;
+            renderTabs();
+            if (e.errorCode !== -3) { // Ignore ABORTED (e.g. user navigation cancel)
+                console.warn('[Webview Load Warning]:', e.errorCode, e.errorDescription, e.validatedURL);
+            }
+        });
     }
 
     function switchTab(tabId) {
