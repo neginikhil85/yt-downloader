@@ -2,7 +2,7 @@ const https = require('https');
 const { execFile } = require('child_process');
 const { YT_DLP_PATH } = require('../config/paths');
 
-const EXTRACTOR_ARGS = ['--no-check-certificates', '--extractor-args', 'youtube:player_client=web,android,ios,mweb'];
+const EXTRACTOR_ARGS = ['--no-check-certificates'];
 
 // In-memory cache for search pagination continuation tokens: query -> token
 const continuationTokenCache = new Map();
@@ -276,7 +276,7 @@ function getVideoFormats(url) {
 
             try {
                 const json = JSON.parse(stdout);
-                const videoFormats = (json.formats || []).filter(f => f.vcodec && f.vcodec !== 'none' && f.protocol && f.protocol.startsWith('http'));
+                const videoFormats = (json.formats || []).filter(f => f.vcodec && f.vcodec !== 'none' && f.protocol && f.protocol.startsWith('http') && f.height >= 144);
                 const heights = [...new Set(videoFormats.map(f => f.height).filter(Boolean))].sort((a, b) => b - a);
 
                 const resolutions = heights.map(h => {
@@ -337,34 +337,43 @@ function getVideoFormats(url) {
  */
 function getStreamUrl(url, quality = 'auto') {
     return new Promise((resolve) => {
-        let formatFilter = 'best[ext=mp4]/best';
+        let formatFilter = 'bestvideo[vcodec^=avc1]+bestaudio[acodec^=mp4a]/bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best';
         const heightMatch = String(quality).match(/(\d+)/);
         if (heightMatch) {
             const h = parseInt(heightMatch[1], 10);
-            formatFilter = `bestvideo[height<=${h}][ext=mp4]+bestaudio[ext=m4a]/best[height<=${h}][ext=mp4]/best[height<=${h}]/best`;
+            formatFilter = `bestvideo[height<=${h}][vcodec^=avc1]+bestaudio[acodec^=mp4a]/bestvideo[height<=${h}][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=${h}]+bestaudio/best[height<=${h}]/best`;
         }
 
         const args = [
-            ...EXTRACTOR_ARGS,
+            '--no-check-certificates',
+            '--no-playlist',
+            '--no-warnings',
             '-g',
             '-f', formatFilter,
-            '--no-warnings',
             url
         ];
         execFile(YT_DLP_PATH, args, (error, stdout) => {
             if (error) {
-                const fallbackArgs = [...EXTRACTOR_ARGS, '-g', url];
+                const fallbackArgs = ['--no-check-certificates', '-g', url];
                 execFile(YT_DLP_PATH, fallbackArgs, (err2, stdout2) => {
                     if (err2) return resolve({ success: false, error: err2.message });
                     const lines = stdout2.trim().split('\n').filter(Boolean);
                     const raw = lines[0];
-                    resolve({ success: true, streamUrl: formatProxiedStreamUrl(raw), rawUrl: raw, quality });
+                    resolve({ success: true, streamUrl: formatProxiedStreamUrl(raw), audioUrl: null, rawUrl: raw, quality });
                 });
                 return;
             }
             const lines = stdout.trim().split('\n').filter(Boolean);
-            const raw = lines[0];
-            resolve({ success: true, streamUrl: formatProxiedStreamUrl(raw), rawUrl: raw, quality });
+            const videoUrl = lines[0];
+            const audioUrl = lines[1] || null;
+            resolve({
+                success: true,
+                streamUrl: formatProxiedStreamUrl(videoUrl),
+                audioUrl: audioUrl ? formatProxiedStreamUrl(audioUrl) : null,
+                rawVideoUrl: videoUrl,
+                rawAudioUrl: audioUrl,
+                quality
+            });
         });
     });
 }

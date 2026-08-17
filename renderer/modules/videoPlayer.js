@@ -5,6 +5,7 @@ import { startDownloadTask } from './downloadManager.js';
 
 export function initVideoPlayer() {
     const videoEl = document.getElementById('cinema-video');
+    const audioEl = document.getElementById('cinema-audio');
     const screenWrapper = document.getElementById('video-screen-wrapper');
     const playerControls = document.getElementById('player-controls');
     const playerContainer = document.querySelector('.player-container');
@@ -59,13 +60,15 @@ export function initVideoPlayer() {
     let controlsTimer = null;
     let previousVolume = 0.9;
 
-    // 1. Play / Pause with Animation
+    // 1. Play / Pause with Animation & Audio Sync
     function togglePlayPause(showRipple = true) {
         if (videoEl.paused) {
-            videoEl.play().catch(err => console.error('Play error:', err));
+            videoEl.play().catch(err => console.warn('Play notice:', err.message || err));
+            if (audioEl && audioEl.src && audioEl.paused) audioEl.play().catch(()=>{});
             if (showRipple) triggerCenterRipple(true);
         } else {
             videoEl.pause();
+            if (audioEl && audioEl.src && !audioEl.paused) audioEl.pause();
             if (showRipple) triggerCenterRipple(false);
         }
     }
@@ -89,6 +92,7 @@ export function initVideoPlayer() {
         if (iconPlay) iconPlay.style.display = 'none';
         if (iconPause) iconPause.style.display = 'block';
         if (btnPlayPause) btnPlayPause.title = 'Pause (k / space)';
+        if (audioEl && audioEl.src && audioEl.paused) audioEl.play().catch(()=>{});
         resetControlsTimeout();
     });
 
@@ -96,12 +100,33 @@ export function initVideoPlayer() {
         if (iconPlay) iconPlay.style.display = 'block';
         if (iconPause) iconPause.style.display = 'none';
         if (btnPlayPause) btnPlayPause.title = 'Play (k / space)';
+        if (audioEl && audioEl.src && !audioEl.paused) audioEl.pause();
         showControls();
+    });
+
+    videoEl.addEventListener('seeking', () => {
+        if (audioEl && audioEl.src) audioEl.currentTime = videoEl.currentTime;
+    });
+
+    videoEl.addEventListener('seeked', () => {
+        if (audioEl && audioEl.src) audioEl.currentTime = videoEl.currentTime;
+    });
+
+    videoEl.addEventListener('ratechange', () => {
+        if (audioEl && audioEl.src) audioEl.playbackRate = videoEl.playbackRate;
+    });
+
+    videoEl.addEventListener('volumechange', () => {
+        if (audioEl && audioEl.src) {
+            audioEl.volume = videoEl.volume;
+            audioEl.muted = videoEl.muted;
+        }
     });
 
     videoEl.addEventListener('ended', () => {
         if (iconPlay) iconPlay.style.display = 'block';
         if (iconPause) iconPause.style.display = 'none';
+        if (audioEl && audioEl.src) audioEl.pause();
         showControls();
     });
 
@@ -558,6 +583,7 @@ export function updateDynamicResolutions(resolutions = []) {
         // Attach click listeners to new dynamic quality options
         const qualityOpts = qualityList.querySelectorAll('.yt-menu-opt');
         const videoEl = document.getElementById('cinema-video');
+        const audioEl = document.getElementById('cinema-audio');
         const settingsMenu = document.getElementById('yt-settings-menu');
 
         qualityOpts.forEach(btn => {
@@ -581,13 +607,28 @@ export function updateDynamicResolutions(resolutions = []) {
                     try {
                         const res = await window.electronAPI.getStreamUrl(state.currentVideoData.url, quality);
                         if (playerLoader) playerLoader.style.display = 'none';
-                        if (res && res.success && res.streamUrl) {
                             videoEl.src = res.streamUrl;
-                            videoEl.currentTime = savedTime;
-                            if (wasPlaying) {
-                                videoEl.play().catch(e => console.error('Play error on quality switch:', e));
+                            if (res.audioUrl && audioEl) {
+                                audioEl.src = res.audioUrl;
+                                audioEl.volume = videoEl.volume;
+                                audioEl.muted = videoEl.muted;
+                                audioEl.playbackRate = videoEl.playbackRate;
+                            } else if (audioEl) {
+                                audioEl.removeAttribute('src');
                             }
-                        }
+
+                            const restorePlayback = () => {
+                                if (savedTime > 0) {
+                                    try { videoEl.currentTime = savedTime; } catch {}
+                                    if (audioEl && audioEl.src) { try { audioEl.currentTime = savedTime; } catch {} }
+                                }
+                                if (wasPlaying) {
+                                    videoEl.play().catch(e => console.warn('Play notice on quality switch:', e.message || e));
+                                    if (audioEl && audioEl.src) audioEl.play().catch(()=>{});
+                                }
+                            };
+
+                            videoEl.addEventListener('loadedmetadata', restorePlayback, { once: true });
                     } catch (err) {
                         if (playerLoader) playerLoader.style.display = 'none';
                         console.error('Quality switch error:', err);
@@ -631,6 +672,7 @@ export async function streamVideo(video) {
 
     const iframeEl = document.getElementById('cinema-iframe');
     const videoEl = document.getElementById('cinema-video');
+    const audioEl = document.getElementById('cinema-audio');
     const playerControls = document.getElementById('player-controls');
     const playerTitle = document.getElementById('player-title');
     const playerChannel = document.getElementById('player-channel');
@@ -647,6 +689,10 @@ export async function streamVideo(video) {
     videoEl.pause();
     videoEl.removeAttribute('src');
     videoEl.style.display = 'none';
+    if (audioEl) {
+        audioEl.pause();
+        audioEl.removeAttribute('src');
+    }
     if (playerControls) playerControls.style.display = 'none';
 
     if (playerLoader) {
@@ -672,7 +718,14 @@ export async function streamVideo(video) {
             videoEl.style.display = 'block';
             if (playerControls) playerControls.style.display = 'flex';
             videoEl.src = streamRes.streamUrl;
-            videoEl.play().catch(err => console.error('Stream playback notice:', err));
+            if (streamRes.audioUrl && audioEl) {
+                audioEl.src = streamRes.audioUrl;
+                audioEl.volume = videoEl.volume;
+                audioEl.muted = videoEl.muted;
+                audioEl.playbackRate = videoEl.playbackRate;
+            }
+            videoEl.play().catch(err => console.warn('Autoplay notice:', err.message || err));
+            if (audioEl && audioEl.src) audioEl.play().catch(()=>{});
         } else {
             // Embed fallback
             if (iframeEl) {
