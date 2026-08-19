@@ -3,6 +3,24 @@ const fs = require('fs');
 const os = require('os');
 const { execSync } = require('child_process');
 
+// Ensure system environment PATH includes standard bin directories on macOS / Linux GUI app launch
+if (process.platform !== 'win32') {
+    const extraPaths = [
+        path.join(os.homedir(), 'homebrew', 'bin'),
+        path.join(os.homedir(), 'homebrew', 'sbin'),
+        '/opt/homebrew/bin',
+        '/opt/homebrew/sbin',
+        '/usr/local/bin',
+        '/usr/local/sbin',
+        path.join(os.homedir(), '.local/bin'),
+        '/usr/bin',
+        '/bin'
+    ];
+    const currentPaths = (process.env.PATH || '').split(':');
+    const merged = Array.from(new Set([...extraPaths, ...currentPaths].filter(p => p && fs.existsSync(p))));
+    process.env.PATH = merged.join(':');
+}
+
 const PROJECT_ROOT = path.join(__dirname, '..', '..', '..');
 
 function ensureExecutable(filePath) {
@@ -39,16 +57,16 @@ function getYtDlpPath() {
     const arch = process.arch;
 
     const candidatePaths = [
-        // 1. Packaged production extraResources (Priority inside built standalone .app / .exe)
-        process.resourcesPath && path.join(process.resourcesPath, 'bin', platform, exeName),
-        process.resourcesPath && path.join(process.resourcesPath, 'bin', `${platform}-${arch}`, exeName),
-        process.resourcesPath && path.join(process.resourcesPath, 'bin', exeName),
-
-        // 2. System / Homebrew locations (Executes via system Python with root CAs — bypasses corporate proxy on npm start)
+        // 1. System / Homebrew locations (Executes via system Python with root CAs — bypasses corporate proxy on macOS)
         path.join(os.homedir(), 'homebrew', 'bin', exeName),
         !isWin && `/opt/homebrew/bin/${exeName}`,
         !isWin && `/usr/local/bin/${exeName}`,
         !isWin && path.join(os.homedir(), '.local', 'bin', exeName),
+
+        // 2. Packaged production extraResources (Priority inside built standalone .app / .exe on target machines)
+        process.resourcesPath && path.join(process.resourcesPath, 'bin', platform, exeName),
+        process.resourcesPath && path.join(process.resourcesPath, 'bin', `${platform}-${arch}`, exeName),
+        process.resourcesPath && path.join(process.resourcesPath, 'bin', exeName),
 
         // 3. Project root bin directory (For standalone dev testing & portable bundles)
         path.join(PROJECT_ROOT, 'bin', platform, exeName),

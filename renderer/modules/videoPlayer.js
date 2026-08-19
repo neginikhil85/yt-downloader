@@ -717,6 +717,22 @@ export async function streamVideo(video) {
         if (streamRes && streamRes.success && streamRes.streamUrl) {
             videoEl.style.display = 'block';
             if (playerControls) playerControls.style.display = 'flex';
+
+            videoEl.onerror = (e) => {
+                console.warn('Native video playback notice:', e);
+                if (playerLoader) playerLoader.style.display = 'none';
+            };
+
+            videoEl.onloadeddata = () => {
+                if (playerLoader) playerLoader.style.display = 'none';
+            };
+            videoEl.onplaying = () => {
+                if (playerLoader) playerLoader.style.display = 'none';
+            };
+            videoEl.oncanplay = () => {
+                if (playerLoader) playerLoader.style.display = 'none';
+            };
+
             videoEl.src = streamRes.streamUrl;
             if (streamRes.audioUrl && audioEl) {
                 audioEl.src = streamRes.audioUrl;
@@ -726,22 +742,10 @@ export async function streamVideo(video) {
             }
             videoEl.play().catch(err => console.warn('Autoplay notice:', err.message || err));
             if (audioEl && audioEl.src) audioEl.play().catch(()=>{});
-        } else {
-            // Embed fallback
-            if (iframeEl) {
-                iframeEl.style.display = 'block';
-                const videoId = video.id || (video.url.match(/v=([^&]+)/)?.[1] || '');
-                iframeEl.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1&origin=https://www.youtube.com`;
-            }
         }
     } catch (err) {
         if (playerLoader) playerLoader.style.display = 'none';
-        console.error('Stream resolution failed:', err);
-        if (iframeEl) {
-            iframeEl.style.display = 'block';
-            const videoId = video.id || (video.url.match(/v=([^&]+)/)?.[1] || '');
-            iframeEl.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1&origin=https://www.youtube.com`;
-        }
+        console.error('Stream resolution notice:', err);
     }
 }
 

@@ -1,7 +1,27 @@
 const { app, BrowserWindow, protocol, session } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const { Readable } = require('stream');
+
+// Ensure system environment PATH includes standard bin directories on macOS / Linux GUI app launch
+if (process.platform !== 'win32') {
+    const extraPaths = [
+        path.join(os.homedir(), 'homebrew', 'bin'),
+        path.join(os.homedir(), 'homebrew', 'sbin'),
+        '/opt/homebrew/bin',
+        '/opt/homebrew/sbin',
+        '/usr/local/bin',
+        '/usr/local/sbin',
+        path.join(os.homedir(), '.local/bin'),
+        '/usr/bin',
+        '/bin'
+    ];
+    const currentPaths = (process.env.PATH || '').split(':');
+    const merged = Array.from(new Set([...extraPaths, ...currentPaths].filter(p => p && fs.existsSync(p))));
+    process.env.PATH = merged.join(':');
+}
+
 const { createMainWindow, getMainWindow } = require('./src/main/windowManager');
 const { registerIpcHandlers } = require('./src/main/ipcHandlers');
 

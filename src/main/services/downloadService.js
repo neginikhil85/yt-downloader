@@ -5,7 +5,7 @@ const { app } = require('electron');
 const { YT_DLP_PATH, FFMPEG_DIR } = require('../config/paths');
 
 const activeDownloads = new Map();
-const EXTRACTOR_ARGS = ['--no-check-certificates', '--extractor-args', 'youtube:player_client=android'];
+const EXTRACTOR_ARGS = ['--no-check-certificates', '--js-runtimes', 'node', '--extractor-args', 'youtube:player_client=android_vr,android,tv_embedded'];
 
 /**
  * Spawns yt-dlp download process with real-time progress parsing
