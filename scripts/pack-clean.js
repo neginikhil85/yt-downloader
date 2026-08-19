@@ -1,5 +1,5 @@
 // ==========================================================================
-// YT Studio Pro — Clean Standalone Packager for macOS & Windows
+// YT Studio Pro / Bruno — Universal Standalone Packager for macOS, Windows & Linux
 // ==========================================================================
 
 const fs = require('fs');
@@ -9,22 +9,22 @@ const { execSync } = require('child_process');
 
 const rootDir = path.join(__dirname, '..');
 const releaseDir = path.join(rootDir, 'release');
-const electronDistMac = path.join(rootDir, 'node_modules', 'electron', 'dist');
+const electronDist = path.join(rootDir, 'node_modules', 'electron', 'dist');
 
-const processName = 'bruno';
-const appName = 'bruno';
+const processName = process.env.PROCESS_NAME || 'bruno';
+const appName = process.env.APP_NAME || 'bruno';
 
-const macOutputDir = path.join(releaseDir, 'mac');
-const winOutputDir = path.join(releaseDir, 'windows');
+const isMac = process.platform === 'darwin';
+const isWin = process.platform === 'win32';
+const isLinux = process.platform === 'linux';
 
 console.log('=== Cleaning up release directory ===');
 
-// 1. Remove all old/temporary artifacts from release
+// 1. Clean release directory safely
 if (fs.existsSync(releaseDir)) {
     const items = fs.readdirSync(releaseDir);
     items.forEach(item => {
         const itemPath = path.join(releaseDir, item);
-        // Remove old openvpn, dmg, zip, blockmap, yml, and temporary folders
         if (
             item.endsWith('.zip') ||
             item.endsWith('.dmg') ||
@@ -32,21 +32,27 @@ if (fs.existsSync(releaseDir)) {
             item.endsWith('.yml') ||
             item.startsWith('.icon') ||
             item.includes('openvpn') ||
-            item === 'mac-arm64' ||
+            item === 'temp-mac' ||
+            item === 'temp-win' ||
+            item === 'standalone-mac' ||
+            item === 'standalone-win' ||
             item === 'standalone-linux'
         ) {
-            console.log(` - Removing old artifact: ${item}`);
-            fs.rmSync(itemPath, { recursive: true, force: true });
+            try {
+                fs.rmSync(itemPath, { recursive: true, force: true });
+                console.log(` - Removed old artifact: ${item}`);
+            } catch (e) {
+                // Ignore cleanup errors
+            }
         }
     });
+} else {
+    fs.mkdirSync(releaseDir, { recursive: true });
 }
 
 function copyRecursive(src, dest) {
-    if (process.platform === 'darwin' || process.platform === 'linux') {
-        execSync(`cp -R "${src}" "${dest}"`);
-    } else {
-        fs.cpSync(src, dest, { recursive: true });
-    }
+    if (!fs.existsSync(src)) return;
+    fs.cpSync(src, dest, { recursive: true, force: true });
 }
 
 function updateInfoPlist(plistPath, updates) {
@@ -69,9 +75,21 @@ const binSrc = path.join(rootDir, 'bin');
 function bundleProdDependencies(targetAppDir) {
     const targetNodeModules = path.join(targetAppDir, 'node_modules');
     fs.mkdirSync(targetNodeModules, { recursive: true });
-    
+
     // Copy production dependencies needed at runtime
-    const depsToCopy = ['qrcode', 'dijkstrajs', 'pngjs', 'yargs', 'yargs-parser', 'string-width', 'strip-ansi', 'ansi-regex', 'is-fullwidth-code-point', 'emoji-regex'];
+    const depsToCopy = [
+        'qrcode',
+        'dijkstrajs',
+        'pngjs',
+        'yargs',
+        'yargs-parser',
+        'string-width',
+        'strip-ansi',
+        'ansi-regex',
+        'is-fullwidth-code-point',
+        'emoji-regex'
+    ];
+
     depsToCopy.forEach(dep => {
         const srcPath = path.join(rootDir, 'node_modules', dep);
         const destPath = path.join(targetNodeModules, dep);
@@ -81,44 +99,129 @@ function bundleProdDependencies(targetAppDir) {
     });
 }
 
-// ==========================================================================
-// 2. Package macOS Standalone (bruno.app)
-// ==========================================================================
-console.log('\n=== 1. Packaging macOS Standalone (bruno.app) ===');
-const macZip = path.join(os.homedir(), 'Library', 'Caches', 'electron', 'electron-v34.5.8-darwin-arm64.zip');
+function populateAppResources(resourcesDir) {
+    const appDir = path.join(resourcesDir, 'app');
+    fs.mkdirSync(appDir, { recursive: true });
 
-if (fs.existsSync(macOutputDir)) {
-    try { execSync(`rm -rf "${macOutputDir}"`); } catch {}
+    // Remove default_app.asar if present
+    const defaultAppAsar = path.join(resourcesDir, 'default_app.asar');
+    if (fs.existsSync(defaultAppAsar)) {
+        try { fs.rmSync(defaultAppAsar, { force: true }); } catch (e) {}
+    }
+
+    // Copy source code
+    filesToCopy.forEach((item) => {
+        const srcPath = path.join(rootDir, item);
+        if (fs.existsSync(srcPath)) {
+            copyRecursive(srcPath, path.join(appDir, item));
+        }
+    });
+
+    // Bundle production dependencies
+    bundleProdDependencies(appDir);
+
+    // Copy standalone binaries to resources/bin
+    if (fs.existsSync(binSrc)) {
+        copyRecursive(binSrc, path.join(resourcesDir, 'bin'));
+    }
 }
-fs.mkdirSync(macOutputDir, { recursive: true });
 
-let electronAppTemplate = path.join(electronDistMac, 'Electron.app');
-if (!fs.existsSync(electronAppTemplate) && fs.existsSync(macZip)) {
-    console.log(' - Extracting macOS Electron runtime from cache...');
-    const tempMacExtract = path.join(releaseDir, 'temp-mac');
-    fs.mkdirSync(tempMacExtract, { recursive: true });
-    execSync(`unzip -q -o "${macZip}" -d "${tempMacExtract}"`);
-    electronAppTemplate = path.join(tempMacExtract, 'Electron.app');
+function createZip(sourceDir, destZipPath) {
+    try {
+        if (fs.existsSync(destZipPath)) {
+            fs.rmSync(destZipPath, { force: true });
+        }
+        if (process.platform === 'win32') {
+            execSync(`powershell -NoProfile -Command "Compress-Archive -Path '${sourceDir}\\*' -DestinationPath '${destZipPath}' -Force"`, { stdio: 'ignore' });
+        } else {
+            const baseDir = path.dirname(sourceDir);
+            const folderName = path.basename(sourceDir);
+            execSync(`cd "${baseDir}" && zip -r -q "${destZipPath}" "${folderName}"`, { stdio: 'ignore' });
+        }
+        return fs.existsSync(destZipPath);
+    } catch (e) {
+        return false;
+    }
 }
 
-if (fs.existsSync(electronAppTemplate)) {
+// ==========================================================================
+// 1. macOS Standalone Packaging
+// ==========================================================================
+function packageMac() {
+    console.log('\n=== Packaging macOS Standalone (bruno.app) ===');
+    const macOutputDir = path.join(releaseDir, 'mac');
+
+    if (fs.existsSync(macOutputDir)) {
+        try { fs.rmSync(macOutputDir, { recursive: true, force: true }); } catch (e) {}
+    }
+    fs.mkdirSync(macOutputDir, { recursive: true });
+
+    let electronAppTemplate = null;
+
+    if (fs.existsSync(electronDist)) {
+        const distItems = fs.readdirSync(electronDist);
+        const appFolder = distItems.find(item => item.endsWith('.app'));
+        if (appFolder) {
+            electronAppTemplate = path.join(electronDist, appFolder);
+        }
+    }
+
+    // Optional cache fallback if not found in dist
+    if (!electronAppTemplate) {
+        const cacheLocations = [
+            path.join(os.homedir(), 'Library', 'Caches', 'electron'),
+            path.join(os.homedir(), '.cache', 'electron')
+        ];
+        for (const cacheDir of cacheLocations) {
+            if (fs.existsSync(cacheDir)) {
+                const zips = fs.readdirSync(cacheDir).filter(f => f.includes('darwin') && f.endsWith('.zip'));
+                if (zips.length > 0) {
+                    const zipPath = path.join(cacheDir, zips[0]);
+                    console.log(` - Extracting macOS runtime from cache (${zips[0]})...`);
+                    const tempExtract = path.join(releaseDir, 'temp-mac');
+                    fs.mkdirSync(tempExtract, { recursive: true });
+                    try {
+                        execSync(`unzip -q -o "${zipPath}" -d "${tempExtract}"`);
+                        const extractedItems = fs.readdirSync(tempExtract);
+                        const appNameInZip = extractedItems.find(i => i.endsWith('.app'));
+                        if (appNameInZip) {
+                            electronAppTemplate = path.join(tempExtract, appNameInZip);
+                        }
+                    } catch (e) {}
+                    break;
+                }
+            }
+        }
+    }
+
+    if (!electronAppTemplate || !fs.existsSync(electronAppTemplate)) {
+        console.warn(' - Notice: macOS Electron template not found on this host. Skipping macOS package.');
+        return false;
+    }
+
     const destApp = path.join(macOutputDir, `${appName}.app`);
     copyRecursive(electronAppTemplate, destApp);
 
     // Clean up temporary extract
     const tempMacExtract = path.join(releaseDir, 'temp-mac');
     if (fs.existsSync(tempMacExtract)) {
-        try { execSync(`rm -rf "${tempMacExtract}"`); } catch {}
+        try { fs.rmSync(tempMacExtract, { recursive: true, force: true }); } catch (e) {}
     }
 
     // Rename main executable inside Contents/MacOS to processName
     const macOsDir = path.join(destApp, 'Contents', 'MacOS');
-    const oldExe = path.join(macOsDir, 'Electron');
-    const newExe = path.join(macOsDir, processName);
-    if (fs.existsSync(oldExe)) {
-        fs.renameSync(oldExe, newExe);
-        fs.chmodSync(newExe, 0o755);
-        console.log(` - Renamed main executable to: ${processName}`);
+    if (fs.existsSync(macOsDir)) {
+        const exeFiles = fs.readdirSync(macOsDir);
+        const mainExeName = exeFiles[0] || 'Electron';
+        const oldExe = path.join(macOsDir, mainExeName);
+        const newExe = path.join(macOsDir, processName);
+        if (fs.existsSync(oldExe)) {
+            if (oldExe !== newExe) {
+                fs.renameSync(oldExe, newExe);
+            }
+            try { fs.chmodSync(newExe, 0o755); } catch (e) {}
+            console.log(` - Configured executable: ${processName}`);
+        }
     }
 
     // Update main Info.plist
@@ -134,41 +237,46 @@ if (fs.existsSync(electronAppTemplate)) {
     // Rename and update Helper apps in Contents/Frameworks
     const frameworksDir = path.join(destApp, 'Contents', 'Frameworks');
     if (fs.existsSync(frameworksDir)) {
-        const helpers = [
-            { oldApp: 'Electron Helper.app', newApp: `${processName} Helper.app`, name: `${processName} Helper` },
-            { oldApp: 'Electron Helper (GPU).app', newApp: `${processName} Helper (GPU).app`, name: `${processName} Helper (GPU)` },
-            { oldApp: 'Electron Helper (Plugin).app', newApp: `${processName} Helper (Plugin).app`, name: `${processName} Helper (Plugin)` },
-            { oldApp: 'Electron Helper (Renderer).app', newApp: `${processName} Helper (Renderer).app`, name: `${processName} Helper (Renderer)` }
-        ];
+        const fwItems = fs.readdirSync(frameworksDir);
+        fwItems.forEach(item => {
+            if (item.endsWith('.app')) {
+                const oldHelperPath = path.join(frameworksDir, item);
+                const suffixMatch = item.match(/\((.*?)\)/);
+                const helperSuffix = suffixMatch ? ` (${suffixMatch[1]})` : '';
+                const newHelperName = `${processName} Helper${helperSuffix}`;
+                const newHelperApp = `${newHelperName}.app`;
+                const newHelperPath = path.join(frameworksDir, newHelperApp);
 
-        helpers.forEach(h => {
-            const oldHelperPath = path.join(frameworksDir, h.oldApp);
-            const newHelperPath = path.join(frameworksDir, h.newApp);
-            if (fs.existsSync(oldHelperPath)) {
-                const oldHelperExeName = h.oldApp.replace(/\.app$/, '');
-                const oldHelperExe = path.join(oldHelperPath, 'Contents', 'MacOS', oldHelperExeName);
-                const newHelperExe = path.join(oldHelperPath, 'Contents', 'MacOS', h.name);
-                if (fs.existsSync(oldHelperExe)) {
-                    fs.renameSync(oldHelperExe, newHelperExe);
-                    fs.chmodSync(newHelperExe, 0o755);
+                const helperMacOsDir = path.join(oldHelperPath, 'Contents', 'MacOS');
+                if (fs.existsSync(helperMacOsDir)) {
+                    const helperExes = fs.readdirSync(helperMacOsDir);
+                    if (helperExes.length > 0) {
+                        const oldHelperExe = path.join(helperMacOsDir, helperExes[0]);
+                        const newHelperExe = path.join(helperMacOsDir, newHelperName);
+                        if (oldHelperExe !== newHelperExe) {
+                            fs.renameSync(oldHelperExe, newHelperExe);
+                        }
+                        try { fs.chmodSync(newHelperExe, 0o755); } catch (e) {}
+                    }
                 }
 
                 const helperPlist = path.join(oldHelperPath, 'Contents', 'Info.plist');
                 updateInfoPlist(helperPlist, {
-                    CFBundleExecutable: h.name,
-                    CFBundleName: h.name,
-                    CFBundleDisplayName: h.name,
-                    CFBundleIdentifier: `com.${processName}.helper.${h.name.replace(/[^a-zA-Z0-9]/g, '')}`
+                    CFBundleExecutable: newHelperName,
+                    CFBundleName: newHelperName,
+                    CFBundleDisplayName: newHelperName,
+                    CFBundleIdentifier: `com.${processName}.helper.${newHelperName.replace(/[^a-zA-Z0-9]/g, '')}`
                 });
 
-                fs.renameSync(oldHelperPath, newHelperPath);
+                if (oldHelperPath !== newHelperPath) {
+                    fs.renameSync(oldHelperPath, newHelperPath);
+                }
             }
         });
     }
 
     const resourcesDir = path.join(destApp, 'Contents', 'Resources');
-    const appDir = path.join(resourcesDir, 'app');
-    fs.mkdirSync(appDir, { recursive: true });
+    fs.mkdirSync(resourcesDir, { recursive: true });
 
     // Copy icon
     const icnsSource = path.join(rootDir, 'assets', 'icon.icns');
@@ -177,109 +285,163 @@ if (fs.existsSync(electronAppTemplate)) {
         fs.copyFileSync(icnsSource, path.join(resourcesDir, 'electron.icns'));
     }
 
-    // Remove default_app.asar
-    const defaultAppAsar = path.join(resourcesDir, 'default_app.asar');
-    if (fs.existsSync(defaultAppAsar)) {
-        fs.rmSync(defaultAppAsar, { force: true });
+    // Populate app files & node_modules
+    populateAppResources(resourcesDir);
+
+    // Clear quarantine and apply ad-hoc codesign on macOS
+    if (process.platform === 'darwin') {
+        try {
+            execSync(`xattr -cr "${destApp}"`, { stdio: 'ignore' });
+            execSync(`codesign --force --deep --sign - "${destApp}"`, { stdio: 'ignore' });
+            console.log(' - macOS xattr stripped & ad-hoc codesign applied.');
+        } catch (e) {}
     }
 
-    // Copy source code
-    filesToCopy.forEach((item) => {
-        const srcPath = path.join(rootDir, item);
-        if (fs.existsSync(srcPath)) {
-            copyRecursive(srcPath, path.join(appDir, item));
+    console.log(`✓ macOS Standalone ready: ${path.join(macOutputDir, `${appName}.app`)}`);
+    return true;
+}
+
+// ==========================================================================
+// 2. Windows Standalone Packaging
+// ==========================================================================
+function packageWindows() {
+    console.log('\n=== Packaging Windows Standalone (bruno.exe) ===');
+    const winOutputDir = path.join(releaseDir, 'windows');
+
+    if (fs.existsSync(winOutputDir)) {
+        try { fs.rmSync(winOutputDir, { recursive: true, force: true }); } catch (e) {}
+    }
+
+    let winRuntimeFound = false;
+
+    // Check if host is Windows and node_modules/electron/dist contains electron.exe
+    if (isWin && fs.existsSync(electronDist)) {
+        const distFiles = fs.readdirSync(electronDist);
+        if (distFiles.some(f => f.toLowerCase().endsWith('.exe'))) {
+            fs.mkdirSync(winOutputDir, { recursive: true });
+            copyRecursive(electronDist, winOutputDir);
+            winRuntimeFound = true;
         }
-    });
-
-    // Bundle production dependencies (qrcode, etc.)
-    bundleProdDependencies(appDir);
-
-    // Copy binaries
-    if (fs.existsSync(binSrc)) {
-        copyRecursive(binSrc, path.join(resourcesDir, 'bin'));
     }
 
-    // Clear quarantine and apply ad-hoc codesign
-    try {
-        execSync(`xattr -cr "${destApp}"`, { stdio: 'ignore' });
-        execSync(`codesign --force --deep --sign - "${destApp}"`, { stdio: 'ignore' });
-        console.log(' - macOS xattr stripped & codesign applied successfully.');
-    } catch {}
+    // Check cache for windows electron zip
+    if (!winRuntimeFound) {
+        const cacheLocations = [
+            path.join(os.homedir(), 'Library', 'Caches', 'electron'),
+            path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'electron', 'Cache'),
+            path.join(os.homedir(), '.cache', 'electron')
+        ];
 
-    console.log(`✓ macOS Standalone ready: ${path.join(macOutputDir, 'bruno.app')}`);
-}
+        for (const cacheDir of cacheLocations) {
+            if (fs.existsSync(cacheDir)) {
+                const zips = fs.readdirSync(cacheDir).filter(f => (f.includes('win32') || f.includes('windows')) && f.endsWith('.zip'));
+                if (zips.length > 0) {
+                    const zipPath = path.join(cacheDir, zips[0]);
+                    console.log(` - Extracting Windows runtime from cache (${zips[0]})...`);
+                    fs.mkdirSync(winOutputDir, { recursive: true });
+                    try {
+                        if (process.platform === 'win32') {
+                            execSync(`powershell -NoProfile -Command "Expand-Archive -Path '${zipPath}' -DestinationPath '${winOutputDir}' -Force"`, { stdio: 'ignore' });
+                        } else {
+                            execSync(`unzip -q -o "${zipPath}" -d "${winOutputDir}"`, { stdio: 'ignore' });
+                        }
+                        winRuntimeFound = true;
+                    } catch (e) {}
+                    break;
+                }
+            }
+        }
+    }
 
-// ==========================================================================
-// 3. Package Universal Windows x64 Standalone (bruno.exe)
-// ==========================================================================
-console.log('\n=== 2. Packaging Windows x64 Standalone (bruno.exe) ===');
-const winZip = path.join(os.homedir(), 'Library', 'Caches', 'electron', 'electron-v34.5.8-win32-x64.zip');
-
-if (fs.existsSync(winOutputDir)) {
-    try { execSync(`rm -rf "${winOutputDir}"`); } catch {}
-}
-fs.mkdirSync(winOutputDir, { recursive: true });
-
-if (fs.existsSync(winZip)) {
-    console.log(' - Extracting native Windows x64 Electron runtime...');
-    execSync(`unzip -q -o "${winZip}" -d "${winOutputDir}"`);
+    if (!winRuntimeFound) {
+        console.warn(' - Notice: Windows Electron runtime not found on this host. Skipping Windows package.');
+        return false;
+    }
 
     // Rename electron.exe to bruno.exe
     const oldWinExe = path.join(winOutputDir, 'electron.exe');
-    const newWinExe = path.join(winOutputDir, 'bruno.exe');
+    const newWinExe = path.join(winOutputDir, `${processName}.exe`);
     if (fs.existsSync(oldWinExe)) {
         fs.renameSync(oldWinExe, newWinExe);
-        console.log(' - Renamed Windows binary to: bruno.exe');
+        console.log(` - Renamed Windows binary to: ${processName}.exe`);
     }
 
-    // Prepare resources/app
     const winResources = path.join(winOutputDir, 'resources');
-    const winAppDir = path.join(winResources, 'app');
-    fs.mkdirSync(winAppDir, { recursive: true });
+    fs.mkdirSync(winResources, { recursive: true });
 
-    // Remove default_app.asar
-    const defaultAppAsar = path.join(winResources, 'default_app.asar');
-    if (fs.existsSync(defaultAppAsar)) {
-        fs.rmSync(defaultAppAsar, { force: true });
-    }
+    // Populate app files & dependencies
+    populateAppResources(winResources);
 
-    // Copy source code
-    filesToCopy.forEach((item) => {
-        const srcPath = path.join(rootDir, item);
-        if (fs.existsSync(srcPath)) {
-            copyRecursive(srcPath, path.join(winAppDir, item));
-        }
-    });
+    console.log(`✓ Windows Standalone ready: ${path.join(winOutputDir, `${processName}.exe`)}`);
 
-    // Bundle production dependencies (qrcode, etc.)
-    bundleProdDependencies(winAppDir);
-
-    // Copy standalone binaries to resources/bin
-    if (fs.existsSync(binSrc)) {
-        copyRecursive(binSrc, path.join(winResources, 'bin'));
-    }
-
-    console.log(`✓ Windows x64 Standalone ready: ${path.join(winOutputDir, 'bruno.exe')}`);
-
-    // Create windows-portable.zip
-    console.log('\n=== 3. Compressing Windows Portable Zip ===');
+    // Create windows-portable.zip if possible
     const zipPath = path.join(releaseDir, 'windows-portable.zip');
-    if (fs.existsSync(zipPath)) fs.rmSync(zipPath, { force: true });
-    execSync(`cd "${releaseDir}" && zip -r -q "windows-portable.zip" windows/`);
-    console.log(`✓ windows-portable.zip ready: ${zipPath}`);
+    const zipCreated = createZip(winOutputDir, zipPath);
+    if (zipCreated) {
+        console.log(`✓ windows-portable.zip created: ${zipPath}`);
+    }
+
+    return true;
+}
+
+// ==========================================================================
+// 3. Linux Standalone Packaging
+// ==========================================================================
+function packageLinux() {
+    console.log('\n=== Packaging Linux Standalone (bruno) ===');
+    const linuxOutputDir = path.join(releaseDir, 'linux');
+
+    if (fs.existsSync(linuxOutputDir)) {
+        try { fs.rmSync(linuxOutputDir, { recursive: true, force: true }); } catch (e) {}
+    }
+
+    let linuxRuntimeFound = false;
+
+    if (isLinux && fs.existsSync(electronDist)) {
+        fs.mkdirSync(linuxOutputDir, { recursive: true });
+        copyRecursive(electronDist, linuxOutputDir);
+        linuxRuntimeFound = true;
+    }
+
+    if (!linuxRuntimeFound) {
+        console.warn(' - Notice: Linux Electron runtime not found on this host. Skipping Linux package.');
+        return false;
+    }
+
+    const oldLinuxExe = path.join(linuxOutputDir, 'electron');
+    const newLinuxExe = path.join(linuxOutputDir, processName);
+    if (fs.existsSync(oldLinuxExe)) {
+        fs.renameSync(oldLinuxExe, newLinuxExe);
+        try { fs.chmodSync(newLinuxExe, 0o755); } catch (e) {}
+        console.log(` - Renamed Linux binary to: ${processName}`);
+    }
+
+    const linuxResources = path.join(linuxOutputDir, 'resources');
+    fs.mkdirSync(linuxResources, { recursive: true });
+
+    populateAppResources(linuxResources);
+
+    console.log(`✓ Linux Standalone ready: ${path.join(linuxOutputDir, processName)}`);
+    return true;
+}
+
+// ==========================================================================
+// Execute Packaging Pipeline
+// ==========================================================================
+if (isMac) {
+    packageMac();
+    packageWindows(); // Also try building Windows if cached zip is present
+} else if (isWin) {
+    packageWindows();
+    packageMac();
+} else if (isLinux) {
+    packageLinux();
+    packageWindows();
 } else {
-    console.warn(' - Warning: Windows x64 electron zip not found.');
+    packageMac();
+    packageWindows();
+    packageLinux();
 }
 
-// Also remove standalone-mac if it was an old directory name, keep clean release/mac and release/windows
-const oldStandaloneMac = path.join(releaseDir, 'standalone-mac');
-if (fs.existsSync(oldStandaloneMac)) {
-    try {
-        execSync(`rm -rf "${oldStandaloneMac}"`);
-    } catch {}
-}
-
-console.log('\n🎉 ALL CLEAN! Release folder now contains:');
-console.log(` 📂 release/mac/                  -> bruno.app (macOS Standalone)`);
-console.log(` 📂 release/windows/              -> bruno.exe + runtime (Windows Standalone)`);
-console.log(` 📦 release/windows-portable.zip  -> Full Windows package ready to send & extract\n`);
+console.log('\n🎉 ALL DONE! Standalone packaging finished.');
+console.log(` 📂 Check release/ directory for outputs.\n`);

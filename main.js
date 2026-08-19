@@ -4,6 +4,15 @@ const fs = require('fs');
 const os = require('os');
 const { Readable } = require('stream');
 
+// Ensure app name and identity is consistent across all OS platforms & in dev mode (npm start)
+app.name = 'bruno';
+if (typeof app.setName === 'function') {
+    app.setName('bruno');
+}
+if (process.platform === 'win32') {
+    app.setAppUserModelId('com.bruno.bruno');
+}
+
 // Ensure system environment PATH includes standard bin directories on macOS / Linux GUI app launch
 if (process.platform !== 'win32') {
     const extraPaths = [
