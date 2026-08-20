@@ -61,6 +61,108 @@ const DEFAULT_PINNED_APPS = [
     { name: 'Google', url: 'https://www.google.com', key: 'google' }
 ];
 
+const BROWSER_THEMES = [
+    {
+        key: 'obsidian',
+        name: 'Obsidian Studio',
+        badge: 'Default',
+        desc: 'Deep matte charcoal with subtle cobalt blue lighting',
+        swatch: ['#0b0c10', '#181b23', '#3b82f6']
+    },
+    {
+        key: 'cyberpunk',
+        name: 'Midnight Cyberpunk',
+        badge: 'Neon Glow',
+        desc: 'High-contrast ultraviolet violet & cybernetic cyan accents',
+        swatch: ['#090611', '#191230', '#a855f7']
+    },
+    {
+        key: 'nord',
+        name: 'Nord Arctic Frost',
+        badge: 'Clean Polar',
+        desc: 'Arctic slate, deep polar night blue, and ice cyan highlights',
+        swatch: ['#0c1017', '#1a232f', '#38bdf8']
+    },
+    {
+        key: 'ember',
+        name: 'Solarized Ember',
+        badge: 'Warm Dark',
+        desc: 'Warm graphite dark background with vibrant amber fire glow',
+        swatch: ['#100b08', '#241912', '#f97316']
+    },
+    {
+        key: 'emerald',
+        name: 'Matrix Emerald',
+        badge: 'Forest Tech',
+        desc: 'Dark cyber forest base with bright mint green accents',
+        swatch: ['#070f0a', '#132419', '#10b981']
+    },
+    {
+        key: 'oled',
+        name: 'Pure OLED Black',
+        badge: 'Zero Backlight',
+        desc: '100% True black for maximum contrast & battery efficiency',
+        swatch: ['#000000', '#0d0d0d', '#00f0ff']
+    }
+];
+
+const CURATED_ADDONS_DATA = [
+    {
+        id: 'cjpalhdlnbpafiamejdnhcphjbkeiagm',
+        name: 'uBlock Origin',
+        category: 'Privacy & Security',
+        description: 'An efficient ad, tracker, and malware blocker. Fast, lightweight, and highly customizable.',
+        badge: 'Top Rated',
+        author: 'Raymond Hill',
+        iconSvg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`
+    },
+    {
+        id: 'eimadpbcbfnmbkopoojfekhnkhdbieeh',
+        name: 'Dark Reader',
+        category: 'Visual & Themes',
+        description: 'Invert brightness and contrast on every website with high-performance real-time dark mode.',
+        badge: 'Essential',
+        author: 'Alexander Shutov',
+        iconSvg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a10 10 0 0 1 10 10 10 10 0 0 1-10 10V2z"></path></svg>`
+    },
+    {
+        id: 'hlkenndednhfkekhgcdicdfddnkalmdm',
+        name: 'Cookie-Editor',
+        category: 'Developer Tools',
+        description: 'Create, edit, search, and export cookies for the current tab with zero friction.',
+        badge: 'Dev Tool',
+        author: 'Moustachware',
+        iconSvg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="8" cy="9" r="1.5"></circle><circle cx="15" cy="8" r="1"></circle><circle cx="10" cy="15" r="1.5"></circle><circle cx="16" cy="14" r="1.5"></circle></svg>`
+    },
+    {
+        id: 'mnjggcdmjocbbbhaepdhchncahnbgone',
+        name: 'SponsorBlock',
+        category: 'Media & Streaming',
+        description: 'Automatically skip YouTube video sponsorships, intros, outros, and subscribe reminders.',
+        badge: 'Popular',
+        author: 'Ajay Ramachandran',
+        iconSvg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>`
+    },
+    {
+        id: 'jinjaccalgkegednnccohejagnlnfdag',
+        name: 'Violentmonkey',
+        category: 'Developer Tools',
+        description: 'Lightweight and open-source userscript manager supporting Greasemonkey & Tampermonkey scripts.',
+        badge: 'Power Tool',
+        author: 'Violentmonkey Team',
+        iconSvg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>`
+    },
+    {
+        id: 'djflhoibgkdhkhhcedjflbmhjenkljhe',
+        name: 'User-Agent Switcher',
+        category: 'Utilities',
+        description: 'Quickly switch browser user-agent string to spoof mobile, tablet, or desktop devices.',
+        badge: 'Utility',
+        author: 'Ray',
+        iconSvg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>`
+    }
+];
+
 const USER_AGENTS = {
     desktop: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
     firefox: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0',
@@ -109,10 +211,13 @@ export function initBrowserManager() {
     const btnFullscreen = document.getElementById('browser-btn-fullscreen');
     const btnPinPage = document.getElementById('browser-btn-pin-page');
     const btnCopyUrl = document.getElementById('browser-btn-copy-url');
+    const btnThemeStudio = document.getElementById('browser-btn-theme-studio');
+    const btnExtHub = document.getElementById('browser-btn-ext-hub');
     const btnExtensions = document.getElementById('browser-btn-extensions');
     const browserPanel = document.getElementById('view-browser');
+    const activeCountBadge = document.getElementById('ext-active-count-badge');
 
-    // Extensions Controls
+    // Extensions Quick Popover
     const extPanel = document.getElementById('browser-extensions-panel');
     const extCloseBtn = document.getElementById('ext-close-btn');
     const extToggleAdblock = document.getElementById('ext-toggle-adblock');
@@ -124,6 +229,32 @@ export function initBrowserManager() {
     const extBtnInjectJs = document.getElementById('ext-btn-inject-js');
     const extBtnClearCache = document.getElementById('ext-btn-clear-cache');
     const extBtnHardReload = document.getElementById('ext-btn-hard-reload');
+
+    // Extension Hub Modal Elements
+    const modalExtHub = document.getElementById('modal-extension-hub');
+    const btnCloseExtHub = document.getElementById('btn-close-ext-hub');
+    const btnExtHubDone = document.getElementById('btn-ext-hub-done');
+    const extHubTabs = document.querySelectorAll('.ext-hub-tab');
+    const extHubViews = document.querySelectorAll('.ext-hub-view');
+    const extCuratedGrid = document.getElementById('ext-curated-grid');
+    const extInstalledList = document.getElementById('ext-installed-list');
+    const extThemesGrid = document.getElementById('ext-themes-grid');
+    const extInstalledPill = document.getElementById('ext-installed-count-pill');
+    const extMarketSearch = document.getElementById('ext-market-search');
+    const extCatPills = document.querySelectorAll('.ext-cat-pill');
+    const extSideloadInput = document.getElementById('ext-sideload-input');
+    const extSideloadBtn = document.getElementById('ext-sideload-btn');
+    const extSideloadStatus = document.getElementById('ext-sideload-status');
+    const extBtnSideloadFolder = document.getElementById('ext-btn-sideload-folder');
+    const extBtnQuickUnpack = document.getElementById('ext-btn-quick-unpack');
+
+    // Find in Page Elements
+    const findBar = document.getElementById('browser-find-bar');
+    const findInput = document.getElementById('browser-find-input');
+    const findCount = document.getElementById('browser-find-count');
+    const findPrev = document.getElementById('browser-find-prev');
+    const findNext = document.getElementById('browser-find-next');
+    const findClose = document.getElementById('browser-find-close');
 
     // Modals
     const pinAppModal = document.getElementById('pin-app-modal');
@@ -153,6 +284,12 @@ export function initBrowserManager() {
     let globalAdBlock = true;
     let globalDarkMode = false;
     let currentUaKey = 'desktop';
+    let installedExtensionsList = [];
+    let currentMarketFilter = 'all';
+
+    // Apply saved browser theme
+    const savedTheme = localStorage.getItem('yt_browser_theme') || 'obsidian';
+    applyBrowserTheme(savedTheme);
 
     // ==========================================================================
     // Brand & Icon Resolver
@@ -187,7 +324,6 @@ export function initBrowserManager() {
             }
         }
 
-        // Generic high-res favicon via Google Favicon CDN
         let favUrl = '';
         try {
             const host = new URL(url).hostname;
@@ -211,6 +347,230 @@ export function initBrowserManager() {
                 </div>
             `;
         }
+    }
+
+    // ==========================================================================
+    // Theme Studio Engine
+    // ==========================================================================
+    function applyBrowserTheme(themeKey) {
+        if (!browserPanel) return;
+        browserPanel.setAttribute('data-browser-theme', themeKey);
+        localStorage.setItem('yt_browser_theme', themeKey);
+        renderThemesGrid();
+    }
+
+    function renderThemesGrid() {
+        if (!extThemesGrid) return;
+        const current = browserPanel?.getAttribute('data-browser-theme') || 'obsidian';
+        extThemesGrid.innerHTML = BROWSER_THEMES.map(theme => {
+            const isActive = theme.key === current;
+            return `
+                <div class="ext-theme-card ${isActive ? 'active' : ''}" data-theme="${theme.key}">
+                    <div class="ext-theme-swatch-box">
+                        <div class="ext-theme-swatch-p1" style="background: ${theme.swatch[0]};"></div>
+                        <div class="ext-theme-swatch-p2" style="background: ${theme.swatch[1]};"></div>
+                        <div class="ext-theme-swatch-p3" style="background: ${theme.swatch[2]};"></div>
+                    </div>
+                    <div>
+                        <div class="ext-theme-title-row">
+                            <h5 class="ext-theme-name">${theme.name}</h5>
+                            <span class="ext-theme-badge">${isActive ? 'Active ✓' : theme.badge}</span>
+                        </div>
+                        <p class="ext-theme-desc">${theme.desc}</p>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        extThemesGrid.querySelectorAll('.ext-theme-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const k = card.getAttribute('data-theme');
+                if (k) applyBrowserTheme(k);
+            });
+        });
+    }
+
+    // ==========================================================================
+    // Chrome Extension Hub & Marketplace
+    // ==========================================================================
+    async function loadInstalledExtensions() {
+        if (!window.electronAPI || !window.electronAPI.extensionGetInstalled) return;
+        try {
+            installedExtensionsList = await window.electronAPI.extensionGetInstalled();
+            updateExtensionBadges();
+            renderInstalledList();
+            renderCuratedGrid();
+        } catch (e) {
+            console.warn('[ExtensionHub] Load error:', e);
+        }
+    }
+
+    function updateExtensionBadges() {
+        const activeCount = installedExtensionsList.filter(e => e.enabled).length;
+        if (activeCountBadge) {
+            activeCountBadge.textContent = activeCount;
+            activeCountBadge.style.display = activeCount > 0 ? 'inline-block' : 'none';
+        }
+        if (extInstalledPill) {
+            extInstalledPill.textContent = installedExtensionsList.length;
+        }
+    }
+
+    function renderCuratedGrid() {
+        if (!extCuratedGrid) return;
+        const query = (extMarketSearch?.value || '').toLowerCase().trim();
+
+        const filtered = CURATED_ADDONS_DATA.filter(addon => {
+            const matchesCat = currentMarketFilter === 'all' || addon.category === currentMarketFilter;
+            const matchesQuery = !query || addon.name.toLowerCase().includes(query) || addon.description.toLowerCase().includes(query);
+            return matchesCat && matchesQuery;
+        });
+
+        extCuratedGrid.innerHTML = filtered.map(addon => {
+            const installed = installedExtensionsList.find(e => e.id === addon.id);
+            const isInstalled = !!installed;
+
+            return `
+                <div class="ext-addon-card">
+                    <div class="ext-card-top">
+                        <div class="ext-addon-icon-wrap">
+                            ${addon.iconSvg}
+                        </div>
+                        <div class="ext-card-info">
+                            <div class="ext-card-title-row">
+                                <h5 class="ext-addon-name">${addon.name}</h5>
+                                <span class="ext-addon-badge">${addon.badge}</span>
+                            </div>
+                            <div class="ext-addon-author">by ${addon.author}</div>
+                            <p class="ext-addon-desc">${addon.description}</p>
+                        </div>
+                    </div>
+                    <div class="ext-card-footer">
+                        <span class="ext-addon-cat-tag">${addon.category}</span>
+                        ${isInstalled 
+                            ? `<span class="ext-btn-installed">✓ Installed</span>`
+                            : `<button class="ext-btn-install" data-ext-id="${addon.id}">Install Addon</button>`
+                        }
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        extCuratedGrid.querySelectorAll('.ext-btn-install').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const extId = btn.getAttribute('data-ext-id');
+                if (!extId) return;
+                btn.disabled = true;
+                btn.textContent = 'Installing...';
+                try {
+                    const res = await window.electronAPI.extensionInstall(extId);
+                    if (res && res.success) {
+                        btn.outerHTML = `<span class="ext-btn-installed">✓ Installed</span>`;
+                        await loadInstalledExtensions();
+                    } else {
+                        btn.disabled = false;
+                        btn.textContent = 'Install Addon';
+                        alert('Install notice: ' + (res?.error || 'Failed'));
+                    }
+                } catch (err) {
+                    btn.disabled = false;
+                    btn.textContent = 'Install Addon';
+                    alert('Install Error: ' + err.message);
+                }
+            });
+        });
+    }
+
+    function renderInstalledList() {
+        if (!extInstalledList) return;
+        if (!installedExtensionsList.length) {
+            extInstalledList.innerHTML = `
+                <div style="text-align: center; padding: 48px 20px; color: #64748b;">
+                    <div style="font-size: 32px; margin-bottom: 10px;">🧩</div>
+                    <div style="font-size: 13.5px; font-weight: 500; color: #94a3b8;">No Extensions Installed Yet</div>
+                    <div style="font-size: 12px; margin-top: 4px;">Browse the Addon Store or sideload any Chrome Web Store extension.</div>
+                </div>
+            `;
+            return;
+        }
+
+        extInstalledList.innerHTML = installedExtensionsList.map(ext => {
+            return `
+                <div class="ext-installed-item">
+                    <div class="ext-item-left">
+                        <div class="ext-item-icon">🧩</div>
+                        <div>
+                            <div class="ext-item-name-row">
+                                <span class="ext-item-name">${ext.name}</span>
+                                <span class="ext-item-version">v${ext.version || '1.0'}</span>
+                                ${ext.isUnpacked ? `<span class="ext-addon-badge">Local</span>` : ''}
+                            </div>
+                            <div class="ext-item-desc">${ext.description || 'Chromium extension runtime component'}</div>
+                        </div>
+                    </div>
+                    <div class="ext-item-actions">
+                        <button class="ext-icon-btn" data-action="folder" data-id="${ext.id}" title="Open Extension Folder">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                        </button>
+                        <button class="ext-icon-btn delete" data-action="delete" data-id="${ext.id}" title="Remove Extension">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                        <label class="ext-switch" title="Toggle Extension">
+                            <input type="checkbox" data-action="toggle" data-id="${ext.id}" ${ext.enabled ? 'checked' : ''}>
+                            <span class="ext-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Action bindings
+        extInstalledList.querySelectorAll('[data-action="toggle"]').forEach(input => {
+            input.addEventListener('change', async (e) => {
+                const id = input.getAttribute('data-id');
+                const enabled = e.target.checked;
+                await window.electronAPI.extensionToggle(id, enabled);
+                await loadInstalledExtensions();
+            });
+        });
+
+        extInstalledList.querySelectorAll('[data-action="folder"]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const id = btn.getAttribute('data-id');
+                if (id) await window.electronAPI.extensionOpenFolder(id);
+            });
+        });
+
+        extInstalledList.querySelectorAll('[data-action="delete"]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const id = btn.getAttribute('data-id');
+                if (id && confirm('Are you sure you want to remove this extension?')) {
+                    await window.electronAPI.extensionRemove(id);
+                    await loadInstalledExtensions();
+                }
+            });
+        });
+    }
+
+    function openExtensionHub(targetTab = 'ext-view-marketplace') {
+        if (!modalExtHub) return;
+        modalExtHub.style.display = 'flex';
+        switchExtHubTab(targetTab);
+        loadInstalledExtensions();
+        renderThemesGrid();
+    }
+
+    function closeExtensionHub() {
+        if (modalExtHub) modalExtHub.style.display = 'none';
+    }
+
+    function switchExtHubTab(viewId) {
+        extHubTabs.forEach(tab => {
+            tab.classList.toggle('active', tab.getAttribute('data-target') === viewId);
+        });
+        extHubViews.forEach(view => {
+            view.classList.toggle('active', view.id === viewId);
+        });
     }
 
     // ==========================================================================
@@ -248,148 +608,119 @@ export function initBrowserManager() {
         webview.setAttribute('partition', 'persist:main');
         webview.setAttribute('allowpopups', 'true');
         const isGoogleAuth = finalUrl.includes('accounts.google.com') || finalUrl.includes('accounts.youtube.com') || finalUrl.includes('oauth2.googleapis.com');
-        webview.setAttribute('useragent', isGoogleAuth ? USER_AGENTS.firefox : (USER_AGENTS[currentUaKey] || USER_AGENTS.desktop));
-        webview.style.width = '100%';
-        webview.style.height = '100%';
-        webview.style.border = 'none';
+        const ua = isGoogleAuth
+            ? 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36'
+            : (USER_AGENTS[currentUaKey] || USER_AGENTS.desktop);
 
-        if (!isHome) {
-            webview.src = finalUrl;
-        }
+        webview.setAttribute('useragent', ua);
+        webview.className = 'browser-webview';
+        if (!isHome) webview.src = finalUrl;
 
         webviewsContainer.appendChild(webview);
 
-        const tabObj = {
+        const tabData = {
             id: tabId,
-            url: isHome ? '' : finalUrl,
+            url: isHome ? 'about:home' : finalUrl,
             title: isHome ? 'New Tab' : 'Loading...',
-            isHome: isHome,
-            isLoading: !isHome,
+            loading: !isHome,
+            canGoBack: false,
+            canGoForward: false,
+            isAudioMuted: false,
             webviewEl: webview,
-            adBlock: globalAdBlock,
-            darkMode: globalDarkMode
+            tabEl: null
         };
 
-        tabs.push(tabObj);
+        // Create Tab Element in Header
+        const tabEl = document.createElement('div');
+        tabEl.className = 'browser-tab';
+        tabEl.id = `header-tab-${tabId}`;
+        tabEl.innerHTML = `
+            <div class="tab-favicon-container">
+                ${getBrandIconHtml(tabData.url, tabData.title)}
+            </div>
+            <span class="tab-title">${tabData.title}</span>
+            <span class="tab-audio-icon" style="display: none;" title="Audio playing — Click to mute">🔊</span>
+            <button class="tab-close-btn" title="Close Tab (⌘W / Ctrl+W)">✕</button>
+        `;
 
-        // Attach Webview Listeners
-        attachWebviewListeners(tabObj);
+        tabData.tabEl = tabEl;
+        tabsContainer.appendChild(tabEl);
+        tabs.push(tabData);
 
-        renderTabs();
+        // Tab Event Listeners
+        tabEl.addEventListener('click', (e) => {
+            if (e.target.closest('.tab-close-btn')) {
+                e.stopPropagation();
+                closeTab(tabId);
+                return;
+            }
+            if (e.target.closest('.tab-audio-icon')) {
+                e.stopPropagation();
+                toggleTabAudio(tabId);
+                return;
+            }
+            switchTab(tabId);
+        });
+
+        // Middle-click to close tab
+        tabEl.addEventListener('auxclick', (e) => {
+            if (e.button === 1) {
+                e.preventDefault();
+                closeTab(tabId);
+            }
+        });
+
+        setupWebviewEvents(tabData);
 
         if (activate) {
             switchTab(tabId);
         }
 
-        return tabObj;
+        tabsContainer.scrollLeft = tabsContainer.scrollWidth;
+        return tabData;
     }
 
-    function attachWebviewListeners(tab) {
-        const { webviewEl: wv, id: tabId } = tab;
-
-        wv.addEventListener('did-start-loading', () => {
-            tab.isLoading = true;
-            renderTabs();
-        });
-
-        wv.addEventListener('did-stop-loading', () => {
-            tab.isLoading = false;
-            
-            if (wv.getURL) {
-                const currentUrl = wv.getURL();
-                tab.url = currentUrl;
-                if (activeTabId === tabId && urlInput) {
-                    urlInput.value = currentUrl;
-                }
+    function toggleTabAudio(tabId) {
+        const tab = tabs.find(t => t.id === tabId);
+        if (tab && tab.webviewEl && tab.webviewEl.setAudioMuted) {
+            tab.isAudioMuted = !tab.isAudioMuted;
+            tab.webviewEl.setAudioMuted(tab.isAudioMuted);
+            const audioIcon = tab.tabEl?.querySelector('.tab-audio-icon');
+            if (audioIcon) {
+                audioIcon.textContent = tab.isAudioMuted ? '🔇' : '🔊';
+                audioIcon.title = tab.isAudioMuted ? 'Muted — Click to unmute' : 'Audio playing — Click to mute';
             }
-            
-            if (wv.getTitle) {
-                tab.title = wv.getTitle() || tab.title;
-            }
-
-            // Sync Pin Star state
-            updatePinStarState();
-            applyExtensions(tab);
-            updateNavControls();
-            renderTabs();
-        });
-
-        wv.addEventListener('did-navigate', (e) => {
-            tab.url = e.url;
-            tab.isHome = false;
-
-            if (activeTabId === tabId) {
-                if (urlInput) urlInput.value = e.url;
-                if (homeDashboard) homeDashboard.classList.remove('active');
-                wv.classList.add('active');
-            }
-            updatePinStarState();
-            updateNavControls();
-            renderTabs();
-        });
-
-        wv.addEventListener('did-navigate-in-page', (e) => {
-            tab.url = e.url;
-            if (activeTabId === tabId && urlInput) urlInput.value = e.url;
-            updatePinStarState();
-            updateNavControls();
-        });
-
-        wv.addEventListener('page-title-updated', (e) => {
-            tab.title = e.title || tab.title;
-            renderTabs();
-        });
-
-        wv.addEventListener('new-window', (e) => {
-            e.preventDefault();
-            if (e.url) {
-                createTab(e.url, true);
-            }
-        });
-
-        wv.addEventListener('did-fail-load', (e) => {
-            tab.isLoading = false;
-            renderTabs();
-            if (e.errorCode !== -3) { // Ignore ABORTED (e.g. user navigation cancel)
-                console.warn('[Webview Load Warning]:', e.errorCode, e.errorDescription, e.validatedURL);
-            }
-        });
+        }
     }
 
     function switchTab(tabId) {
-        const targetTab = tabs.find(t => t.id === tabId);
-        if (!targetTab) return;
-
+        if (!tabId) return;
         activeTabId = tabId;
 
-        // Hide all webviews
         tabs.forEach(t => {
+            const isActive = t.id === tabId;
+            t.tabEl?.classList.toggle('active', isActive);
             if (t.webviewEl) {
-                t.webviewEl.style.display = 'none';
-                t.webviewEl.classList.remove('active');
+                t.webviewEl.classList.toggle('active', isActive);
             }
         });
 
-        // Show target webview or Home Dashboard
-        if (targetTab.isHome) {
-            if (homeDashboard) homeDashboard.classList.add('active');
-            if (urlInput) urlInput.value = '';
-        } else {
-            if (homeDashboard) homeDashboard.classList.remove('active');
-            if (targetTab.webviewEl) {
-                targetTab.webviewEl.style.display = 'flex';
-                targetTab.webviewEl.classList.add('active');
+        const activeTab = tabs.find(t => t.id === tabId);
+        if (!activeTab) return;
+
+        if (activeTab.url === 'about:home') {
+            homeDashboard.style.display = 'flex';
+            if (urlInput) {
+                urlInput.value = '';
+                urlInput.placeholder = 'Search Google or enter address...';
             }
-            if (urlInput) urlInput.value = targetTab.url || '';
+        } else {
+            homeDashboard.style.display = 'none';
+            if (urlInput) urlInput.value = activeTab.url;
         }
 
-        // Sync extension toggles & Star Pin button
-        if (extToggleAdblock) extToggleAdblock.checked = targetTab.adBlock;
-        if (extToggleDarkmode) extToggleDarkmode.checked = targetTab.darkMode;
-        updatePinStarState();
-
-        updateNavControls();
-        renderTabs();
+        updateControlsState();
+        activeTab.tabEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
     }
 
     function closeTab(tabId) {
@@ -397,9 +728,8 @@ export function initBrowserManager() {
         if (index === -1) return;
 
         const [removedTab] = tabs.splice(index, 1);
-        if (removedTab.webviewEl && removedTab.webviewEl.parentNode) {
-            removedTab.webviewEl.parentNode.removeChild(removedTab.webviewEl);
-        }
+        removedTab.tabEl?.remove();
+        removedTab.webviewEl?.remove();
 
         if (tabs.length === 0) {
             createTab('about:home', true);
@@ -407,393 +737,289 @@ export function initBrowserManager() {
         }
 
         if (activeTabId === tabId) {
-            const nextIndex = Math.max(0, index - 1);
-            switchTab(tabs[nextIndex].id);
-        } else {
-            renderTabs();
+            const nextTab = tabs[Math.min(index, tabs.length - 1)];
+            if (nextTab) switchTab(nextTab.id);
         }
     }
 
-    function renderTabs() {
-        if (!tabsContainer) return;
-        tabsContainer.innerHTML = '';
+    function setupWebviewEvents(tabData) {
+        const wv = tabData.webviewEl;
 
-        tabs.forEach((tab) => {
-            const tabEl = document.createElement('div');
-            tabEl.className = `browser-tab ${tab.id === activeTabId ? 'active' : ''} ${tab.isLoading ? 'loading' : ''}`;
-            tabEl.dataset.tabId = tab.id;
-
-            let iconHtml = '';
-            if (tab.isHome) {
-                iconHtml = `<div class="tab-favicon-wrap"><span class="tab-favicon-fallback">🏠</span></div>`;
-            } else {
-                iconHtml = getBrandIconHtml(tab.url, tab.title, false);
-            }
-
-            tabEl.innerHTML = `
-                <div class="tab-spinner"></div>
-                ${iconHtml}
-                <span class="tab-title" title="${tab.title || tab.url}">${tab.title || 'New Tab'}</span>
-                <button class="tab-close-btn" title="Close Tab (Ctrl+W / ⌘W)">✕</button>
-            `;
-
-            // Tab click to activate
-            tabEl.addEventListener('click', (e) => {
-                if (e.target.closest('.tab-close-btn')) {
-                    e.stopPropagation();
-                    closeTab(tab.id);
-                } else {
-                    switchTab(tab.id);
-                }
-            });
-
-            tabsContainer.appendChild(tabEl);
+        wv.addEventListener('did-start-loading', () => {
+            tabData.loading = true;
+            if (tabData.id === activeTabId) updateControlsState();
         });
 
-        // Insert "+" New Tab button right after the tabs inside the scroll container
-        if (btnNewTab) {
-            tabsContainer.appendChild(btnNewTab);
-        }
+        wv.addEventListener('did-stop-loading', () => {
+            tabData.loading = false;
+            tabData.url = wv.getURL();
+            if (tabData.id === activeTabId) {
+                if (urlInput && tabData.url !== 'about:home') urlInput.value = tabData.url;
+                updateControlsState();
+            }
+            applyPageInjections(wv);
+        });
 
-        // Ensure active tab is scrolled into view
-        const activeTabEl = tabsContainer.querySelector('.browser-tab.active');
-        if (activeTabEl) {
-            activeTabEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
-        }
-    }
-
-    function updateNavControls() {
-        const activeTab = tabs.find(t => t.id === activeTabId);
-        if (!activeTab || activeTab.isHome || !activeTab.webviewEl) {
-            if (btnBack) btnBack.disabled = true;
-            if (btnForward) btnForward.disabled = true;
-            return;
-        }
-
-        const wv = activeTab.webviewEl;
-        if (btnBack && wv.canGoBack) {
-            btnBack.disabled = !wv.canGoBack();
-        }
-        if (btnForward && wv.canGoForward) {
-            btnForward.disabled = !wv.canGoForward();
-        }
-    }
-
-    function updatePinStarState() {
-        const activeTab = tabs.find(t => t.id === activeTabId);
-        if (!btnPinPage) return;
-
-        if (!activeTab || activeTab.isHome || !activeTab.url) {
-            btnPinPage.classList.remove('pinned');
-            return;
-        }
-
-        const isPinned = pinnedApps.some(app => {
-            try {
-                return new URL(app.url).hostname === new URL(activeTab.url).hostname;
-            } catch {
-                return false;
+        wv.addEventListener('page-title-updated', (e) => {
+            tabData.title = e.title || 'Untitled';
+            if (tabData.tabEl) {
+                const titleSpan = tabData.tabEl.querySelector('.tab-title');
+                if (titleSpan) titleSpan.textContent = tabData.title;
             }
         });
 
-        if (isPinned) {
-            btnPinPage.classList.add('pinned');
-            btnPinPage.title = '★ Bookmarked / Pinned to Quick Apps';
-        } else {
-            btnPinPage.classList.remove('pinned');
-            btnPinPage.title = '☆ Bookmark / Pin this Website to Quick Apps';
+        wv.addEventListener('page-favicon-updated', () => {
+            if (tabData.tabEl) {
+                const favBox = tabData.tabEl.querySelector('.tab-favicon-container');
+                if (favBox) favBox.innerHTML = getBrandIconHtml(tabData.url, tabData.title);
+            }
+        });
+
+        wv.addEventListener('media-started-playing', () => {
+            const audioIcon = tabData.tabEl?.querySelector('.tab-audio-icon');
+            if (audioIcon) audioIcon.style.display = 'inline-block';
+        });
+
+        wv.addEventListener('media-paused', () => {
+            const audioIcon = tabData.tabEl?.querySelector('.tab-audio-icon');
+            if (audioIcon) audioIcon.style.display = 'none';
+        });
+
+        wv.addEventListener('new-window', (e) => {
+            e.preventDefault();
+            if (e.url) createTab(e.url, true);
+        });
+
+        // Find-in-page result listener
+        wv.addEventListener('found-in-page', (e) => {
+            if (findCount && e.result) {
+                const active = e.result.activeMatchOrdinal || 0;
+                const total = e.result.matches || 0;
+                findCount.textContent = `${active} of ${total}`;
+            }
+        });
+    }
+
+    function applyPageInjections(wv) {
+        if (!wv) return;
+        if (globalAdBlock) {
+            wv.insertCSS(ADBLOCK_CSS).catch(()=>{});
+        }
+        if (globalDarkMode) {
+            wv.insertCSS(DARK_READER_CSS).catch(()=>{});
         }
     }
 
-    function navigateActiveTab(targetUrl) {
+    function navigateActiveTab(inputUrl) {
         const activeTab = tabs.find(t => t.id === activeTabId);
         if (!activeTab) return;
 
-        const finalUrl = parseUrl(targetUrl);
-        if (finalUrl === 'about:home') {
-            activeTab.isHome = true;
-            activeTab.url = '';
-            activeTab.title = 'New Tab';
-            if (activeTab.webviewEl) {
-                activeTab.webviewEl.style.display = 'none';
-                activeTab.webviewEl.classList.remove('active');
-            }
-            if (homeDashboard) homeDashboard.classList.add('active');
+        const target = parseUrl(inputUrl);
+        activeTab.url = target;
+
+        if (target === 'about:home') {
+            homeDashboard.style.display = 'flex';
             if (urlInput) urlInput.value = '';
-            updatePinStarState();
-            renderTabs();
-            return;
-        }
-
-        activeTab.isHome = false;
-        activeTab.url = finalUrl;
-        if (homeDashboard) homeDashboard.classList.remove('active');
-
-        if (activeTab.webviewEl) {
-            activeTab.webviewEl.style.display = 'flex';
-            activeTab.webviewEl.classList.add('active');
-            try {
-                activeTab.webviewEl.loadURL(finalUrl);
-            } catch {
-                activeTab.webviewEl.src = finalUrl;
+            if (activeTab.tabEl) {
+                const titleSpan = activeTab.tabEl.querySelector('.tab-title');
+                if (titleSpan) titleSpan.textContent = 'New Tab';
             }
+        } else {
+            homeDashboard.style.display = 'none';
+            if (urlInput) urlInput.value = target;
+            if (activeTab.webviewEl) activeTab.webviewEl.loadURL(target);
         }
-        if (urlInput) urlInput.value = finalUrl;
-        updatePinStarState();
-        renderTabs();
+        updateControlsState();
+    }
+
+    function updateControlsState() {
+        const activeTab = tabs.find(t => t.id === activeTabId);
+        if (!activeTab || !activeTab.webviewEl) return;
+
+        if (btnBack) btnBack.disabled = !activeTab.webviewEl.canGoBack();
+        if (btnForward) btnForward.disabled = !activeTab.webviewEl.canGoForward();
     }
 
     // ==========================================================================
-    // Quick Apps / Pinned Shortcuts (Firefox Style)
+    // Pinned Apps Bar & Quick Star
     // ==========================================================================
     function loadPinnedApps() {
         try {
-            const saved = localStorage.getItem('yt_pinned_web_apps');
-            return saved ? JSON.parse(saved) : DEFAULT_PINNED_APPS;
+            const raw = localStorage.getItem('yt_browser_pinned_apps');
+            return raw ? JSON.parse(raw) : DEFAULT_PINNED_APPS;
         } catch {
             return DEFAULT_PINNED_APPS;
         }
     }
 
-    function savePinnedApps(apps) {
-        pinnedApps = apps;
-        try {
-            localStorage.setItem('yt_pinned_web_apps', JSON.stringify(apps));
-        } catch (e) {
-            console.error('Failed to save pinned apps:', e);
-        }
-        renderPinnedApps();
-        updatePinStarState();
+    function savePinnedApps() {
+        localStorage.setItem('yt_browser_pinned_apps', JSON.stringify(pinnedApps));
     }
 
     function renderPinnedApps() {
-        // 1. Render in top pinned bar
         if (pinnedBar) {
-            pinnedBar.innerHTML = '';
-            pinnedApps.forEach((app, idx) => {
-                const chip = document.createElement('button');
-                chip.className = 'pinned-app-chip';
-                chip.title = `${app.name} (${app.url})`;
-
-                const iconHtml = getBrandIconHtml(app.url, app.name, false);
-
-                chip.innerHTML = `
-                    ${iconHtml}
+            pinnedBar.innerHTML = pinnedApps.map((app, idx) => `
+                <button class="browser-pinned-item" data-index="${idx}" title="${app.name} (${app.url})">
+                    <span class="pinned-app-icon">${getBrandIconHtml(app.url, app.name)}</span>
                     <span class="pinned-app-name">${app.name}</span>
-                    <span class="pinned-app-delete" title="Unpin shortcut">✕</span>
-                `;
+                </button>
+            `).join('') + `
+                <button class="browser-pinned-add-btn" id="btn-add-pinned-bar" title="Pin custom web app">+ Add</button>
+            `;
 
-                chip.addEventListener('click', (e) => {
-                    if (e.target.closest('.pinned-app-delete')) {
-                        e.stopPropagation();
-                        deletePinnedApp(idx);
-                    } else {
-                        navigateActiveTab(app.url);
-                    }
+            pinnedBar.querySelectorAll('.browser-pinned-item').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const idx = parseInt(btn.getAttribute('data-index'), 10);
+                    const app = pinnedApps[idx];
+                    if (app) navigateActiveTab(app.url);
                 });
-
-                pinnedBar.appendChild(chip);
             });
 
-            // Add Pin Button
-            const addBtn = document.createElement('button');
-            addBtn.className = 'btn-add-pin-chip';
-            addBtn.innerHTML = `<span>＋</span> Pin App`;
-            addBtn.addEventListener('click', () => openPinModal());
-            pinnedBar.appendChild(addBtn);
+            const btnAddBar = document.getElementById('btn-add-pinned-bar');
+            if (btnAddBar) btnAddBar.addEventListener('click', () => openPinModal());
         }
 
-        // 2. Render in Home Dashboard Grid (Firefox Style Top Sites)
         if (homeAppsGrid) {
-            homeAppsGrid.innerHTML = '';
-            pinnedApps.forEach((app, idx) => {
-                const card = document.createElement('div');
-                card.className = 'home-app-card';
-                card.title = `${app.name}\n${app.url}`;
-
-                const iconWrapHtml = getBrandIconHtml(app.url, app.name, true);
-
-                card.innerHTML = `
-                    <div class="home-app-actions">
-                        <button class="home-app-action-btn edit-btn" title="Edit shortcut">
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                        </button>
-                        <button class="home-app-action-btn delete-btn" title="Remove shortcut">
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                        </button>
-                    </div>
-                    ${iconWrapHtml}
+            homeAppsGrid.innerHTML = pinnedApps.map((app, idx) => `
+                <div class="home-app-card" data-index="${idx}" title="${app.name}">
+                    <button class="home-app-delete-btn" data-delete-index="${idx}" title="Remove Shortcut">✕</button>
+                    ${getBrandIconHtml(app.url, app.name, true)}
                     <span class="home-app-name">${app.name}</span>
-                `;
+                </div>
+            `).join('') + `
+                <div class="home-app-card add-card" id="home-card-add-pin" title="Add New Shortcut">
+                    <div class="home-app-icon-wrap" style="background: rgba(255,255,255,0.05);">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </div>
+                    <span class="home-app-name">Add Shortcut</span>
+                </div>
+            `;
 
+            homeAppsGrid.querySelectorAll('.home-app-card:not(.add-card)').forEach(card => {
                 card.addEventListener('click', (e) => {
-                    if (e.target.closest('.edit-btn')) {
+                    if (e.target.closest('.home-app-delete-btn')) {
                         e.stopPropagation();
-                        openPinModal(app.name, app.url, idx);
-                    } else if (e.target.closest('.delete-btn')) {
-                        e.stopPropagation();
-                        deletePinnedApp(idx);
-                    } else {
-                        navigateActiveTab(app.url);
+                        const delIdx = parseInt(e.target.closest('.home-app-delete-btn').getAttribute('data-delete-index'), 10);
+                        removePinnedApp(delIdx);
+                        return;
                     }
+                    const idx = parseInt(card.getAttribute('data-index'), 10);
+                    const app = pinnedApps[idx];
+                    if (app) navigateActiveTab(app.url);
                 });
-
-                homeAppsGrid.appendChild(card);
             });
 
-            // Add Shortcut Card (Dashed)
-            const addCard = document.createElement('div');
-            addCard.className = 'home-app-card add-card';
-            addCard.innerHTML = `
-                <div class="home-app-icon-wrap">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                </div>
-                <span class="home-app-name" style="color: #80868b;">Add Shortcut</span>
-            `;
-            addCard.addEventListener('click', () => openPinModal());
-            homeAppsGrid.appendChild(addCard);
+            const homeAddCard = document.getElementById('home-card-add-pin');
+            if (homeAddCard) homeAddCard.addEventListener('click', () => openPinModal());
         }
     }
 
     function addPinnedApp(name, url) {
         if (!url) return;
-        const cleanUrl = parseUrl(url);
-        const cleanName = (name || '').trim() || new URL(cleanUrl).hostname;
-        let newApps = [...pinnedApps];
-        if (editingPinIndex !== null && editingPinIndex >= 0 && editingPinIndex < newApps.length) {
-            newApps[editingPinIndex] = { name: cleanName, url: cleanUrl };
-        } else {
-            newApps.push({ name: cleanName, url: cleanUrl });
-        }
-        editingPinIndex = null;
-        savePinnedApps(newApps);
+        const normalized = parseUrl(url);
+        pinnedApps.push({
+            name: name || new URL(normalized).hostname.replace('www.', ''),
+            url: normalized
+        });
+        savePinnedApps();
+        renderPinnedApps();
     }
 
-    function deletePinnedApp(index) {
-        const newApps = pinnedApps.filter((_, i) => i !== index);
-        savePinnedApps(newApps);
+    function removePinnedApp(index) {
+        pinnedApps.splice(index, 1);
+        savePinnedApps();
+        renderPinnedApps();
     }
 
     function togglePinCurrentPage() {
         const activeTab = tabs.find(t => t.id === activeTabId);
-        if (!activeTab || activeTab.isHome || !activeTab.url) return;
+        if (!activeTab || activeTab.url === 'about:home') return;
 
-        const currentHost = new URL(activeTab.url).hostname;
-        const existingIndex = pinnedApps.findIndex(app => {
-            try { return new URL(app.url).hostname === currentHost; } catch { return false; }
-        });
-
-        if (existingIndex >= 0) {
-            deletePinnedApp(existingIndex);
+        const existingIdx = pinnedApps.findIndex(a => a.url === activeTab.url);
+        if (existingIdx >= 0) {
+            removePinnedApp(existingIdx);
+            if (btnPinPage) btnPinPage.classList.remove('pinned');
         } else {
-            openPinModal(activeTab.title || currentHost, activeTab.url);
+            addPinnedApp(activeTab.title || 'Page', activeTab.url);
+            if (btnPinPage) btnPinPage.classList.add('pinned');
         }
     }
 
-    let editingPinIndex = null;
-    const pinModalTitle = document.getElementById('pin-modal-title');
-
-    function openPinModal(defaultName = '', defaultUrl = '', editIndex = null) {
-        editingPinIndex = editIndex;
-        if (pinModalTitle) {
-            pinModalTitle.textContent = editIndex !== null ? '✏️ Edit Shortcut' : '📌 Pin Web App / Shortcut';
-        }
-        if (btnPinSave) {
-            btnPinSave.textContent = editIndex !== null ? 'Save Changes' : 'Save Shortcut';
-        }
-        if (pinNameInput) pinNameInput.value = defaultName;
-        if (pinUrlInput) pinUrlInput.value = defaultUrl;
-        if (pinAppModal) pinAppModal.style.display = 'flex';
-        setTimeout(() => {
-            if (pinNameInput) pinNameInput.focus();
-        }, 50);
+    function openPinModal(initialUrl = '', initialName = '') {
+        if (!pinAppModal) return;
+        if (pinNameInput) pinNameInput.value = initialName;
+        if (pinUrlInput) pinUrlInput.value = initialUrl;
+        pinAppModal.style.display = 'flex';
+        if (pinNameInput) pinNameInput.focus();
     }
 
     function closePinModal() {
-        editingPinIndex = null;
         if (pinAppModal) pinAppModal.style.display = 'none';
     }
 
     // ==========================================================================
-    // Extensions & Power Tools Implementation
+    // Quick Tools (Adblock, Darkmode, Reader, PiP, UA, DevTools)
     // ==========================================================================
-    function applyExtensions(tab) {
-        if (!tab || !tab.webviewEl || tab.isHome) return;
-        const wv = tab.webviewEl;
-
-        if (tab.adBlock) {
-            try {
-                wv.insertCSS(ADBLOCK_CSS);
-            } catch {}
-        }
-
-        if (tab.darkMode) {
-            try {
-                wv.insertCSS(DARK_READER_CSS);
-            } catch {}
-        }
-    }
-
     function toggleAdBlock(enable) {
         globalAdBlock = enable;
-        const activeTab = tabs.find(t => t.id === activeTabId);
-        if (activeTab) {
-            activeTab.adBlock = enable;
-            if (enable) applyExtensions(activeTab);
-            else if (activeTab.webviewEl && activeTab.webviewEl.reload) activeTab.webviewEl.reload();
-        }
+        tabs.forEach(t => {
+            if (t.webviewEl && t.url !== 'about:home') {
+                if (enable) {
+                    t.webviewEl.insertCSS(ADBLOCK_CSS).catch(()=>{});
+                } else if (t.webviewEl.reload) {
+                    t.webviewEl.reload();
+                }
+            }
+        });
     }
 
     function toggleDarkMode(enable) {
         globalDarkMode = enable;
-        const activeTab = tabs.find(t => t.id === activeTabId);
-        if (activeTab) {
-            activeTab.darkMode = enable;
-            if (enable) applyExtensions(activeTab);
-            else if (activeTab.webviewEl && activeTab.webviewEl.reload) activeTab.webviewEl.reload();
-        }
+        tabs.forEach(t => {
+            if (t.webviewEl && t.url !== 'about:home') {
+                if (enable) {
+                    t.webviewEl.insertCSS(DARK_READER_CSS).catch(()=>{});
+                } else if (t.webviewEl.reload) {
+                    t.webviewEl.reload();
+                }
+            }
+        });
     }
 
     function triggerReaderMode() {
         const activeTab = tabs.find(t => t.id === activeTabId);
-        if (!activeTab || !activeTab.webviewEl || activeTab.isHome) return;
-
-        const readerScript = `
-            (function() {
-                const article = document.querySelector('article') || document.querySelector('main') || document.querySelector('.post-content') || document.body;
-                if (!article) return;
-                const title = document.title;
-                const html = article.innerHTML;
-                document.body.innerHTML = '<div style="max-width:740px; margin:40px auto; padding:20px; font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif; font-size:18px; line-height:1.7; color:#e0e0e0; background:#121316; min-height:100vh;">' +
-                    '<h1 style="font-size:32px; line-height:1.2; margin-bottom:24px; color:#ffffff;">' + title + '</h1>' +
-                    '<div style="border-top:1px solid #333; padding-top:24px;">' + html + '</div>' +
-                '</div>';
-                document.body.style.background = '#121316';
-            })();
-        `;
-        activeTab.webviewEl.executeJavaScript(readerScript).catch(console.error);
+        if (activeTab && activeTab.webviewEl && activeTab.url !== 'about:home') {
+            const readerCode = `
+                (function() {
+                    const article = document.querySelector('article') || document.querySelector('main') || document.body;
+                    document.body.innerHTML = '<div style="max-width:740px; margin:40px auto; padding:20px; font-family:serif; line-height:1.75; font-size:19px; color:#e0e0e0; background:#181818;">' + article.innerHTML + '</div>';
+                    document.body.style.background = '#181818';
+                })();
+            `;
+            activeTab.webviewEl.executeJavaScript(readerCode).catch(()=>{});
+        }
         if (extPanel) extPanel.classList.remove('open');
     }
 
     function triggerVideoPip() {
         const activeTab = tabs.find(t => t.id === activeTabId);
-        if (!activeTab || !activeTab.webviewEl || activeTab.isHome) return;
-
-        const pipScript = `
-            (function() {
-                const video = document.querySelector('video');
-                if (video) {
-                    if (document.pictureInPictureElement) {
-                        document.exitPictureInPicture();
+        if (activeTab && activeTab.webviewEl) {
+            const pipCode = `
+                (function() {
+                    const v = document.querySelector('video');
+                    if (v) {
+                        if (document.pictureInPictureElement) {
+                            document.exitPictureInPicture();
+                        } else if (v.requestPictureInPicture) {
+                            v.requestPictureInPicture();
+                        }
                     } else {
-                        video.requestPictureInPicture().catch(err => alert('PiP Error: ' + err.message));
+                        alert('No active video found on this page.');
                     }
-                } else {
-                    alert('No active video player found on this page.');
-                }
-            })();
-        `;
-        activeTab.webviewEl.executeJavaScript(pipScript).catch(console.error);
+                })();
+            `;
+            activeTab.webviewEl.executeJavaScript(pipCode).catch(()=>{});
+        }
         if (extPanel) extPanel.classList.remove('open');
     }
 
@@ -826,6 +1052,41 @@ export function initBrowserManager() {
             activeTab.webviewEl.reloadIgnoringCache();
         }
         if (extPanel) extPanel.classList.remove('open');
+    }
+
+    // ==========================================================================
+    // Find in Page Controller
+    // ==========================================================================
+    function openFindBar() {
+        if (!findBar) return;
+        findBar.style.display = 'flex';
+        if (findInput) {
+            findInput.focus();
+            findInput.select();
+        }
+    }
+
+    function closeFindBar() {
+        if (!findBar) return;
+        findBar.style.display = 'none';
+        const activeTab = tabs.find(t => t.id === activeTabId);
+        if (activeTab && activeTab.webviewEl && activeTab.webviewEl.stopFindInPage) {
+            activeTab.webviewEl.stopFindInPage('clearSelection');
+        }
+        if (findCount) findCount.textContent = '0 of 0';
+    }
+
+    function executeFind(forward = true, findNext = false) {
+        const text = findInput?.value || '';
+        const activeTab = tabs.find(t => t.id === activeTabId);
+        if (!activeTab || !activeTab.webviewEl || !activeTab.webviewEl.findInPage) return;
+
+        if (!text) {
+            activeTab.webviewEl.stopFindInPage('clearSelection');
+            if (findCount) findCount.textContent = '0 of 0';
+            return;
+        }
+        activeTab.webviewEl.findInPage(text, { forward, findNext });
     }
 
     // ==========================================================================
@@ -940,7 +1201,21 @@ export function initBrowserManager() {
         });
     }
 
-    // Extensions Popover Toggle
+    // Theme Studio Button
+    if (btnThemeStudio) {
+        btnThemeStudio.addEventListener('click', () => {
+            openExtensionHub('ext-view-themes');
+        });
+    }
+
+    // Extension Hub Button
+    if (btnExtHub) {
+        btnExtHub.addEventListener('click', () => {
+            openExtensionHub('ext-view-marketplace');
+        });
+    }
+
+    // Quick Extensions Popover Toggle
     if (btnExtensions && extPanel) {
         btnExtensions.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -954,7 +1229,6 @@ export function initBrowserManager() {
         });
     }
 
-    // Close extensions panel on outside click
     document.addEventListener('click', (e) => {
         if (extPanel && extPanel.classList.contains('open')) {
             if (!extPanel.contains(e.target) && !btnExtensions.contains(e.target)) {
@@ -963,26 +1237,12 @@ export function initBrowserManager() {
         }
     });
 
-    // Extension Controls Binding
-    if (extToggleAdblock) {
-        extToggleAdblock.addEventListener('change', (e) => {
-            toggleAdBlock(e.target.checked);
-        });
-    }
-
-    if (extToggleDarkmode) {
-        extToggleDarkmode.addEventListener('change', (e) => {
-            toggleDarkMode(e.target.checked);
-        });
-    }
-
+    // Quick Tool Controls
+    if (extToggleAdblock) extToggleAdblock.addEventListener('change', (e) => toggleAdBlock(e.target.checked));
+    if (extToggleDarkmode) extToggleDarkmode.addEventListener('change', (e) => toggleDarkMode(e.target.checked));
     if (extBtnReader) extBtnReader.addEventListener('click', triggerReaderMode);
     if (extBtnPip) extBtnPip.addEventListener('click', triggerVideoPip);
-    if (extUaSelect) {
-        extUaSelect.addEventListener('change', (e) => {
-            setUserAgent(e.target.value);
-        });
-    }
+    if (extUaSelect) extUaSelect.addEventListener('change', (e) => setUserAgent(e.target.value));
     if (extBtnDevtools) extBtnDevtools.addEventListener('click', openDevToolsForActiveTab);
     if (extBtnClearCache) extBtnClearCache.addEventListener('click', clearTabCache);
     if (extBtnHardReload) extBtnHardReload.addEventListener('click', clearTabCache);
@@ -1008,6 +1268,104 @@ export function initBrowserManager() {
             }
         });
     }
+
+    // Extension Hub Modal Bindings
+    if (btnCloseExtHub) btnCloseExtHub.addEventListener('click', closeExtensionHub);
+    if (btnExtHubDone) btnExtHubDone.addEventListener('click', closeExtensionHub);
+
+    extHubTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const target = tab.getAttribute('data-target');
+            if (target) switchExtHubTab(target);
+        });
+    });
+
+    if (extMarketSearch) {
+        extMarketSearch.addEventListener('input', () => renderCuratedGrid());
+    }
+
+    extCatPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            extCatPills.forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            currentMarketFilter = pill.getAttribute('data-cat') || 'all';
+            renderCuratedGrid();
+        });
+    });
+
+    if (extSideloadBtn) {
+        extSideloadBtn.addEventListener('click', async () => {
+            const val = extSideloadInput?.value || '';
+            if (!val.trim()) return;
+
+            if (extSideloadStatus) {
+                extSideloadStatus.style.display = 'block';
+                extSideloadStatus.className = 'ext-sideload-status loading';
+                extSideloadStatus.textContent = '⏳ Downloading CRX & Unpacking Extension...';
+            }
+
+            extSideloadBtn.disabled = true;
+
+            try {
+                const res = await window.electronAPI.extensionInstall(val.trim());
+                if (res && res.success) {
+                    if (extSideloadStatus) {
+                        extSideloadStatus.className = 'ext-sideload-status success';
+                        extSideloadStatus.textContent = `✓ Successfully installed & activated: ${res.extension.name} (v${res.extension.version})`;
+                    }
+                    if (extSideloadInput) extSideloadInput.value = '';
+                    await loadInstalledExtensions();
+                } else {
+                    if (extSideloadStatus) {
+                        extSideloadStatus.className = 'ext-sideload-status error';
+                        extSideloadStatus.textContent = `✕ Install Failed: ${res?.error || 'Unknown error'}`;
+                    }
+                }
+            } catch (err) {
+                if (extSideloadStatus) {
+                    extSideloadStatus.className = 'ext-sideload-status error';
+                    extSideloadStatus.textContent = `✕ Error: ${err.message}`;
+                }
+            } finally {
+                extSideloadBtn.disabled = false;
+            }
+        });
+    }
+
+    const handleUnpackClick = async () => {
+        try {
+            const res = await window.electronAPI.extensionInstallUnpacked();
+            if (res && res.success) {
+                alert(`✓ Loaded unpacked extension: ${res.extension.name}`);
+                await loadInstalledExtensions();
+                switchExtHubTab('ext-view-installed');
+            } else if (res && res.error) {
+                alert('Unpacked Load Notice: ' + res.error);
+            }
+        } catch (err) {
+            alert('Load Unpacked Error: ' + err.message);
+        }
+    };
+
+    if (extBtnSideloadFolder) extBtnSideloadFolder.addEventListener('click', handleUnpackClick);
+    if (extBtnQuickUnpack) extBtnQuickUnpack.addEventListener('click', handleUnpackClick);
+
+    // Find in Page Bindings
+    if (findInput) {
+        findInput.addEventListener('input', () => executeFind(true, false));
+        findInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                executeFind(!e.shiftKey, true);
+            } else if (e.key === 'Escape') {
+                closeFindBar();
+            }
+        });
+    }
+
+    if (findPrev) findPrev.addEventListener('click', () => executeFind(false, true));
+    if (findNext) findNext.addEventListener('click', () => executeFind(true, true));
+    if (findClose) findClose.addEventListener('click', closeFindBar);
 
     // Pin App Modal
     if (btnClosePinModal) btnClosePinModal.addEventListener('click', closePinModal);
@@ -1065,6 +1423,12 @@ export function initBrowserManager() {
             if (urlInput) urlInput.focus();
         }
 
+        // Cmd/Ctrl + F: Find in Page
+        if (cmdOrCtrl && (e.key === 'f' || e.key === 'F')) {
+            e.preventDefault();
+            openFindBar();
+        }
+
         // Cmd/Ctrl + D: Pin / Bookmark Current Page
         if (cmdOrCtrl && (e.key === 'd' || e.key === 'D')) {
             e.preventDefault();
@@ -1094,9 +1458,16 @@ export function initBrowserManager() {
             e.preventDefault();
             toggleBrowserFullscreen();
         }
+
+        // Esc: Close Modals / Find bar
+        if (e.key === 'Escape') {
+            if (findBar && findBar.style.display !== 'none') closeFindBar();
+            if (modalExtHub && modalExtHub.style.display !== 'none') closeExtensionHub();
+        }
     });
 
     // Initial Setup
     renderPinnedApps();
     createTab('about:home', true);
+    loadInstalledExtensions();
 }

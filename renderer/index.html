@@ -416,14 +416,30 @@
                                 <button class="browser-action-icon-btn" id="browser-btn-pin-page" title="Bookmark / Pin site to quick apps (Ctrl+D)">
                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                                 </button>
-                                <button class="browser-action-icon-btn" id="browser-btn-extensions" title="Extensions & developer tools">
+                                <button class="browser-action-icon-btn" id="browser-btn-theme-studio" title="Browser Theme Studio (Obsidian, Nord, Cyberpunk, OLED)">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a10 10 0 0 1 10 10 10 10 0 0 1-10 10V2z"></path></svg>
+                                </button>
+                                <button class="browser-action-icon-btn ext-hub-btn-wrap" id="browser-btn-ext-hub" title="Addons & Chrome Extension Marketplace">
                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.5 11H19V7a2 2 0 0 0-2-2h-4V3.5a1.5 1.5 0 0 0-3 0V5H6a2 2 0 0 0-2 2v4H2.5a1.5 1.5 0 0 0 0 3H4v4a2 2 0 0 0 2 2h4v1.5a1.5 1.5 0 0 0 3 0V20h4a2 2 0 0 0 2-2v-4h1.5a1.5 1.5 0 0 0 0-3z"></path></svg>
+                                    <span class="ext-count-badge" id="ext-active-count-badge" style="display: none;">0</span>
+                                </button>
+                                <button class="browser-action-icon-btn" id="browser-btn-extensions" title="Quick Tools & User-Agent (Floating)">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
                                 </button>
                             </div>
                             <button class="browser-go-btn" id="browser-btn-go" title="Go to URL (Enter)">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
                             </button>
                         </div>
+                    </div>
+
+                    <!-- Find in Page Floating Bar -->
+                    <div class="browser-find-bar" id="browser-find-bar" style="display: none;">
+                        <input type="text" class="browser-find-input" id="browser-find-input" placeholder="Find in page (Ctrl+F / ⌘F)..." />
+                        <span class="browser-find-count" id="browser-find-count">0 of 0</span>
+                        <button class="browser-find-btn" id="browser-find-prev" title="Previous match">▲</button>
+                        <button class="browser-find-btn" id="browser-find-next" title="Next match">▼</button>
+                        <button class="browser-find-close" id="browser-find-close" title="Close (Esc)">✕</button>
                     </div>
 
                     <!-- Pinned Quick Apps Bar (Firefox Style) -->
@@ -957,6 +973,134 @@
             </div>
             <div class="modal-footer">
                 <button class="btn-secondary" id="btn-phone-modal-done">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. Chrome Extension Hub & Browser Theme Studio Modal (🧩 Ultra-Clean Firefox/Chromium Aesthetic) -->
+    <div class="modal-overlay" id="modal-extension-hub" style="display: none;">
+        <div class="modal-card ext-hub-modal-card">
+            <!-- Modal Top Bar -->
+            <div class="ext-hub-header">
+                <div class="ext-hub-title-group">
+                    <div class="ext-hub-icon-badge">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.5 11H19V7a2 2 0 0 0-2-2h-4V3.5a1.5 1.5 0 0 0-3 0V5H6a2 2 0 0 0-2 2v4H2.5a1.5 1.5 0 0 0 0 3H4v4a2 2 0 0 0 2 2h4v1.5a1.5 1.5 0 0 0 3 0V20h4a2 2 0 0 0 2-2v-4h1.5a1.5 1.5 0 0 0 0-3z"></path></svg>
+                    </div>
+                    <div>
+                        <h3 class="ext-hub-title">Addons & Extension Manager</h3>
+                        <p class="ext-hub-subtitle">Manage Chrome extensions, browse curated addons, and customize themes</p>
+                    </div>
+                </div>
+                <button class="btn-close-modal" id="btn-close-ext-hub" title="Close (Esc)">✕</button>
+            </div>
+
+            <!-- Hub Navigation Tabs -->
+            <div class="ext-hub-nav-strip">
+                <button class="ext-hub-tab active" data-target="ext-view-marketplace">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                    <span>Addon Store</span>
+                </button>
+                <button class="ext-hub-tab" data-target="ext-view-installed">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.5 11H19V7a2 2 0 0 0-2-2h-4V3.5a1.5 1.5 0 0 0-3 0V5H6a2 2 0 0 0-2 2v4H2.5a1.5 1.5 0 0 0 0 3H4v4a2 2 0 0 0 2 2h4v1.5a1.5 1.5 0 0 0 3 0V20h4a2 2 0 0 0 2-2v-4h1.5a1.5 1.5 0 0 0 0-3z"></path></svg>
+                    <span>Installed</span>
+                    <span class="ext-hub-tab-badge" id="ext-installed-count-pill">0</span>
+                </button>
+                <button class="ext-hub-tab" data-target="ext-view-themes">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a10 10 0 0 1 10 10 10 10 0 0 1-10 10V2z"></path></svg>
+                    <span>Theme Studio</span>
+                </button>
+                <button class="ext-hub-tab" data-target="ext-view-sideload">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <span>Sideload / Local</span>
+                </button>
+            </div>
+
+            <!-- Hub Body Views Container -->
+            <div class="ext-hub-body">
+                <!-- 1. Marketplace View -->
+                <div class="ext-hub-view active" id="ext-view-marketplace">
+                    <div class="ext-market-filter-bar">
+                        <div class="ext-search-box">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            <input type="text" id="ext-market-search" placeholder="Search curated addons..." autocomplete="off" />
+                        </div>
+                        <div class="ext-category-pills" id="ext-market-categories">
+                            <button class="ext-cat-pill active" data-cat="all">All</button>
+                            <button class="ext-cat-pill" data-cat="Privacy & Security">Privacy</button>
+                            <button class="ext-cat-pill" data-cat="Visual & Themes">Visuals</button>
+                            <button class="ext-cat-pill" data-cat="Developer Tools">Developer</button>
+                            <button class="ext-cat-pill" data-cat="Media & Streaming">Media</button>
+                        </div>
+                    </div>
+                    <div class="ext-curated-grid" id="ext-curated-grid">
+                        <!-- Dynamic Addon Cards Rendered Here -->
+                    </div>
+                </div>
+
+                <!-- 2. Installed Extensions View -->
+                <div class="ext-hub-view" id="ext-view-installed">
+                    <div class="ext-installed-topbar">
+                        <span class="ext-installed-lead">Active Chromium Extension Runtime</span>
+                        <button class="ext-btn-outline" id="ext-btn-quick-unpack">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            <span>Load Unpacked...</span>
+                        </button>
+                    </div>
+                    <div class="ext-installed-list" id="ext-installed-list">
+                        <!-- Dynamic Installed Rows Rendered Here -->
+                    </div>
+                </div>
+
+                <!-- 3. Theme Studio View -->
+                <div class="ext-hub-view" id="ext-view-themes">
+                    <div class="ext-theme-lead-box">
+                        <h4>🎨 Studio Color Engine</h4>
+                        <p>Select a luxury dark theme to personalize browser tabs, address bar, buttons, and chrome accents in real-time.</p>
+                    </div>
+                    <div class="ext-themes-grid" id="ext-themes-grid">
+                        <!-- Dynamic Theme Cards Rendered Here -->
+                    </div>
+                </div>
+
+                <!-- 4. Sideload / Custom Install View -->
+                <div class="ext-hub-view" id="ext-view-sideload">
+                    <div class="ext-sideload-container">
+                        <div class="ext-sideload-card">
+                            <div class="ext-sideload-header">
+                                <div class="ext-sideload-icon">🌐</div>
+                                <div>
+                                    <h5>Install from Chrome Web Store</h5>
+                                    <p>Paste any Chrome Web Store extension URL or 32-character extension ID</p>
+                                </div>
+                            </div>
+                            <div class="ext-sideload-input-row">
+                                <input type="text" id="ext-sideload-input" class="modal-input" placeholder="e.g. https://chromewebstore.google.com/detail/... or cjpalhdlnbpafiamejdnhcphjbkeiagm" autocomplete="off" />
+                                <button class="btn-primary" id="ext-sideload-btn">Install Extension</button>
+                            </div>
+                            <div class="ext-sideload-status" id="ext-sideload-status" style="display: none;"></div>
+                        </div>
+
+                        <div class="ext-sideload-card">
+                            <div class="ext-sideload-header">
+                                <div class="ext-sideload-icon">📁</div>
+                                <div>
+                                    <h5>Load Unpacked Local Extension</h5>
+                                    <p>Select a local directory containing a manifest.json file for development or offline testing</p>
+                                </div>
+                            </div>
+                            <button class="btn-secondary" id="ext-btn-sideload-folder" style="align-self: flex-start;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                                <span>Browse Extension Folder...</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="ext-hub-footer">
+                <span class="ext-hub-footer-hint">Extensions execute inside isolated Chromium session partitions with full persistence.</span>
+                <button class="btn-secondary" id="btn-ext-hub-done">Done</button>
             </div>
         </div>
     </div>

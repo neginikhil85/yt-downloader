@@ -106,5 +106,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
             ipcRenderer.removeListener('p2p-clipboard-received', handler);
             ipcRenderer.removeListener('p2p:clipboard-received', handler);
         };
-    }
+    },
+
+    // Chrome Extension Hub & Addons APIs
+    extensionGetInstalled: () => ipcRenderer.invoke('extension:get-installed'),
+    extensionGetCurated: () => ipcRenderer.invoke('extension:get-curated'),
+    extensionInstall: (idOrUrl) => ipcRenderer.invoke('extension:install', idOrUrl),
+    extensionInstallUnpacked: () => ipcRenderer.invoke('extension:install-unpacked'),
+    extensionToggle: (id, enabled) => ipcRenderer.invoke('extension:toggle', { id, enabled }),
+    extensionRemove: (id) => ipcRenderer.invoke('extension:remove', id),
+    extensionOpenFolder: (id) => ipcRenderer.invoke('extension:open-folder', id)
 });

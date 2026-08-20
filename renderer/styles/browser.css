@@ -1124,3 +1124,808 @@
         height: 26px;
     }
 }
+
+/* ==========================================================================
+   8. Studio Theme Engine Variables & Luxury Browser Themes
+   ========================================================================== */
+#view-browser {
+    --br-bg: #0b0c10;
+    --br-header-bg: #12141a;
+    --br-tab-bg: #181b23;
+    --br-tab-active: #1f232e;
+    --br-border: rgba(255, 255, 255, 0.08);
+    --br-accent: #3b82f6;
+    --br-accent-glow: rgba(59, 130, 246, 0.25);
+    --br-text: #f1f5f9;
+    --br-text-muted: #94a3b8;
+}
+
+#view-browser[data-browser-theme="cyberpunk"] {
+    --br-bg: #090611;
+    --br-header-bg: #120d22;
+    --br-tab-bg: #191230;
+    --br-tab-active: #231a44;
+    --br-border: rgba(168, 85, 247, 0.18);
+    --br-accent: #a855f7;
+    --br-accent-glow: rgba(168, 85, 247, 0.35);
+    --br-text: #f5f3ff;
+    --br-text-muted: #a78bfa;
+}
+
+#view-browser[data-browser-theme="nord"] {
+    --br-bg: #0c1017;
+    --br-header-bg: #141b24;
+    --br-tab-bg: #1a232f;
+    --br-tab-active: #222d3d;
+    --br-border: rgba(56, 189, 248, 0.16);
+    --br-accent: #38bdf8;
+    --br-accent-glow: rgba(56, 189, 248, 0.25);
+    --br-text: #f0f9ff;
+    --br-text-muted: #7dd3fc;
+}
+
+#view-browser[data-browser-theme="ember"] {
+    --br-bg: #100b08;
+    --br-header-bg: #1a120d;
+    --br-tab-bg: #241912;
+    --br-tab-active: #312117;
+    --br-border: rgba(249, 115, 22, 0.18);
+    --br-accent: #f97316;
+    --br-accent-glow: rgba(249, 115, 22, 0.3);
+    --br-text: #fff7ed;
+    --br-text-muted: #fdba74;
+}
+
+#view-browser[data-browser-theme="emerald"] {
+    --br-bg: #070f0a;
+    --br-header-bg: #0d1a12;
+    --br-tab-bg: #132419;
+    --br-tab-active: #1a3223;
+    --br-border: rgba(16, 185, 129, 0.18);
+    --br-accent: #10b981;
+    --br-accent-glow: rgba(16, 185, 129, 0.3);
+    --br-text: #ecfdf5;
+    --br-text-muted: #6ee7b7;
+}
+
+#view-browser[data-browser-theme="oled"] {
+    --br-bg: #000000;
+    --br-header-bg: #050505;
+    --br-tab-bg: #0d0d0d;
+    --br-tab-active: #151515;
+    --br-border: rgba(255, 255, 255, 0.1);
+    --br-accent: #00f0ff;
+    --br-accent-glow: rgba(0, 240, 255, 0.3);
+    --br-text: #ffffff;
+    --br-text-muted: #888888;
+}
+
+/* Apply theme variables to browser chrome */
+#view-browser .browser-tabs-header {
+    background: var(--br-header-bg) !important;
+    border-bottom: 1px solid var(--br-border) !important;
+}
+
+#view-browser .browser-tab {
+    background: var(--br-tab-bg);
+}
+
+#view-browser .browser-tab.active {
+    background: var(--br-tab-active) !important;
+    border-top: 2px solid var(--br-accent) !important;
+}
+
+#view-browser .browser-toolbar {
+    background: var(--br-header-bg) !important;
+    border-bottom: 1px solid var(--br-border) !important;
+}
+
+#view-browser .browser-address-bar {
+    border-color: var(--br-border) !important;
+}
+
+#view-browser .browser-address-bar:focus-within {
+    border-color: var(--br-accent) !important;
+    box-shadow: 0 0 0 2px var(--br-accent-glow) !important;
+}
+
+/* Extension Hub Button & Badge */
+.ext-hub-btn-wrap {
+    position: relative;
+}
+
+.ext-count-badge {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    background: #3b82f6;
+    color: #ffffff;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 999px;
+    line-height: 1;
+    border: 1.5px solid #12141a;
+    pointer-events: none;
+}
+
+/* Find in Page Floating Bar */
+.browser-find-bar {
+    position: absolute;
+    top: 92px;
+    right: 24px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: rgba(20, 24, 33, 0.96);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+    animation: findSlideIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes findSlideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.browser-find-input {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #f1f5f9;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    outline: none;
+    width: 180px;
+}
+
+.browser-find-input:focus {
+    border-color: #3b82f6;
+}
+
+.browser-find-count {
+    font-size: 11px;
+    color: #94a3b8;
+    min-width: 50px;
+}
+
+.browser-find-btn, .browser-find-close {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 11px;
+    cursor: pointer;
+    padding: 3px 6px;
+    border-radius: 4px;
+    transition: all 0.12s;
+}
+
+.browser-find-btn:hover, .browser-find-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+/* ==========================================================================
+   9. Chrome Extension Hub & Theme Studio Modal
+   ========================================================================== */
+.ext-hub-modal-card {
+    max-width: 840px !important;
+    width: 92% !important;
+    max-height: 85vh !important;
+    display: flex;
+    flex-direction: column;
+    padding: 0 !important;
+    overflow: hidden;
+    background: #0f1218 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6) !important;
+}
+
+.ext-hub-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 16px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.ext-hub-title-group {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.ext-hub-icon-badge {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: rgba(59, 130, 246, 0.12);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #60a5fa;
+}
+
+.ext-hub-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #f8fafc;
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+.ext-hub-subtitle {
+    font-size: 12px;
+    color: #94a3b8;
+    margin: 2px 0 0 0;
+}
+
+.ext-hub-nav-strip {
+    display: flex;
+    gap: 6px;
+    padding: 8px 24px;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ext-hub-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: #94a3b8;
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.ext-hub-tab:hover {
+    color: #e2e8f0;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.ext-hub-tab.active {
+    color: #ffffff;
+    background: rgba(59, 130, 246, 0.14);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.ext-hub-tab-badge {
+    background: rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 999px;
+}
+
+.ext-hub-tab.active .ext-hub-tab-badge {
+    background: #3b82f6;
+    color: #ffffff;
+}
+
+.ext-hub-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+    min-height: 380px;
+}
+
+.ext-hub-view {
+    display: none;
+}
+
+.ext-hub-view.active {
+    display: block;
+    animation: fadeInTab 0.15s ease;
+}
+
+@keyframes fadeInTab {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Marketplace Filter Bar */
+.ext-market-filter-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+
+.ext-search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 6px 12px;
+    width: 240px;
+    color: #94a3b8;
+}
+
+.ext-search-box input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #f8fafc;
+    font-size: 12.5px;
+    width: 100%;
+}
+
+.ext-category-pills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.ext-cat-pill {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: #94a3b8;
+    font-size: 11.5px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.12s;
+}
+
+.ext-cat-pill:hover {
+    color: #f1f5f9;
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.ext-cat-pill.active {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* Curated Addons Grid */
+.ext-curated-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 14px;
+}
+
+.ext-addon-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 12px;
+    transition: all 0.15s ease;
+}
+
+.ext-addon-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.12);
+    transform: translateY(-1px);
+}
+
+.ext-card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.ext-addon-icon-wrap {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    flex-shrink: 0;
+}
+
+.ext-card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.ext-card-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.ext-addon-name {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #f8fafc;
+    margin: 0;
+}
+
+.ext-addon-badge {
+    font-size: 10px;
+    font-weight: 600;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.ext-addon-author {
+    font-size: 11px;
+    color: #64748b;
+    margin: 2px 0 0 0;
+}
+
+.ext-addon-desc {
+    font-size: 12px;
+    color: #94a3b8;
+    line-height: 1.45;
+    margin: 4px 0 0 0;
+}
+
+.ext-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 10px;
+}
+
+.ext-addon-cat-tag {
+    font-size: 11px;
+    color: #64748b;
+}
+
+.ext-btn-install {
+    background: #3b82f6;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.ext-btn-install:hover {
+    background: #2563eb;
+}
+
+.ext-btn-install:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.ext-btn-installed {
+    background: rgba(16, 185, 129, 0.14);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: default;
+}
+
+/* Installed Addons List */
+.ext-installed-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.ext-installed-lead {
+    font-size: 12.5px;
+    color: #94a3b8;
+}
+
+.ext-btn-outline {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.12s;
+}
+
+.ext-btn-outline:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.ext-installed-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ext-installed-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    transition: all 0.12s;
+}
+
+.ext-installed-item:hover {
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.ext-item-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.ext-item-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    flex-shrink: 0;
+}
+
+.ext-item-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ext-item-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #f8fafc;
+}
+
+.ext-item-version {
+    font-size: 11px;
+    color: #64748b;
+}
+
+.ext-item-desc {
+    font-size: 11.5px;
+    color: #94a3b8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 400px;
+}
+
+.ext-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ext-icon-btn {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.12s;
+}
+
+.ext-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #f1f5f9;
+}
+
+.ext-icon-btn.delete:hover {
+    background: rgba(239, 68, 68, 0.14);
+    color: #f87171;
+}
+
+/* Theme Studio Grid */
+.ext-theme-lead-box {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+}
+
+.ext-theme-lead-box h4 {
+    margin: 0;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #f8fafc;
+}
+
+.ext-theme-lead-box p {
+    margin: 4px 0 0 0;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.ext-themes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+}
+
+.ext-theme-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.ext-theme-card:hover {
+    border-color: rgba(255, 255, 255, 0.16);
+    transform: translateY(-2px);
+}
+
+.ext-theme-card.active {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px #3b82f6, 0 8px 24px rgba(59, 130, 246, 0.2);
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.ext-theme-swatch-box {
+    height: 48px;
+    border-radius: 8px;
+    display: flex;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ext-theme-swatch-p1 { flex: 2; }
+.ext-theme-swatch-p2 { flex: 1.5; }
+.ext-theme-swatch-p3 { flex: 1; }
+
+.ext-theme-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.ext-theme-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #f8fafc;
+    margin: 0;
+}
+
+.ext-theme-badge {
+    font-size: 10px;
+    font-weight: 600;
+    color: #60a5fa;
+}
+
+.ext-theme-desc {
+    font-size: 11.5px;
+    color: #94a3b8;
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Sideload View */
+.ext-sideload-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.ext-sideload-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.ext-sideload-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ext-sideload-icon {
+    font-size: 24px;
+}
+
+.ext-sideload-header h5 {
+    margin: 0;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #f8fafc;
+}
+
+.ext-sideload-header p {
+    margin: 2px 0 0 0;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.ext-sideload-input-row {
+    display: flex;
+    gap: 10px;
+}
+
+.ext-sideload-input-row input {
+    flex: 1;
+}
+
+.ext-sideload-status {
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.ext-sideload-status.success {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #34d399;
+}
+
+.ext-sideload-status.error {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #f87171;
+}
+
+.ext-sideload-status.loading {
+    background: rgba(59, 130, 246, 0.12);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #60a5fa;
+}
+
+.ext-hub-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.ext-hub-footer-hint {
+    font-size: 11.5px;
+    color: #64748b;
+}

@@ -143,6 +143,56 @@ function registerIpcHandlers(getMainWindow) {
         const { decompressToken } = require('./services/p2p/p2pTokenCodec');
         return decompressToken(tokenStr);
     });
+
+    // ======================================================================
+    // Chrome Extension Engine & Addon Marketplace IPC Handlers
+    // ======================================================================
+    const {
+        getInstalledExtensions,
+        getCuratedAddons,
+        installExtensionFromWebStore,
+        installUnpackedExtension,
+        toggleExtension,
+        removeExtension,
+        openExtensionFolder
+    } = require('./services/extensionService');
+
+    ipcMain.handle('extension:get-installed', () => {
+        return getInstalledExtensions();
+    });
+
+    ipcMain.handle('extension:get-curated', () => {
+        return getCuratedAddons();
+    });
+
+    ipcMain.handle('extension:install', async (event, idOrUrl) => {
+        return installExtensionFromWebStore(idOrUrl);
+    });
+
+    ipcMain.handle('extension:install-unpacked', async () => {
+        const { dialog } = require('electron');
+        const win = getMainWindow();
+        const result = await dialog.showOpenDialog(win, {
+            title: 'Select Unpacked Extension Folder',
+            properties: ['openDirectory']
+        });
+        if (result.canceled || !result.filePaths.length) {
+            return { success: false, cancelled: true };
+        }
+        return installUnpackedExtension(result.filePaths[0]);
+    });
+
+    ipcMain.handle('extension:toggle', async (event, { id, enabled }) => {
+        return toggleExtension(id, enabled);
+    });
+
+    ipcMain.handle('extension:remove', (event, id) => {
+        return removeExtension(id);
+    });
+
+    ipcMain.handle('extension:open-folder', (event, id) => {
+        return openExtensionFolder(id);
+    });
 }
 
 module.exports = {

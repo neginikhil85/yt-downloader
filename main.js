@@ -222,7 +222,9 @@ app.whenReady().then(() => {
     const proxyPort = getHttpPort() || 9876;
     const proxyRules = `http://127.0.0.1:${proxyPort}`;
 
-    session.fromPartition('persist:main').setProxy({ proxyRules }).catch(err => console.warn('Webview session proxy setup:', err.message));
+    // Initialize installed Chrome extensions into Research Browser partition
+    const { initExtensionService } = require('./src/main/services/extensionService');
+    initExtensionService().catch(err => console.warn('[Extensions] Startup init notice:', err.message));
 
     createMainWindow();
 
