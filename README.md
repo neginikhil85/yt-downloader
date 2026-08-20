@@ -92,53 +92,31 @@ Ensure you have the following installed on your development machine:
 
 ---
 
-### 2. Installation & Quick Start
+### 2. Quick Start (Only 3 Commands Needed!)
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/neginikhil85/yt-downloader.git
-   cd yt-downloader
-   ```
-
-2. **Install Node.js dependencies**:
+1. **Install Dependencies & Auto-Setup Binaries**:
    ```bash
    npm install
    ```
+   *(Automatically detects your OS and downloads the latest `yt-dlp` and `ffmpeg` binaries).*
 
-3. **Run in Development Mode**:
+2. **Run in Development Mode**:
    ```bash
    npm start
    ```
 
----
-
-### 3. Running in Development Mode
-
-To launch the app with hot reloading and developer tools:
-```bash
-npm start
-```
+3. **Package Standalone Release**:
+   ```bash
+   npm run pack:standalone
+   ```
+   *(Cleans the `release/` directory, prompts you interactively to choose target OS, auto-downloads any missing runtimes on-demand, and generates production-ready standalone packages).*
 
 ---
 
-## 📦 Packaging Standalone Applications
-
-To generate clean, production-ready standalone executables for macOS and Windows:
-
-```bash
-npm run pack:clean
-```
-
-### Generated Output Locations:
-* **🍏 macOS Standalone**:
-  ```
-  release/mac/bruno.app
-  ```
-* **🪟 Windows x64 Standalone**:
-  ```
-  release/windows/bruno.exe              # Unpacked standalone folder
-  release/windows-portable.zip           # Ready-to-share portable zip
-  ```
+## 📦 Generated Output Locations:
+* **🍏 macOS Standalone**: `release/mac/bruno.app`
+* **🪟 Windows Standalone**: `release/windows/bruno.exe` + `release/windows-portable.zip`
+* **🐧 Linux Standalone**: `release/linux/bruno`
 
 ---
 
