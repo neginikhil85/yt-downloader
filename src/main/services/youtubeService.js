@@ -2,7 +2,7 @@ const https = require('https');
 const { execFile } = require('child_process');
 const { YT_DLP_PATH } = require('../config/paths');
 
-const EXTRACTOR_ARGS = ['--no-check-certificates', '--js-runtimes', 'node', '--extractor-args', 'youtube:player_client=android_vr,android,tv_embedded'];
+const EXTRACTOR_ARGS = ['--no-check-certificates', '--js-runtimes', 'node', '--extractor-args', 'youtube:player_client=android,web'];
 
 // In-memory cache for search pagination continuation tokens: query -> token
 const continuationTokenCache = new Map();
@@ -337,11 +337,11 @@ function getVideoFormats(url) {
  */
 function getStreamUrl(url, quality = 'auto') {
     return new Promise((resolve) => {
-        let formatFilter = 'best[ext=mp4]/best/bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best';
+        let formatFilter = '18/22/best[ext=mp4]/best';
         const heightMatch = String(quality).match(/(\d+)/);
         if (heightMatch) {
             const h = parseInt(heightMatch[1], 10);
-            formatFilter = `best[height<=${h}][ext=mp4]/best[height<=${h}]/bestvideo[height<=${h}][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=${h}]+bestaudio/best`;
+            formatFilter = `best[height<=${h}][ext=mp4]/best[height<=${h}]/18/best`;
         }
 
         const args = [
@@ -354,7 +354,7 @@ function getStreamUrl(url, quality = 'auto') {
         ];
         execFile(YT_DLP_PATH, args, (error, stdout) => {
             if (error) {
-                const fallbackArgs = [...EXTRACTOR_ARGS, '-g', '-f', 'best[ext=mp4]/best', url];
+                const fallbackArgs = [...EXTRACTOR_ARGS, '-g', '-f', 'best', url];
                 execFile(YT_DLP_PATH, fallbackArgs, (err2, stdout2) => {
                     if (err2) return resolve({ success: false, error: err2.message });
                     const lines = stdout2.trim().split('\n').filter(Boolean);
