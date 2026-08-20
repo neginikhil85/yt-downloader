@@ -114,8 +114,8 @@ export function initBrowserManager() {
         pinNameInput,
         pinUrlInput,
         homeBtnAddPin,
-        btnPinPage,
-        onNavigate: (url) => tabController && tabController.navigateActiveTab(url)
+        onNavigate: (url) => tabController && tabController.navigateActiveTab(url),
+        onCreateTab: (url, activate) => tabController && tabController.createTab(url, activate)
     });
 
     const addonsController = new AddonsController({
@@ -131,7 +131,8 @@ export function initBrowserManager() {
         extBtnSideloadFolder,
         extBtnQuickUnpack,
         addonsNavBtns,
-        addonsTabContents
+        addonsTabContents,
+        onOpenTab: (url, activate) => tabController && tabController.createTab(url, activate)
     });
 
     const findInPage = new FindInPageController({
@@ -211,15 +212,25 @@ export function initBrowserManager() {
     if (urlInput) {
         urlInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
-                tabController.navigateActiveTab(urlInput.value);
+                const openInNewTab = e.altKey || (e.metaKey && e.shiftKey) || (e.ctrlKey && e.shiftKey);
+                if (openInNewTab) {
+                    tabController.createTab(urlInput.value, true);
+                } else {
+                    tabController.navigateActiveTab(urlInput.value);
+                }
             }
         });
         urlInput.addEventListener('focus', () => urlInput.select());
     }
 
     if (btnGo) {
-        btnGo.addEventListener('click', () => {
-            tabController.navigateActiveTab(urlInput.value);
+        btnGo.addEventListener('click', (e) => {
+            const isNewTab = e.metaKey || e.ctrlKey;
+            if (isNewTab) {
+                tabController.createTab(urlInput.value, true);
+            } else {
+                tabController.navigateActiveTab(urlInput.value);
+            }
         });
     }
 
@@ -320,13 +331,25 @@ export function initBrowserManager() {
     if (homeSearchInput) {
         homeSearchInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
-                tabController.navigateActiveTab(homeSearchInput.value);
+                const openInNewTab = e.altKey || (e.metaKey && e.shiftKey) || (e.ctrlKey && e.shiftKey);
+                if (openInNewTab) {
+                    tabController.createTab(homeSearchInput.value, true);
+                } else {
+                    tabController.navigateActiveTab(homeSearchInput.value);
+                }
             }
         });
     }
     if (homeSearchBtn) {
-        homeSearchBtn.addEventListener('click', () => {
-            if (homeSearchInput) tabController.navigateActiveTab(homeSearchInput.value);
+        homeSearchBtn.addEventListener('click', (e) => {
+            if (homeSearchInput) {
+                const isNewTab = e.metaKey || e.ctrlKey;
+                if (isNewTab) {
+                    tabController.createTab(homeSearchInput.value, true);
+                } else {
+                    tabController.navigateActiveTab(homeSearchInput.value);
+                }
+            }
         });
     }
 

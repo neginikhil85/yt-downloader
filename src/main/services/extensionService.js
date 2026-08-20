@@ -255,6 +255,18 @@ function getInstalledExtensions() {
                     }
                 }
 
+                // Resolve popup and options URL if available
+                let popupUrl = null;
+                let optionsUrl = null;
+                const action = manifest.action || manifest.browser_action || manifest.page_action;
+                if (action && action.default_popup) {
+                    popupUrl = `chrome-extension://${ext.id}/${action.default_popup}`;
+                }
+                const options = (manifest.options_ui && manifest.options_ui.page) || manifest.options_page;
+                if (options) {
+                    optionsUrl = `chrome-extension://${ext.id}/${options}`;
+                }
+
                 // Resolve icon
                 if (manifest.icons) {
                     // Pick the largest icon available (128 > 48 > 32 > 16)
@@ -273,9 +285,10 @@ function getInstalledExtensions() {
                         }
                     }
                 }
+                return { ...ext, name, description, iconDataUrl, popupUrl, optionsUrl };
             }
         }
-        return { ...ext, name, description, iconDataUrl };
+        return { ...ext, name, description, iconDataUrl, popupUrl: null, optionsUrl: null };
     });
 
     if (metadataChanged) {

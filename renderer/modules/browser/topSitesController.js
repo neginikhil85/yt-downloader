@@ -7,7 +7,7 @@ import { getBrandIconHtml } from '../../data/brandIcons.js';
 import { parseUrl } from './urlUtils.js';
 
 export class TopSitesController {
-    constructor({ pinnedBar, homeAppsGrid, pinAppModal, pinModalTitle, btnClosePinModal, btnPinCancel, btnPinSave, pinNameInput, pinUrlInput, homeBtnAddPin, btnPinPage, onNavigate }) {
+    constructor({ pinnedBar, homeAppsGrid, pinAppModal, pinModalTitle, btnClosePinModal, btnPinCancel, btnPinSave, pinNameInput, pinUrlInput, homeBtnAddPin, btnPinPage, onNavigate, onCreateTab }) {
         this.pinnedBar = pinnedBar;
         this.homeAppsGrid = homeAppsGrid;
         this.pinAppModal = pinAppModal;
@@ -20,6 +20,7 @@ export class TopSitesController {
         this.homeBtnAddPin = homeBtnAddPin;
         this.btnPinPage = btnPinPage;
         this.onNavigate = onNavigate || (() => {});
+        this.onCreateTab = onCreateTab || null;
 
         this.editingPinIndex = -1;
         this.pinnedApps = this.loadPinnedApps();
@@ -82,10 +83,24 @@ export class TopSitesController {
             `;
 
             this.pinnedBar.querySelectorAll('.pinned-app-chip').forEach(btn => {
-                btn.addEventListener('click', () => {
+                btn.addEventListener('click', (e) => {
                     const idx = parseInt(btn.getAttribute('data-index'), 10);
                     const app = this.pinnedApps[idx];
-                    if (app) this.onNavigate(app.url);
+                    if (!app) return;
+                    const isNewTab = e.metaKey || e.ctrlKey;
+                    if (isNewTab && this.onCreateTab) {
+                        this.onCreateTab(app.url, true);
+                    } else {
+                        this.onNavigate(app.url);
+                    }
+                });
+                btn.addEventListener('auxclick', (e) => {
+                    if (e.button === 1) {
+                        e.preventDefault();
+                        const idx = parseInt(btn.getAttribute('data-index'), 10);
+                        const app = this.pinnedApps[idx];
+                        if (app && this.onCreateTab) this.onCreateTab(app.url, true);
+                    }
                 });
             });
 
@@ -126,7 +141,21 @@ export class TopSitesController {
                     }
                     const idx = parseInt(card.getAttribute('data-index'), 10);
                     const app = this.pinnedApps[idx];
-                    if (app) this.onNavigate(app.url);
+                    if (!app) return;
+                    const isNewTab = e.metaKey || e.ctrlKey;
+                    if (isNewTab && this.onCreateTab) {
+                        this.onCreateTab(app.url, true);
+                    } else {
+                        this.onNavigate(app.url);
+                    }
+                });
+                card.addEventListener('auxclick', (e) => {
+                    if (e.button === 1) {
+                        e.preventDefault();
+                        const idx = parseInt(card.getAttribute('data-index'), 10);
+                        const app = this.pinnedApps[idx];
+                        if (app && this.onCreateTab) this.onCreateTab(app.url, true);
+                    }
                 });
             });
         }

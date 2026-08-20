@@ -19,7 +19,8 @@ export class AddonsController {
         extBtnQuickUnpack,
         addonsNavBtns,
         addonsTabContents,
-        onExtensionInstalled
+        onExtensionInstalled,
+        onOpenTab
     }) {
         this.extCuratedGrid = extCuratedGrid;
         this.extInstalledList = extInstalledList;
@@ -35,6 +36,7 @@ export class AddonsController {
         this.addonsNavBtns = addonsNavBtns || [];
         this.addonsTabContents = addonsTabContents || [];
         this.onExtensionInstalled = onExtensionInstalled || (() => {});
+        this.onOpenTab = onOpenTab || (() => {});
 
         this.installedExtensionsList = [];
         this.currentMarketFilter = 'all';
@@ -194,7 +196,14 @@ export class AddonsController {
                 ? `<img src="${ext.iconDataUrl}" width="36" height="36" style="border-radius:8px; object-fit:contain;" alt="${ext.name}" />`
                 : `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--br-text-muted, #64748b)" stroke-width="1.5"><path d="M20.5 11H19V7a2 2 0 0 0-2-2h-4V3.5a1.5 1.5 0 0 0-3 0V5H6a2 2 0 0 0-2 2v4H2.5a1.5 1.5 0 0 0 0 3H4v4a2 2 0 0 0 2 2h4v1.5a1.5 1.5 0 0 0 3 0V20h4a2 2 0 0 0 2-2v-4h1.5a1.5 1.5 0 0 0 0-3z"/></svg>`;
 
-            return `
+                const launchUrl = ext.popupUrl || ext.optionsUrl;
+                const launchBtn = launchUrl ? `
+                    <button class="ext-icon-btn launch" data-action="launch" data-url="${launchUrl}" title="Open Extension Interface">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                    </button>
+                ` : '';
+
+                return `
                 <div class="ext-installed-item">
                     <div class="ext-item-left">
                         <div class="ext-item-icon">${iconHtml}</div>
@@ -208,6 +217,7 @@ export class AddonsController {
                         </div>
                     </div>
                     <div class="ext-item-actions">
+                        ${launchBtn}
                         <button class="ext-icon-btn" data-action="folder" data-id="${ext.id}" title="Open Extension Folder">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
                         </button>
@@ -222,6 +232,13 @@ export class AddonsController {
                 </div>
             `;
         }).join('');
+
+        this.extInstalledList.querySelectorAll('[data-action="launch"]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const url = btn.getAttribute('data-url');
+                if (url && this.onOpenTab) this.onOpenTab(url, true);
+            });
+        });
 
         this.extInstalledList.querySelectorAll('[data-action="toggle"]').forEach(input => {
             input.addEventListener('change', async (e) => {

@@ -208,6 +208,10 @@ export class TabController {
             if (tabData.id === this.activeTabId) this.updateControlsState();
         });
 
+        wv.addEventListener('dom-ready', () => {
+            this._injectLinkHandler(wv);
+        });
+
         wv.addEventListener('did-stop-loading', () => {
             tabData.loading = false;
             const currentUrl = wv.getURL();
@@ -229,6 +233,7 @@ export class TabController {
             }
             if (this.quickTools) this.quickTools.applyInjections(wv);
 
+            this._injectLinkHandler(wv);
             // Inject 1-click install helper on Chrome Web Store extension pages
             this._injectWebstoreHelper(wv, currentUrl);
         });
@@ -240,11 +245,25 @@ export class TabController {
                 if (tabData.id === this.activeTabId && this.urlInput) {
                     this.urlInput.value = e.url;
                 }
+                this._injectLinkHandler(wv);
                 this._injectWebstoreHelper(wv, e.url);
             }
         });
 
         wv.addEventListener('console-message', async (e) => {
+            if (e.message && e.message.startsWith('[YT_BROWSER_OPEN_LINK]:')) {
+                try {
+                    const raw = e.message.replace('[YT_BROWSER_OPEN_LINK]:', '').trim();
+                    const payload = JSON.parse(raw);
+                    if (payload && payload.url) {
+                        this.createTab(payload.url, payload.activate !== false);
+                    }
+                } catch (err) {
+                    console.warn('[TabController] Open link error:', err);
+                }
+                return;
+            }
+
             if (e.message && e.message.startsWith('[YT_BROWSER_INSTALL_EXTENSION]:')) {
                 const extId = e.message.replace('[YT_BROWSER_INSTALL_EXTENSION]:', '').trim();
                 if (extId && window.electronAPI && window.electronAPI.extensionInstall) {
@@ -310,7 +329,10 @@ export class TabController {
 
         wv.addEventListener('new-window', (e) => {
             e.preventDefault();
-            if (e.url) this.createTab(e.url, true);
+            if (e.url) {
+                const activate = e.disposition !== 'background-tab';
+                this.createTab(e.url, activate);
+            }
         });
 
         wv.addEventListener('found-in-page', (e) => {
@@ -425,5 +447,50 @@ export class TabController {
         setTimeout(() => {
             wv.executeJavaScript(helperScript).catch(() => {});
         }, 800);
+    }
+
+    _injectLinkHandler(wv) {
+        if (!wv) return;
+        const linkScript = `
+            (function() {
+                if (window.__yt_link_capture_injected) return;
+                window.__yt_link_capture_injected = true;
+
+                function getClosestAnchor(el) {
+                    while (el && el !== document && el !== document.body) {
+                        if (el.tagName && el.tagName.toLowerCase() === 'a' && el.href) {
+                            return el;
+                        }
+                        el = el.parentElement || el.parentNode;
+                    }
+                    return null;
+                }
+
+                function onLinkInteraction(e) {
+                    const isMiddle = e.button === 1;
+                    const isModifier = (e.metaKey || e.ctrlKey || isMiddle);
+                    const isShift = e.shiftKey;
+
+                    // Only intercept if a modifier key or middle click is involved
+                    if (!isModifier && !isShift) return;
+
+                    const anchor = getClosestAnchor(e.target);
+                    if (!anchor) return;
+
+                    const href = anchor.href;
+                    if (!href || href.startsWith('javascript:') || href === '#' || href.startsWith('#')) return;
+
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const activate = isShift ? true : true;
+                    console.log('[YT_BROWSER_OPEN_LINK]:' + JSON.stringify({ url: href, activate }));
+                }
+
+                document.addEventListener('click', onLinkInteraction, true);
+                document.addEventListener('auxclick', onLinkInteraction, true);
+            })();
+        `;
+        wv.executeJavaScript(linkScript).catch(() => {});
     }
 }
