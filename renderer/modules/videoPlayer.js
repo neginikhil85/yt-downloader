@@ -553,15 +553,6 @@ export function initVideoPlayer() {
         }
     });
 
-    // 13. Back Button
-    if (btnBackPlayer) {
-        btnBackPlayer.addEventListener('click', () => {
-            videoEl.pause();
-            const iframe = document.getElementById('cinema-iframe');
-            if (iframe) iframe.src = '';
-            switchView(state.previousView || 'home');
-        });
-    }
 }
 
 /**
