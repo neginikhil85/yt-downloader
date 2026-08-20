@@ -1,5 +1,6 @@
 const { BrowserWindow } = require('electron');
 const path = require('path');
+const { attachWindowCrashHandler } = require('./services/crashReporter');
 
 let mainWindow = null;
 
@@ -28,6 +29,8 @@ function createMainWindow() {
             webviewTag: true
         }
     });
+
+    attachWindowCrashHandler(mainWindow);
 
     mainWindow.loadFile(path.join(__dirname, '..', '..', 'renderer', 'index.html'));
 

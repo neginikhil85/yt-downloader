@@ -116,6 +116,12 @@ function extractZip(zipPath, targetDir) {
     fs.mkdirSync(targetDir, { recursive: true });
     if (process.platform === 'win32') {
         execSync(`powershell -NoProfile -Command "Expand-Archive -Path '${zipPath}' -DestinationPath '${targetDir}' -Force"`, { stdio: 'ignore' });
+    } else if (process.platform === 'darwin') {
+        try {
+            execSync(`/usr/bin/ditto -x -k "${zipPath}" "${targetDir}"`, { stdio: 'ignore' });
+        } catch (e) {
+            execSync(`unzip -q -o "${zipPath}" -d "${targetDir}"`, { stdio: 'ignore' });
+        }
     } else {
         execSync(`unzip -q -o "${zipPath}" -d "${targetDir}"`, { stdio: 'ignore' });
     }

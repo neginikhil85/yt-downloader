@@ -1,3 +1,6 @@
+const { initCrashReporter } = require('./src/main/services/crashReporter');
+initCrashReporter();
+
 const { app, BrowserWindow, protocol, session } = require('electron');
 const path = require('path');
 const fs = require('fs');

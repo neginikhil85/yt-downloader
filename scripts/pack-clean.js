@@ -50,9 +50,25 @@ function cleanReleaseDirectory() {
     }
 }
 
+function copyBundle(src, dest) {
+    if (!fs.existsSync(src)) return;
+    if (process.platform === 'darwin') {
+        try {
+            execSync(`/usr/bin/ditto "${src}" "${dest}"`, { stdio: 'ignore' });
+            return;
+        } catch (e) {
+            try {
+                execSync(`cp -R -P "${src}" "${dest}"`, { stdio: 'ignore' });
+                return;
+            } catch (e2) {}
+        }
+    }
+    fs.cpSync(src, dest, { recursive: true, force: true, verbatimSymlinks: true });
+}
+
 function copyRecursive(src, dest) {
     if (!fs.existsSync(src)) return;
-    fs.cpSync(src, dest, { recursive: true, force: true });
+    fs.cpSync(src, dest, { recursive: true, force: true, verbatimSymlinks: true });
 }
 
 function updateInfoPlist(plistPath, updates) {
@@ -212,14 +228,14 @@ async function packageMac(spinner = null) {
     if (runtime.isDistFolder) {
         const distItems = fs.readdirSync(runtime.path);
         const appFolder = distItems.find(item => item.endsWith('.app')) || 'Electron.app';
-        copyRecursive(path.join(runtime.path, appFolder), destApp);
+        copyBundle(path.join(runtime.path, appFolder), destApp);
     } else {
         const tempExtract = path.join(releaseDir, 'temp-mac');
         fs.mkdirSync(tempExtract, { recursive: true });
         extractZip(runtime.zipPath, tempExtract);
         const extractedItems = fs.readdirSync(tempExtract);
         const appFolder = extractedItems.find(item => item.endsWith('.app')) || 'Electron.app';
-        copyRecursive(path.join(tempExtract, appFolder), destApp);
+        copyBundle(path.join(tempExtract, appFolder), destApp);
         try { fs.rmSync(tempExtract, { recursive: true, force: true }); } catch (e) {}
     }
 

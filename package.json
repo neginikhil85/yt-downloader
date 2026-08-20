@@ -9,7 +9,11 @@
     "setup:bin": "node scripts/setup-binaries.js",
     "pack:standalone": "node scripts/pack-clean.js",
     "pack:clean": "node scripts/pack-clean.js",
-    "pack": "node scripts/pack-clean.js"
+    "pack": "node scripts/pack-clean.js",
+    "dist": "electron-builder",
+    "dist:mac": "electron-builder --mac",
+    "dist:win": "electron-builder --win",
+    "dist:linux": "electron-builder --linux"
   },
   "build": {
     "appId": "com.bruno.bruno",
