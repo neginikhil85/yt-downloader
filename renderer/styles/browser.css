@@ -378,11 +378,11 @@
     align-items: center;
     gap: 6px;
     background: transparent;
-    border: 1px solid transparent;
-    color: #bdc1c6;
-    padding: 2px 8px;
-    border-radius: 5px;
-    font-size: 11px;
+    border: none;
+    color: #94a3b8;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11.5px;
     font-weight: 500;
     cursor: pointer;
     white-space: nowrap;
@@ -391,16 +391,23 @@
 
 .pinned-app-chip:hover {
     background: rgba(255, 255, 255, 0.08);
-    color: #ffffff;
+    color: #f8fafc;
 }
 
 .pinned-app-icon-wrap {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    overflow: hidden;
+}
+
+.pinned-app-icon-wrap svg {
+    width: 12px;
+    height: 12px;
 }
 
 .pinned-app-icon {
@@ -414,26 +421,7 @@
     max-width: 120px;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-.pinned-app-delete {
-    display: none;
-    background: transparent;
-    border: none;
-    color: #80868b;
-    font-size: 10px;
-    padding: 0 2px;
-    margin-left: 2px;
-    cursor: pointer;
-    border-radius: 50%;
-}
-
-.pinned-app-chip:hover .pinned-app-delete {
-    display: inline-block;
-}
-
-.pinned-app-delete:hover {
-    color: #ef4444;
+    white-space: nowrap;
 }
 
 .btn-add-pin-chip {
@@ -442,20 +430,19 @@
     gap: 4px;
     background: transparent;
     border: 1px dashed rgba(255, 255, 255, 0.15);
-    color: #80868b;
+    color: #64748b;
     padding: 2px 8px;
     border-radius: 5px;
     font-size: 11px;
     font-weight: 500;
     cursor: pointer;
-    white-space: nowrap;
-    transition: all 0.15s ease;
+    transition: all 0.12s ease;
 }
 
 .btn-add-pin-chip:hover {
     border-color: #3b82f6;
-    color: #ffffff;
-    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.08);
 }
 
 /* ==========================================================================
@@ -830,10 +817,16 @@
 
 .home-branding h2 {
     margin: 0;
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 600;
-    color: #ffffff;
-    letter-spacing: -0.3px;
+    color: #f8fafc;
+    letter-spacing: -0.02em;
+}
+
+.home-branding p {
+    margin: 0;
+    font-size: 13px;
+    color: #94a3b8;
 }
 
 /* Search Box */
@@ -842,29 +835,31 @@
     max-width: 580px;
     display: flex;
     align-items: center;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 28px;
-    padding: 6px 8px 6px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    padding: 5px 6px 5px 16px;
     gap: 10px;
-    margin-bottom: 38px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    margin-bottom: 40px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(12px);
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .home-search-box:focus-within {
-    background: #0d0e11;
+    background: #0e1117;
     border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25), 0 8px 24px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25), 0 12px 36px rgba(0, 0, 0, 0.6);
 }
 
 .home-search-engine-icon {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
+    color: #94a3b8;
 }
 
 .home-search-input {
@@ -872,114 +867,115 @@
     background: transparent;
     border: none;
     outline: none;
-    color: #ffffff;
-    font-size: 14px;
+    color: #f8fafc;
+    font-size: 13.5px;
     font-family: inherit;
 }
 
 .home-search-input::placeholder {
-    color: #80868b;
+    color: #64748b;
 }
 
 .home-search-btn {
-    background: #2563eb;
-    color: #ffffff;
-    border: none;
-    padding: 8px 20px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 600;
+    background: rgba(255, 255, 255, 0.08);
+    color: #f1f5f9;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 7px 18px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.15s ease;
 }
 
 .home-search-btn:hover {
-    background: #1d4ed8;
+    background: #3b82f6;
+    border-color: #3b82f6;
+    color: #ffffff;
 }
 
 /* Pinned Shortcuts Grid */
 .home-quick-apps-section {
     width: 100%;
-    max-width: 680px;
+    max-width: 580px;
 }
 
 .home-section-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
     padding: 0 4px;
 }
 
 .home-section-header h3 {
     margin: 0;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.8px;
-    color: #80868b;
+    color: #64748b;
 }
 
 .home-apps-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
 }
 
 .home-app-card {
+    height: 104px;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 10px;
-    padding: 12px 6px;
-    border-radius: 12px;
+    background: #11141c;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 14px;
+    padding: 12px 8px;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     position: relative;
     user-select: none;
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 .home-app-card:hover {
-    background: rgba(255, 255, 255, 0.07);
+    background: #181d28;
+    border-color: rgba(255, 255, 255, 0.15);
     transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 .home-app-icon-wrap {
-    width: 52px;
-    height: 52px;
-    border-radius: 14px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    transition: all 0.2s ease;
     overflow: hidden;
-    position: relative;
-}
-
-.home-app-card:hover .home-app-icon-wrap {
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
-    border-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    transition: all 0.18s ease;
 }
 
 .home-app-icon-wrap svg {
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
 }
 
 .home-app-icon-wrap img {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     object-fit: contain;
-    border-radius: 6px;
 }
 
 .home-app-name {
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 500;
-    color: #bdc1c6;
+    color: #94a3b8;
     max-width: 90px;
     white-space: nowrap;
     overflow: hidden;
@@ -989,73 +985,66 @@
 }
 
 .home-app-card:hover .home-app-name {
-    color: #ffffff;
+    color: #f8fafc;
 }
 
-.home-app-actions {
+.home-app-delete-btn {
     position: absolute;
-    top: 4px;
-    right: 4px;
-    display: none;
-    align-items: center;
-    gap: 3px;
-    z-index: 10;
-}
-
-.home-app-card:hover .home-app-actions {
-    display: flex;
-}
-
-.home-app-action-btn {
-    width: 20px;
-    height: 20px;
-    background: rgba(0, 0, 0, 0.75);
-    border: 1px solid rgba(255, 255, 255, 0.16);
+    top: 6px;
+    right: 6px;
+    width: 18px;
+    height: 18px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 50%;
-    color: #9aa0a6;
+    color: #94a3b8;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.12s ease;
-    padding: 0;
-}
-
-.home-app-action-btn svg {
+    font-size: 10px;
+    opacity: 0;
     pointer-events: none;
+    transition: all 0.15s ease;
+    padding: 0;
+    line-height: 1;
 }
 
-.home-app-action-btn.edit-btn:hover {
-    background: #2563eb;
-    border-color: #3b82f6;
-    color: #ffffff;
-    transform: scale(1.1);
+.home-app-card:hover .home-app-delete-btn {
+    opacity: 1;
+    pointer-events: auto;
 }
 
-.home-app-action-btn.delete-btn:hover {
-    background: #dc2626;
+.home-app-delete-btn:hover {
+    background: #ef4444;
     border-color: #ef4444;
     color: #ffffff;
     transform: scale(1.1);
 }
 
-.home-app-card.add-card .home-app-icon-wrap {
-    border: 1px dashed rgba(255, 255, 255, 0.2);
-    background: transparent;
+.home-app-card.add-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed rgba(255, 255, 255, 0.14);
     box-shadow: none;
 }
 
-.home-app-card.add-card:hover .home-app-icon-wrap {
+.home-app-card.add-card .home-app-icon-wrap {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    color: #64748b;
+}
+
+.home-app-card.add-card:hover {
     border-color: #3b82f6;
-    background: rgba(59, 130, 246, 0.1);
+    background: rgba(59, 130, 246, 0.06);
 }
 
-.home-app-card.add-card .home-app-icon-wrap svg {
-    color: #80868b;
-    transition: color 0.15s ease;
+.home-app-card.add-card:hover .home-app-icon-wrap {
+    color: #3b82f6;
 }
 
-.home-app-card.add-card:hover .home-app-icon-wrap svg {
+.home-app-card.add-card:hover .home-app-name {
     color: #3b82f6;
 }
 

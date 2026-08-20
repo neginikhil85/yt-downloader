@@ -579,9 +579,10 @@
                     <div class="browser-home-dashboard" id="browser-home-dashboard">
                         <div class="home-branding">
                             <div class="home-logo-box">
-                                <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
-                                    <rect x="2" y="4" width="20" height="16" rx="4.5" fill="#FFFFFF"/>
-                                    <polygon points="10,8.5 15.5,12 10,15.5" fill="#FF0000"/>
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #60a5fa;">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
                                 </svg>
                             </div>
                             <h2>Research & Web Portal</h2>
@@ -589,8 +590,10 @@
                         </div>
 
                         <div class="home-search-box">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                            <input type="text" class="home-search-input" id="home-search-input" placeholder="Search the web or paste any URL..." />
+                            <div class="home-search-engine-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            </div>
+                            <input type="text" class="home-search-input" id="home-search-input" placeholder="Search Google or type a URL..." autocomplete="off" />
                             <button class="home-search-btn" id="home-search-btn">Search</button>
                         </div>
 
