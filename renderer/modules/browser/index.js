@@ -1,13 +1,10 @@
-// ==========================================================================
-// YT Studio Pro — Research Browser Module Orchestrator (ES Module)
-// ==========================================================================
-
 import { ThemeStudio } from './themeStudio.js';
 import { TopSitesController } from './topSitesController.js';
 import { AddonsController } from './addonsController.js';
 import { FindInPageController } from './findInPage.js';
 import { QuickToolsController } from './quickToolsController.js';
 import { TabController } from './tabController.js';
+import { ExtensionsMenu } from './extensionsMenu.js';
 
 export function initBrowserManager() {
     // 1. DOM Elements Query
@@ -33,6 +30,19 @@ export function initBrowserManager() {
     const btnExtensions = document.getElementById('browser-btn-extensions');
     const browserPanel = document.getElementById('view-browser');
     const activeCountBadge = document.getElementById('ext-active-count-badge');
+
+    // Chrome-Style Extensions Menu & Action Popover Elements
+    const pinnedIconsContainer = document.getElementById('browser-pinned-ext-icons');
+    const extMenuPanel = document.getElementById('browser-extensions-menu-panel');
+    const extMenuList = document.getElementById('ext-menu-list');
+    const extMenuCloseBtn = document.getElementById('ext-menu-close-btn');
+    const extMenuManageBtn = document.getElementById('ext-menu-manage-btn');
+    const actionPopover = document.getElementById('browser-ext-action-popover');
+    const actionPopoverIcon = document.getElementById('ext-action-popover-icon');
+    const actionPopoverTitle = document.getElementById('ext-action-popover-title');
+    const actionPopoverClose = document.getElementById('ext-action-popover-close');
+    const actionPopoverOpenTab = document.getElementById('ext-action-popover-open-tab');
+    const actionPopoverBody = document.getElementById('ext-action-popover-body');
 
     // Quick Popover Elements
     const extPanel = document.getElementById('browser-extensions-panel');
@@ -118,6 +128,8 @@ export function initBrowserManager() {
         onCreateTab: (url, activate) => tabController && tabController.createTab(url, activate)
     });
 
+    let extensionsMenu;
+
     const addonsController = new AddonsController({
         extCuratedGrid,
         extInstalledList,
@@ -132,7 +144,8 @@ export function initBrowserManager() {
         extBtnQuickUnpack,
         addonsNavBtns,
         addonsTabContents,
-        onOpenTab: (url, activate) => tabController && tabController.createTab(url, activate)
+        onOpenTab: (url, activate) => tabController && tabController.createTab(url, activate),
+        onExtensionInstalled: () => extensionsMenu && extensionsMenu.loadAndRender()
     });
 
     const findInPage = new FindInPageController({
@@ -187,6 +200,7 @@ export function initBrowserManager() {
             addonsController.loadInstalled();
             addonsController.renderCurated();
             themeStudio.render();
+            if (extensionsMenu) extensionsMenu.loadAndRender();
         }
     });
 
@@ -200,7 +214,26 @@ export function initBrowserManager() {
         addonsController.switchTab(targetTab);
         addonsController.loadInstalled();
         themeStudio.render();
+        if (extensionsMenu) extensionsMenu.loadAndRender();
     }
+
+    extensionsMenu = new ExtensionsMenu({
+        btnExtHub,
+        extMenuPanel,
+        extMenuList,
+        extMenuCloseBtn,
+        extMenuManageBtn,
+        pinnedIconsContainer,
+        actionPopover,
+        actionPopoverIcon,
+        actionPopoverTitle,
+        actionPopoverClose,
+        actionPopoverOpenTab,
+        actionPopoverBody,
+        onOpenExtensionHub: (tab) => openExtensionHub(tab),
+        onCreateTab: (url, activate) => tabController && tabController.createTab(url, activate),
+        getActiveTab: () => tabController?.getActiveTab() || null
+    });
 
     // 3. UI Action Bindings
     if (btnNewTab) {
@@ -313,10 +346,6 @@ export function initBrowserManager() {
 
     if (btnThemeStudio) {
         btnThemeStudio.addEventListener('click', () => openExtensionHub('addons-view-themes'));
-    }
-
-    if (btnExtHub) {
-        btnExtHub.addEventListener('click', () => openExtensionHub('addons-view-installed'));
     }
 
     if (btnOpenWebstore) {

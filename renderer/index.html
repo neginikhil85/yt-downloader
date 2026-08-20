@@ -421,7 +421,10 @@
 
                         <!-- Right Side Tools Cluster (Outside Address Bar) -->
                         <div class="browser-tools-cluster">
-                            <button class="browser-btn ext-hub-btn-wrap" id="browser-btn-ext-hub" title="Installed Add-ons & Extensions Manager">
+                            <!-- Dynamic Pinned Extension Action Icons -->
+                            <div class="browser-pinned-ext-icons" id="browser-pinned-ext-icons"></div>
+
+                            <button class="browser-btn ext-hub-btn-wrap" id="browser-btn-ext-hub" title="Extensions">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.5 11H19V7a2 2 0 0 0-2-2h-4V3.5a1.5 1.5 0 0 0-3 0V5H6a2 2 0 0 0-2 2v4H2.5a1.5 1.5 0 0 0 0 3H4v4a2 2 0 0 0 2 2h4v1.5a1.5 1.5 0 0 0 3 0V20h4a2 2 0 0 0 2-2v-4h1.5a1.5 1.5 0 0 0 0-3z"></path></svg>
                                 <span class="ext-count-badge" id="ext-active-count-badge" style="display: none;">0</span>
                             </button>
@@ -449,6 +452,44 @@
                     <!-- Pinned Quick Apps Bar (Firefox Style) -->
                     <div class="browser-pinned-bar" id="browser-pinned-bar">
                         <!-- Dynamic Pinned Apps Rendered Here -->
+                    </div>
+                </div>
+
+                <!-- Chrome-Style Extensions Dropdown Menu -->
+                <div class="browser-extensions-menu-panel" id="browser-extensions-menu-panel" style="display: none;">
+                    <div class="ext-menu-header">
+                        <div class="ext-menu-title-wrap">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.5 11H19V7a2 2 0 0 0-2-2h-4V3.5a1.5 1.5 0 0 0-3 0V5H6a2 2 0 0 0-2 2v4H2.5a1.5 1.5 0 0 0 0 3H4v4a2 2 0 0 0 2 2h4v1.5a1.5 1.5 0 0 0 3 0V20h4a2 2 0 0 0 2-2v-4h1.5a1.5 1.5 0 0 0 0-3z"></path></svg>
+                            <span>Extensions</span>
+                        </div>
+                        <button class="ext-menu-close-btn" id="ext-menu-close-btn" title="Close">✕</button>
+                    </div>
+                    <div class="ext-menu-subtitle">Installed Extensions</div>
+                    <div class="ext-menu-list" id="ext-menu-list">
+                        <!-- Dynamic items -->
+                    </div>
+                    <div class="ext-menu-footer">
+                        <button class="ext-menu-manage-btn" id="ext-menu-manage-btn">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                            <span>Manage Extensions</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Floating Extension Action Popup Flyout -->
+                <div class="browser-ext-action-popover" id="browser-ext-action-popover" style="display: none;">
+                    <div class="ext-action-popover-header">
+                        <div class="ext-action-popover-title-wrap">
+                            <span class="ext-action-popover-icon" id="ext-action-popover-icon"></span>
+                            <span class="ext-action-popover-title" id="ext-action-popover-title">Extension</span>
+                        </div>
+                        <div class="ext-action-popover-btns">
+                            <button class="ext-action-popover-btn" id="ext-action-popover-open-tab" title="Open in Full Tab">↗</button>
+                            <button class="ext-action-popover-btn" id="ext-action-popover-close" title="Close">✕</button>
+                        </div>
+                    </div>
+                    <div class="ext-action-popover-body" id="ext-action-popover-body">
+                        <!-- Dynamically Created Webview Rendered Here -->
                     </div>
                 </div>
 
