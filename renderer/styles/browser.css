@@ -32,7 +32,8 @@
     z-index: 20;
     gap: 6px;
     min-height: 42px;
-    -webkit-app-region: drag; /* Enables window dragging in macOS */
+    -webkit-app-region: drag;
+    /* Enables window dragging in macOS */
 }
 
 .browser-tabs-scroll {
@@ -135,12 +136,15 @@
 .browser-tab.loading .tab-spinner {
     display: inline-block;
 }
+
 .browser-tab.loading .tab-favicon-wrap {
     display: none;
 }
 
 @keyframes tabSpin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .tab-close-btn {
@@ -215,7 +219,8 @@
     border-bottom: 1px solid var(--br-border, rgba(255, 255, 255, 0.07));
     z-index: 15;
     position: relative;
-    -webkit-app-region: drag; /* Allow window dragging from toolbar background */
+    -webkit-app-region: drag;
+    /* Allow window dragging from toolbar background */
 }
 
 .browser-nav-row {
@@ -493,6 +498,7 @@
         opacity: 0;
         transform: translateY(-6px) scale(0.98);
     }
+
     to {
         opacity: 1;
         transform: translateY(0) scale(1);
@@ -611,11 +617,30 @@
     flex-shrink: 0;
 }
 
-.badge-cyan { background: rgba(56, 189, 248, 0.14); color: var(--br-text, #38bdf8); }
-.badge-purple { background: rgba(168, 85, 247, 0.14); color: var(--br-text, #c084fc); }
-.badge-amber { background: rgba(245, 158, 11, 0.14); color: var(--br-text, #fbbf24); }
-.badge-rose { background: rgba(244, 63, 94, 0.14); color: var(--br-text, #fb7185); }
-.badge-emerald { background: rgba(34, 197, 94, 0.14); color: var(--br-text, #4ade80); }
+.badge-cyan {
+    background: rgba(56, 189, 248, 0.14);
+    color: var(--br-text, #38bdf8);
+}
+
+.badge-purple {
+    background: rgba(168, 85, 247, 0.14);
+    color: var(--br-text, #c084fc);
+}
+
+.badge-amber {
+    background: rgba(245, 158, 11, 0.14);
+    color: var(--br-text, #fbbf24);
+}
+
+.badge-rose {
+    background: rgba(244, 63, 94, 0.14);
+    color: var(--br-text, #fb7185);
+}
+
+.badge-emerald {
+    background: rgba(34, 197, 94, 0.14);
+    color: var(--br-text, #4ade80);
+}
 
 .ext-meta {
     display: flex;
@@ -675,7 +700,10 @@
 .ext-slider {
     position: absolute;
     cursor: pointer;
-    top: 0; left: 0; right: 0; bottom: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     background-color: var(--br-border, rgba(255, 255, 255, 0.14));
     transition: 0.18s cubic-bezier(0.16, 1, 0.3, 1);
     border-radius: 20px;
@@ -694,11 +722,11 @@
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-.ext-switch input:checked + .ext-slider {
+.ext-switch input:checked+.ext-slider {
     background-color: var(--br-accent, #2563eb);
 }
 
-.ext-switch input:checked + .ext-slider:before {
+.ext-switch input:checked+.ext-slider:before {
     transform: translateX(14px);
 }
 
@@ -1640,8 +1668,15 @@
 }
 
 @keyframes findSlideIn {
-    from { opacity: 0; transform: translateY(-8px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .browser-find-input {
@@ -1665,7 +1700,8 @@
     min-width: 50px;
 }
 
-.browser-find-btn, .browser-find-close {
+.browser-find-btn,
+.browser-find-close {
     background: transparent;
     border: none;
     color: #94a3b8;
@@ -1676,7 +1712,8 @@
     transition: all 0.12s;
 }
 
-.browser-find-btn:hover, .browser-find-close:hover {
+.browser-find-btn:hover,
+.browser-find-close:hover {
     background: rgba(255, 255, 255, 0.1);
     color: #ffffff;
 }
@@ -1841,8 +1878,15 @@
 }
 
 @keyframes fadeInAddons {
-    from { opacity: 0; transform: translateY(4px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Web Store Hero Banner */
@@ -2422,9 +2466,17 @@
     opacity: 0.65;
 }
 
-.mini-dot.red { background: #ff5f56; }
-.mini-dot.yellow { background: #ffbd2e; }
-.mini-dot.green { background: #27c93f; }
+.mini-dot.red {
+    background: #ff5f56;
+}
+
+.mini-dot.yellow {
+    background: #ffbd2e;
+}
+
+.mini-dot.green {
+    background: #27c93f;
+}
 
 .mini-browser-mini-tab {
     padding: 2px 8px;

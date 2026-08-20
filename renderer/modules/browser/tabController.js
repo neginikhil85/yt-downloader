@@ -228,6 +228,71 @@ export class TabController {
                 this.updateControlsState();
             }
             if (this.quickTools) this.quickTools.applyInjections(wv);
+
+            // Inject 1-click install helper on Chrome Web Store extension pages
+            if (currentUrl && currentUrl.includes('chromewebstore.google.com/detail/')) {
+                const match = currentUrl.match(/\/detail\/(?:[^\/]+\/)?([a-z]{32})/i);
+                if (match) {
+                    const extId = match[1];
+                    const helperScript = `
+                        (function() {
+                            if (document.getElementById('yt-webstore-installer-pill')) return;
+                            const pill = document.createElement('div');
+                            pill.id = 'yt-webstore-installer-pill';
+                            pill.style.cssText = 'position:fixed; bottom:28px; right:28px; z-index:2147483647; background:#0f172a; border:1px solid rgba(255,255,255,0.2); border-radius:14px; padding:12px 18px; display:flex; align-items:center; gap:14px; box-shadow:0 12px 36px rgba(0,0,0,0.45); font-family:-apple-system,BlinkMacSystemFont,sans-serif; color:#f8fafc; font-size:13.5px;';
+                            pill.innerHTML = '<div style="display:flex;align-items:center;gap:8px;font-weight:600;"><span style="font-size:18px;">🧩</span><span>Add to Research Browser</span></div><button id="btn-inject-install-ext" style="background:#2563eb;color:#fff;border:none;padding:7px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;transition:background 0.15s ease;">＋ Install Now</button>';
+                            document.body.appendChild(pill);
+
+                            const btn = document.getElementById('btn-inject-install-ext');
+                            btn.addEventListener('click', () => {
+                                btn.disabled = true;
+                                btn.textContent = 'Installing...';
+                                console.log('[YT_BROWSER_INSTALL_EXTENSION]:' + '${extId}');
+                            });
+                        })();
+                    `;
+                    wv.executeJavaScript(helperScript).catch(()=>{});
+                }
+            }
+        });
+
+        wv.addEventListener('console-message', async (e) => {
+            if (e.message && e.message.startsWith('[YT_BROWSER_INSTALL_EXTENSION]:')) {
+                const extId = e.message.split(':')[1];
+                if (extId && window.electronAPI && window.electronAPI.extensionInstall) {
+                    try {
+                        const res = await window.electronAPI.extensionInstall(extId);
+                        if (res && res.success) {
+                            wv.executeJavaScript(`
+                                (function() {
+                                    const btn = document.getElementById('btn-inject-install-ext');
+                                    if (btn) {
+                                        btn.style.background = '#10b981';
+                                        btn.textContent = '✓ Installed & Active';
+                                    }
+                                })();
+                            `).catch(() => {});
+                            const extName = res.extension?.name || 'Extension';
+                            const extVer = res.extension?.version || '1.0';
+                            alert(`✓ Successfully installed ${extName} (v${extVer}) into Research Browser!`);
+                        } else {
+                            const errMsg = res?.error || 'Failed';
+                            wv.executeJavaScript(`
+                                (function() {
+                                    const btn = document.getElementById('btn-inject-install-ext');
+                                    if (btn) {
+                                        btn.disabled = false;
+                                        btn.style.background = '#ef4444';
+                                        btn.textContent = '✕ Install notice: ${errMsg.replace(/'/g, "\\'")}';
+                                    }
+                                })();
+                            `).catch(() => {});
+                        }
+                    } catch (err) {
+                        alert('Install Error: ' + err.message);
+                    }
+                }
+            }
         });
 
         wv.addEventListener('page-title-updated', (e) => {
