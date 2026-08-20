@@ -15,7 +15,7 @@ let isInitialized = false;
 function ensurePaths() {
     if (!extensionsDir) {
         try {
-            const userData = app.isReady() ? app.getPath('userData') : path.join(require('os').homedir(), '.yt_downloader');
+            const userData = (app && typeof app.isReady === 'function' && app.isReady()) ? app.getPath('userData') : path.join(require('os').homedir(), '.yt_downloader');
             extensionsDir = path.join(userData, 'extensions');
             if (!fs.existsSync(extensionsDir)) {
                 fs.mkdirSync(extensionsDir, { recursive: true });
@@ -143,6 +143,61 @@ function readExtensionManifest(extDir) {
 }
 
 /**
+ * Resolves Chrome extension i18n strings (e.g., __MSG_name__, __MSG_description__)
+ * from the extension's _locales/<locale>/messages.json files.
+ */
+function getI18nMessage(extDir, key, defaultLocale = 'en') {
+    if (!extDir || !fs.existsSync(extDir) || !key) return null;
+    const localesDir = path.join(extDir, '_locales');
+    if (!fs.existsSync(localesDir)) return null;
+
+    const candidates = [];
+    if (defaultLocale) {
+        candidates.push(defaultLocale);
+        if (defaultLocale.includes('-')) candidates.push(defaultLocale.replace('-', '_'));
+        if (defaultLocale.includes('_')) candidates.push(defaultLocale.split('_')[0]);
+    }
+    candidates.push('en', 'en_US', 'en_GB');
+
+    try {
+        const availableLocales = fs.readdirSync(localesDir);
+        for (const loc of availableLocales) {
+            if (!candidates.includes(loc)) candidates.push(loc);
+        }
+
+        const lowerKey = key.toLowerCase();
+        for (const locale of candidates) {
+            const msgFile = path.join(localesDir, locale, 'messages.json');
+            if (fs.existsSync(msgFile)) {
+                try {
+                    const raw = fs.readFileSync(msgFile, 'utf8');
+                    const parsed = JSON.parse(raw);
+                    for (const [k, val] of Object.entries(parsed)) {
+                        if (k.toLowerCase() === lowerKey && val && typeof val.message === 'string') {
+                            return val.message;
+                        }
+                    }
+                } catch (e) {
+                    // Try next candidate locale
+                }
+            }
+        }
+    } catch (e) { }
+
+    return null;
+}
+
+function resolveI18nString(text, extDir, defaultLocale = 'en') {
+    if (!text || typeof text !== 'string') return text;
+    if (!text.includes('__MSG_')) return text;
+
+    return text.replace(/__MSG_([A-Za-z0-9_@]+)__/g, (match, msgKey) => {
+        const resolved = getI18nMessage(extDir, msgKey, defaultLocale);
+        return resolved || match;
+    });
+}
+
+/**
  * Initializes the extension service and loads all enabled extensions into the Research Browser session
  */
 async function initExtensionService() {
@@ -168,30 +223,66 @@ async function initExtensionService() {
 
 function getInstalledExtensions() {
     loadMetadata();
-    return installedExtensions.map(ext => {
+    let metadataChanged = false;
+
+    const result = installedExtensions.map(ext => {
         let iconDataUrl = null;
+        let name = ext.name;
+        let description = ext.description;
+
         if (ext.path && fs.existsSync(ext.path)) {
             const manifest = readExtensionManifest(ext.path);
-            if (manifest && manifest.icons) {
-                // Pick the largest icon available (128 > 48 > 32 > 16)
-                const sizes = Object.keys(manifest.icons).map(Number).sort((a, b) => b - a);
-                for (const size of sizes) {
-                    const iconFile = manifest.icons[String(size)];
-                    const resolvedIcon = path.join(ext.path, iconFile);
-                    if (fs.existsSync(resolvedIcon)) {
-                        try {
-                            const buf = fs.readFileSync(resolvedIcon);
-                            const ext2 = path.extname(iconFile).toLowerCase();
-                            const mime = ext2 === '.svg' ? 'image/svg+xml' : (ext2 === '.webp' ? 'image/webp' : 'image/png');
-                            iconDataUrl = `data:${mime};base64,${buf.toString('base64')}`;
-                        } catch (e) { /* ignore read errors */ }
-                        break;
+            if (manifest) {
+                const defaultLocale = manifest.default_locale || 'en';
+
+                // Resolve localized name if needed
+                if (name && name.includes('__MSG_')) {
+                    const resolvedName = resolveI18nString(name, ext.path, defaultLocale);
+                    if (resolvedName !== name) {
+                        name = resolvedName;
+                        ext.name = resolvedName;
+                        metadataChanged = true;
+                    }
+                }
+
+                // Resolve localized description if needed
+                if (description && description.includes('__MSG_')) {
+                    const resolvedDesc = resolveI18nString(description, ext.path, defaultLocale);
+                    if (resolvedDesc !== description) {
+                        description = resolvedDesc;
+                        ext.description = resolvedDesc;
+                        metadataChanged = true;
+                    }
+                }
+
+                // Resolve icon
+                if (manifest.icons) {
+                    // Pick the largest icon available (128 > 48 > 32 > 16)
+                    const sizes = Object.keys(manifest.icons).map(Number).sort((a, b) => b - a);
+                    for (const size of sizes) {
+                        const iconFile = manifest.icons[String(size)];
+                        const resolvedIcon = path.join(ext.path, iconFile);
+                        if (fs.existsSync(resolvedIcon)) {
+                            try {
+                                const buf = fs.readFileSync(resolvedIcon);
+                                const ext2 = path.extname(iconFile).toLowerCase();
+                                const mime = ext2 === '.svg' ? 'image/svg+xml' : (ext2 === '.webp' ? 'image/webp' : 'image/png');
+                                iconDataUrl = `data:${mime};base64,${buf.toString('base64')}`;
+                            } catch (e) { /* ignore read errors */ }
+                            break;
+                        }
                     }
                 }
             }
         }
-        return { ...ext, iconDataUrl };
+        return { ...ext, name, description, iconDataUrl };
     });
+
+    if (metadataChanged) {
+        saveMetadata();
+    }
+
+    return result;
 }
 
 function getCuratedAddons() {
@@ -256,8 +347,11 @@ async function installExtensionFromWebStore(idOrUrl) {
     }
 
     const curatedMeta = CURATED_ADDONS.find(c => c.id === extId);
-    const name = curatedMeta ? curatedMeta.name : (manifest.name || extId);
-    const description = curatedMeta ? curatedMeta.description : (manifest.description || 'Custom extension');
+    const defaultLoc = manifest.default_locale || 'en';
+    const rawName = curatedMeta ? curatedMeta.name : (manifest.name || extId);
+    const rawDesc = curatedMeta ? curatedMeta.description : (manifest.description || 'Custom extension');
+    const name = resolveI18nString(rawName, targetDir, defaultLoc);
+    const description = resolveI18nString(rawDesc, targetDir, defaultLoc);
     const version = manifest.version || '1.0.0';
 
     const extRecord = {
@@ -302,9 +396,12 @@ async function installUnpackedExtension(targetFolderPath) {
         throw new Error(`Failed to load unpacked extension: ${loadErr.message}`);
     }
 
+    const defaultLoc = manifest.default_locale || 'en';
     const extId = loadedExt?.id || `unpacked_${Date.now()}`;
-    const name = manifest.name || path.basename(targetFolderPath);
-    const description = manifest.description || 'Locally loaded unpacked extension';
+    const rawName = manifest.name || path.basename(targetFolderPath);
+    const rawDesc = manifest.description || 'Locally loaded unpacked extension';
+    const name = resolveI18nString(rawName, targetFolderPath, defaultLoc);
+    const description = resolveI18nString(rawDesc, targetFolderPath, defaultLoc);
     const version = manifest.version || '1.0.0';
 
     const extRecord = {
