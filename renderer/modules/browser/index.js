@@ -305,7 +305,7 @@ export function initBrowserManager() {
     }
 
     if (btnExtHub) {
-        btnExtHub.addEventListener('click', () => openExtensionHub('addons-view-store'));
+        btnExtHub.addEventListener('click', () => openExtensionHub('addons-view-installed'));
     }
 
     if (btnOpenWebstore) {
