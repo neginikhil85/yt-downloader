@@ -23,21 +23,21 @@
    ========================================================================== */
 .browser-tabs-header {
     display: flex;
-    align-items: flex-end;
-    background: #08090b;
-    padding: 8px 14px 0 14px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    align-items: center;
+    background: #13151a;
+    padding: 6px 12px 6px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
     user-select: none;
     z-index: 20;
-    gap: 4px;
-    min-height: 42px;
+    gap: 6px;
+    min-height: 40px;
     -webkit-app-region: drag; /* Enables window dragging in macOS */
 }
 
 .browser-tabs-scroll {
     display: flex;
-    align-items: flex-end;
-    gap: 3px;
+    align-items: center;
+    gap: 4px;
     overflow-x: auto;
     scrollbar-width: none;
     max-width: calc(100% - 90px);
@@ -52,14 +52,13 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    min-width: 130px;
+    min-width: 120px;
     max-width: 220px;
-    height: 33px;
-    padding: 0 8px 0 12px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-bottom: none;
-    border-radius: 8px 8px 0 0;
+    height: 30px;
+    padding: 0 8px 0 10px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
     color: #9aa0a6;
     font-size: 12px;
     font-weight: 500;
@@ -70,29 +69,21 @@
 }
 
 .browser-tab:hover {
-    background: rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.06);
     color: #e8eaed;
 }
 
 .browser-tab.active {
-    background: #181a1f;
+    background: #232732;
     color: #ffffff;
-    border-color: rgba(255, 255, 255, 0.14);
-    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.35);
-    height: 34px;
-    margin-bottom: -1px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    height: 30px;
     z-index: 2;
 }
 
 .browser-tab.active::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 8px;
-    right: 8px;
-    height: 2px;
-    background: var(--brand-red, #ff2a2a);
-    border-radius: 2px;
+    display: none;
 }
 
 .tab-favicon-wrap {
@@ -170,8 +161,8 @@
 }
 
 .tab-close-btn:hover {
-    background: rgba(255, 255, 255, 0.15);
-    color: #ff4d4d;
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
 }
 
 .browser-btn-new-tab {
@@ -186,13 +177,14 @@
     justify-content: center;
     cursor: pointer;
     transition: all 0.15s ease;
-    margin-bottom: 4px;
+    align-self: center;
+    margin-bottom: 0;
     flex-shrink: 0;
     -webkit-app-region: no-drag;
 }
 
 .browser-btn-new-tab:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
     color: #ffffff;
 }
 
@@ -212,9 +204,9 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-    padding: 8px 14px 6px 14px;
-    background: #181a1f;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 6px 12px 6px 12px;
+    background: #181a20;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
     z-index: 15;
     position: relative;
     -webkit-app-region: drag; /* Allow window dragging from toolbar background */
@@ -231,7 +223,7 @@
 .browser-controls {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: 4px;
     -webkit-app-region: no-drag;
 }
 
@@ -239,9 +231,9 @@
     background: transparent;
     border: none;
     color: #9aa0a6;
-    width: 30px;
-    height: 30px;
-    border-radius: 6px;
+    width: 28px;
+    height: 28px;
+    border-radius: 5px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -265,29 +257,33 @@
     flex: 1;
     display: flex;
     align-items: center;
-    background: #0d0e11;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 18px;
+    background: #101216;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
     padding: 0 4px 0 10px;
-    height: 34px;
-    gap: 6px;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    height: 32px;
+    gap: 8px;
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
     -webkit-app-region: no-drag;
 }
 
 .browser-address-bar:focus-within {
-    background: #08090b;
+    background: #0c0e12;
     border-color: #3b82f6;
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
 .browser-security-icon {
-    color: #34d399;
+    color: #9aa0a6;
     display: flex;
     align-items: center;
     cursor: pointer;
     flex-shrink: 0;
-    opacity: 0.85;
+    transition: color 0.15s ease;
+}
+
+.browser-security-icon:hover {
+    color: #34d399;
 }
 
 .browser-address-input {
@@ -295,14 +291,14 @@
     background: transparent;
     border: none;
     outline: none;
-    color: #ffffff;
+    color: #f1f5f9;
     font-size: 12.5px;
     font-family: inherit;
     letter-spacing: 0.1px;
 }
 
 .browser-address-input::placeholder {
-    color: #5f6368;
+    color: #64748b;
 }
 
 .browser-bar-actions {
@@ -315,8 +311,8 @@
     background: transparent;
     border: none;
     color: #80868b;
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
     border-radius: 4px;
     display: flex;
     align-items: center;
@@ -337,22 +333,22 @@
 
 /* Minimalist Clean Go Button */
 .browser-go-btn {
-    background: rgba(255, 255, 255, 0.08);
-    color: #9aa0a6;
+    background: transparent;
+    color: #80868b;
     border: none;
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.15s ease;
-    margin-left: 2px;
+    margin-left: 1px;
 }
 
 .browser-go-btn:hover {
-    background: #3b82f6;
+    background: rgba(255, 255, 255, 0.1);
     color: #ffffff;
 }
 
@@ -365,7 +361,7 @@
     gap: 4px;
     overflow-x: auto;
     scrollbar-width: none;
-    padding: 1px 0;
+    padding: 3px 0 2px 0;
     -webkit-app-region: no-drag;
 }
 
@@ -381,7 +377,7 @@
     border: none;
     color: #94a3b8;
     padding: 3px 8px;
-    border-radius: 6px;
+    border-radius: 5px;
     font-size: 11.5px;
     font-weight: 500;
     cursor: pointer;
@@ -1120,11 +1116,11 @@
    8. Studio Theme Engine Variables & Luxury Browser Themes
    ========================================================================== */
 #view-browser {
-    --br-bg: #0b0c10;
-    --br-header-bg: #12141a;
-    --br-tab-bg: #181b23;
-    --br-tab-active: #1f232e;
-    --br-border: rgba(255, 255, 255, 0.08);
+    --br-bg: #0f1115;
+    --br-header-bg: #13151a;
+    --br-tab-bg: transparent;
+    --br-tab-active: #232732;
+    --br-border: rgba(255, 255, 255, 0.07);
     --br-accent: #3b82f6;
     --br-accent-glow: rgba(59, 130, 246, 0.25);
     --br-text: #f1f5f9;
@@ -1134,7 +1130,7 @@
 #view-browser[data-browser-theme="cyberpunk"] {
     --br-bg: #090611;
     --br-header-bg: #120d22;
-    --br-tab-bg: #191230;
+    --br-tab-bg: transparent;
     --br-tab-active: #231a44;
     --br-border: rgba(168, 85, 247, 0.18);
     --br-accent: #a855f7;
@@ -1146,7 +1142,7 @@
 #view-browser[data-browser-theme="nord"] {
     --br-bg: #0c1017;
     --br-header-bg: #141b24;
-    --br-tab-bg: #1a232f;
+    --br-tab-bg: transparent;
     --br-tab-active: #222d3d;
     --br-border: rgba(56, 189, 248, 0.16);
     --br-accent: #38bdf8;
@@ -1158,7 +1154,7 @@
 #view-browser[data-browser-theme="ember"] {
     --br-bg: #100b08;
     --br-header-bg: #1a120d;
-    --br-tab-bg: #241912;
+    --br-tab-bg: transparent;
     --br-tab-active: #312117;
     --br-border: rgba(249, 115, 22, 0.18);
     --br-accent: #f97316;
@@ -1170,11 +1166,11 @@
 #view-browser[data-browser-theme="emerald"] {
     --br-bg: #070f0a;
     --br-header-bg: #0d1a12;
-    --br-tab-bg: #132419;
+    --br-tab-bg: transparent;
     --br-tab-active: #1a3223;
     --br-border: rgba(16, 185, 129, 0.18);
     --br-accent: #10b981;
-    --br-accent-glow: rgba(16, 185, 129, 0.3);
+    --br-accent-glow: rgba(168, 85, 247, 0.3);
     --br-text: #ecfdf5;
     --br-text-muted: #6ee7b7;
 }
@@ -1182,9 +1178,9 @@
 #view-browser[data-browser-theme="oled"] {
     --br-bg: #000000;
     --br-header-bg: #050505;
-    --br-tab-bg: #0d0d0d;
-    --br-tab-active: #151515;
-    --br-border: rgba(255, 255, 255, 0.1);
+    --br-tab-bg: transparent;
+    --br-tab-active: #161616;
+    --br-border: rgba(255, 255, 255, 0.08);
     --br-accent: #00f0ff;
     --br-accent-glow: rgba(0, 240, 255, 0.3);
     --br-text: #ffffff;
@@ -1203,7 +1199,8 @@
 
 #view-browser .browser-tab.active {
     background: var(--br-tab-active) !important;
-    border-top: 2px solid var(--br-accent) !important;
+    border: 1px solid var(--br-border) !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
 }
 
 #view-browser .browser-toolbar {
