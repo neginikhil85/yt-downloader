@@ -368,7 +368,7 @@
             </section>
 
             <!-- View 5: Research Browser (Multi-Tab & Extensions Hub) -->
-            <section class="view-panel" id="view-browser">
+            <section class="view-panel" id="view-browser" data-browser-theme="obsidian">
                 <!-- 1. Multi-Tab Header Bar (with macOS window drag region) -->
                 <div class="browser-tabs-header">
                     <div class="browser-tabs-scroll" id="browser-tabs-scroll">
@@ -582,32 +582,31 @@
                     <!-- New Tab Home Dashboard (Firefox / Start Page Style) -->
                     <div class="browser-home-dashboard" id="browser-home-dashboard">
                         <div class="home-branding">
-                            <div class="home-logo-box">
-                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #9aa0a6;">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <line x1="2" y1="12" x2="22" y2="12"></line>
-                                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                                </svg>
-                            </div>
-                            <h2>Research & Web Portal</h2>
-                            <p>Private, unmonitored web browsing & fast video extraction</p>
+                            <h2 class="home-brand-title">Research & Web Portal</h2>
+                            <p class="home-brand-subtitle">Private web exploration, unmonitored browsing & fast media extraction</p>
                         </div>
 
                         <div class="home-search-box">
                             <div class="home-search-engine-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                             </div>
-                            <input type="text" class="home-search-input" id="home-search-input" placeholder="Search Google or type a URL..." autocomplete="off" />
-                            <button class="home-search-btn" id="home-search-btn">Search</button>
+                            <input type="text" class="home-search-input" id="home-search-input" placeholder="Search the web or type a URL..." autocomplete="off" spellcheck="false" />
+                            <button class="home-search-btn" id="home-search-btn">
+                                <span>Search</span>
+                                <kbd class="home-search-kbd">↵</kbd>
+                            </button>
                         </div>
 
                         <div class="home-quick-apps-section">
                             <div class="home-section-header">
-                                <h3>Pinned Quick Apps</h3>
-                                <button class="btn-add-pin-chip" id="home-btn-add-pin">＋ Pin Shortcut</button>
+                                <h3>Top Sites</h3>
+                                <button class="btn-add-pin-chip" id="home-btn-add-pin">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                    <span>Add Shortcut</span>
+                                </button>
                             </div>
                             <div class="home-apps-grid" id="home-apps-grid">
-<!-- Rendered Pinned App Cards -->
+                                <!-- Rendered Safari/Arc style squircle top sites -->
                             </div>
                         </div>
                     </div>
