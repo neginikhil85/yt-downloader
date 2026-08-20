@@ -614,7 +614,7 @@ export function initBrowserManager() {
 
         webview.setAttribute('useragent', ua);
         webview.className = 'browser-webview';
-        if (!isHome) webview.src = finalUrl;
+        webview.src = isHome ? 'about:blank' : finalUrl;
 
         webviewsContainer.appendChild(webview);
 
@@ -819,15 +819,22 @@ export function initBrowserManager() {
 
         if (target === 'about:home') {
             homeDashboard.style.display = 'flex';
-            if (urlInput) urlInput.value = '';
+            if (urlInput) {
+                urlInput.value = '';
+                urlInput.placeholder = 'Search Google or enter address...';
+            }
             if (activeTab.tabEl) {
                 const titleSpan = activeTab.tabEl.querySelector('.tab-title');
                 if (titleSpan) titleSpan.textContent = 'New Tab';
+                const favBox = activeTab.tabEl.querySelector('.tab-favicon-container');
+                if (favBox) favBox.innerHTML = getBrandIconHtml('about:home', 'New Tab');
             }
         } else {
             homeDashboard.style.display = 'none';
             if (urlInput) urlInput.value = target;
-            if (activeTab.webviewEl) activeTab.webviewEl.loadURL(target);
+            if (activeTab.webviewEl) {
+                activeTab.webviewEl.src = target;
+            }
         }
         updateControlsState();
     }
