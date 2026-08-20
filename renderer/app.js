@@ -10,7 +10,7 @@ import { initDownloadManager } from './modules/downloadManager.js';
 import { initLibraryManager } from './modules/libraryManager.js';
 import { initOnboardingModal } from './modules/onboardingModal.js';
 import { initSettingsModal } from './modules/settingsModal.js';
-import { initBrowserManager } from './modules/browserManager.js';
+import { initBrowserManager } from './modules/browser/index.js';
 import { initP2PShareManager } from './modules/p2pShareManager.js';
 
 window.addEventListener('error', (e) => {

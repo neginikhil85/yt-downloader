@@ -61,14 +61,22 @@ yt_downloader/
 │   │   ├── browser.css         # Multi-tab research browser & extensions hub
 │   │   ├── share.css           # ToffeeShare P2P direct share & radar styles
 │   │   └── modals.css          # Onboarding, settings, and script modals
+│   ├── data/                   # Pure static datasets & constants (themes, icons, addons)
+│   │   ├── brandIcons.js       # Vector brand SVGs & color tokens
+│   │   ├── browserThemes.js    # 10 themes & preview mockup tokens
+│   │   └── curatedAddons.js    # Extensions store catalog data
 │   └── modules/                # Modular ES6 controllers
+│       ├── browser/            # Self-contained research browser package
+│       │   ├── index.js        # Feature orchestrator & global shortcuts
+│       │   ├── tabController.js# Multi-tab strip & webview lifecycle
+│       │   ├── themeStudio.js  # Theme Studio previews & theme engine
+│       │   └── addonsController.js # Extension store & sideloading
 │       ├── state.js            # App state & LocalStorage persistence
 │       ├── navigation.js       # View switcher & sidebar controller
 │       ├── searchFeed.js       # YouTube search & infinite scroll
 │       ├── videoPlayer.js      # Cinema video player controller
 │       ├── downloadManager.js  # Download queue & progress tracking
 │       ├── libraryManager.js   # Saved files gallery & play triggers
-│       ├── browserManager.js   # Webview tab management & extension runner
 │       ├── p2pShareManager.js  # ToffeeShare App-to-App P2P client controller
 │       ├── settingsModal.js    # Preferences & download folder configuration
 │       └── onboardingModal.js  # First-time user setup wizard
