@@ -1,11 +1,10 @@
 // ==========================================================================
-// YT Studio Pro / Bruno — Universal Standalone Packager for macOS, Windows & Linux
+// YT Studio Pro / Bruno — Universal Standalone Packager
 // ==========================================================================
 
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const readline = require('readline');
 const { execSync } = require('child_process');
 const { ensurePlatformBinaries, downloadFile, extractZip } = require('./setup-binaries');
 
@@ -28,7 +27,6 @@ const isHostWin = process.platform === 'win32';
 const isHostLinux = process.platform === 'linux';
 
 function cleanReleaseDirectory() {
-    console.log('\n=== Cleaning Release Directory ===');
     if (fs.existsSync(releaseDir)) {
         const items = fs.readdirSync(releaseDir);
         items.forEach(item => {
@@ -89,7 +87,6 @@ function bundleProdDependencies(targetAppDir) {
         }
     } catch (e) {}
 
-    // Also include common sub-dependencies
     const extraSubs = ['yargs', 'yargs-parser', 'string-width', 'strip-ansi', 'ansi-regex', 'is-fullwidth-code-point', 'emoji-regex'];
     prodDeps = Array.from(new Set([...prodDeps, ...extraSubs]));
 
@@ -146,13 +143,11 @@ function createZip(sourceDir, destZipPath) {
 /**
  * Ensures Electron runtime zip exists (in local cache or downloaded from GitHub releases)
  */
-async function resolveElectronRuntime(platform, arch = 'x64') {
-    // If target platform and architecture match current host and node_modules/electron/dist is populated
+async function resolveElectronRuntime(platform, arch = 'x64', spinner = null) {
     if (platform === process.platform && fs.existsSync(electronDist)) {
         return { isDistFolder: true, path: electronDist };
     }
 
-    // Check system and local caches
     const cacheDirs = [
         path.join(rootDir, '.cache', 'electron'),
         path.join(os.homedir(), '.cache', 'electron'),
@@ -173,20 +168,19 @@ async function resolveElectronRuntime(platform, arch = 'x64') {
         }
     }
 
-    // Not found in cache — auto-download from official GitHub releases
     const projectCache = path.join(rootDir, '.cache', 'electron');
     fs.mkdirSync(projectCache, { recursive: true });
     const targetZipPath = path.join(projectCache, zipNamePattern);
 
-    console.log(`\n📥 Electron runtime for [${platform}-${arch}] not found in cache.`);
-    console.log(` 🌐 Auto-downloading Electron v${electronVersion} from GitHub releases...`);
+    if (spinner) {
+        spinner.message(`Downloading Electron v${electronVersion} for ${platform}-${arch}...`);
+    }
 
     const downloadUrl = `https://github.com/electron/electron/releases/download/v${electronVersion}/electron-v${electronVersion}-${platform}-${arch}.zip`;
     try {
         await downloadFile(downloadUrl, targetZipPath);
         return { isDistFolder: false, zipPath: targetZipPath };
     } catch (err) {
-        console.warn(` ⚠️ Could not download Electron runtime: ${err.message}`);
         return null;
     }
 }
@@ -194,11 +188,8 @@ async function resolveElectronRuntime(platform, arch = 'x64') {
 // ==========================================================================
 // 1. macOS Standalone Packaging
 // ==========================================================================
-async function packageMac() {
-    console.log('\n=============================================');
-    console.log('🍏 Packaging macOS Standalone (bruno.app)');
-    console.log('=============================================');
-
+async function packageMac(spinner = null) {
+    if (spinner) spinner.message('Setting up macOS binaries...');
     await ensurePlatformBinaries('darwin');
 
     const macOutputDir = path.join(releaseDir, 'mac');
@@ -208,13 +199,14 @@ async function packageMac() {
     fs.mkdirSync(macOutputDir, { recursive: true });
 
     const arch = process.arch === 'arm64' ? 'arm64' : 'x64';
-    const runtime = await resolveElectronRuntime('darwin', arch);
+    if (spinner) spinner.message(`Resolving macOS Electron runtime (${arch})...`);
+    const runtime = await resolveElectronRuntime('darwin', arch, spinner);
 
     if (!runtime) {
-        console.warn('❌ Skipping macOS package: Electron runtime could not be resolved.');
-        return false;
+        throw new Error('macOS Electron runtime could not be resolved.');
     }
 
+    if (spinner) spinner.message('Configuring macOS application bundle...');
     const destApp = path.join(macOutputDir, `${appName}.app`);
 
     if (runtime.isDistFolder) {
@@ -241,7 +233,6 @@ async function packageMac() {
         if (fs.existsSync(oldExe)) {
             if (oldExe !== newExe) fs.renameSync(oldExe, newExe);
             try { fs.chmodSync(newExe, 0o755); } catch (e) {}
-            console.log(` - Configured executable: ${processName}`);
         }
     }
 
@@ -302,7 +293,7 @@ async function packageMac() {
         fs.copyFileSync(icnsSource, path.join(resourcesDir, 'electron.icns'));
     }
 
-    // Populate app files & node_modules & binaries
+    if (spinner) spinner.message('Bundling app resources & dependencies...');
     populateAppResources(resourcesDir);
 
     // Apply ad-hoc codesign and clear quarantine if packaging on macOS
@@ -310,22 +301,17 @@ async function packageMac() {
         try {
             execSync(`xattr -cr "${destApp}"`, { stdio: 'ignore' });
             execSync(`codesign --force --deep --sign - "${destApp}"`, { stdio: 'ignore' });
-            console.log(' - macOS ad-hoc signature applied & quarantine cleared.');
         } catch (e) {}
     }
 
-    console.log(`✅ macOS Standalone ready: ${destApp}`);
-    return true;
+    return destApp;
 }
 
 // ==========================================================================
 // 2. Windows Standalone Packaging
 // ==========================================================================
-async function packageWindows() {
-    console.log('\n=============================================');
-    console.log('🪟 Packaging Windows Standalone (bruno.exe)');
-    console.log('=============================================');
-
+async function packageWindows(spinner = null) {
+    if (spinner) spinner.message('Setting up Windows binaries...');
     await ensurePlatformBinaries('win32');
 
     const winOutputDir = path.join(releaseDir, 'windows');
@@ -334,12 +320,13 @@ async function packageWindows() {
     }
     fs.mkdirSync(winOutputDir, { recursive: true });
 
-    const runtime = await resolveElectronRuntime('win32', 'x64');
+    if (spinner) spinner.message('Resolving Windows Electron runtime (win32-x64)...');
+    const runtime = await resolveElectronRuntime('win32', 'x64', spinner);
     if (!runtime) {
-        console.warn('❌ Skipping Windows package: Electron runtime could not be resolved.');
-        return false;
+        throw new Error('Windows Electron runtime could not be resolved.');
     }
 
+    if (spinner) spinner.message('Extracting Windows runtime & configuring executable...');
     if (runtime.isDistFolder) {
         copyRecursive(runtime.path, winOutputDir);
     } else {
@@ -351,35 +338,27 @@ async function packageWindows() {
     const newWinExe = path.join(winOutputDir, `${processName}.exe`);
     if (fs.existsSync(oldWinExe)) {
         fs.renameSync(oldWinExe, newWinExe);
-        console.log(` - Renamed binary to: ${processName}.exe`);
     }
 
     const winResources = path.join(winOutputDir, 'resources');
     fs.mkdirSync(winResources, { recursive: true });
 
+    if (spinner) spinner.message('Bundling Windows app resources & dependencies...');
     populateAppResources(winResources);
-
-    console.log(`✅ Windows Standalone ready: ${newWinExe}`);
 
     // Create windows-portable.zip
     const zipPath = path.join(releaseDir, 'windows-portable.zip');
-    console.log(' - Creating release/windows-portable.zip...');
-    const zipCreated = createZip(winOutputDir, zipPath);
-    if (zipCreated) {
-        console.log(`✅ windows-portable.zip ready: ${zipPath}`);
-    }
+    if (spinner) spinner.message('Creating release/windows-portable.zip archive...');
+    createZip(winOutputDir, zipPath);
 
-    return true;
+    return newWinExe;
 }
 
 // ==========================================================================
 // 3. Linux Standalone Packaging
 // ==========================================================================
-async function packageLinux() {
-    console.log('\n=============================================');
-    console.log('🐧 Packaging Linux Standalone (bruno)');
-    console.log('=============================================');
-
+async function packageLinux(spinner = null) {
+    if (spinner) spinner.message('Setting up Linux binaries...');
     await ensurePlatformBinaries('linux');
 
     const linuxOutputDir = path.join(releaseDir, 'linux');
@@ -388,12 +367,13 @@ async function packageLinux() {
     }
     fs.mkdirSync(linuxOutputDir, { recursive: true });
 
-    const runtime = await resolveElectronRuntime('linux', 'x64');
+    if (spinner) spinner.message('Resolving Linux Electron runtime (linux-x64)...');
+    const runtime = await resolveElectronRuntime('linux', 'x64', spinner);
     if (!runtime) {
-        console.warn('❌ Skipping Linux package: Electron runtime could not be resolved.');
-        return false;
+        throw new Error('Linux Electron runtime could not be resolved.');
     }
 
+    if (spinner) spinner.message('Extracting Linux runtime & configuring executable...');
     if (runtime.isDistFolder) {
         copyRecursive(runtime.path, linuxOutputDir);
     } else {
@@ -405,22 +385,22 @@ async function packageLinux() {
     if (fs.existsSync(oldLinuxExe)) {
         fs.renameSync(oldLinuxExe, newLinuxExe);
         try { fs.chmodSync(newLinuxExe, 0o755); } catch (e) {}
-        console.log(` - Renamed binary to: ${processName}`);
     }
 
     const linuxResources = path.join(linuxOutputDir, 'resources');
     fs.mkdirSync(linuxResources, { recursive: true });
 
+    if (spinner) spinner.message('Bundling Linux app resources & dependencies...');
     populateAppResources(linuxResources);
 
-    console.log(`✅ Linux Standalone ready: ${path.join(linuxOutputDir, processName)}`);
-    return true;
+    return path.join(linuxOutputDir, processName);
 }
 
 // ==========================================================================
-// Interactive CLI & Execution Router
+// Interactive CLI
 // ==========================================================================
 async function runCLI() {
+    const clack = await import('@clack/prompts');
     const args = process.argv.slice(2);
 
     const hasAll = args.includes('--all');
@@ -431,114 +411,99 @@ async function runCLI() {
 
     cleanReleaseDirectory();
 
+    let selectedPlatforms = [];
+
     if (hasAll) {
-        await packageMac();
-        await packageWindows();
-        await packageLinux();
-        printSummary();
-        return;
-    }
+        selectedPlatforms = ['darwin', 'win32', 'linux'];
+    } else if (hasWin || hasMac || hasLinux || hasCurrent) {
+        if (hasMac) selectedPlatforms.push('darwin');
+        if (hasWin) selectedPlatforms.push('win32');
+        if (hasLinux) selectedPlatforms.push('linux');
+        if (hasCurrent) selectedPlatforms.push(process.platform);
+        selectedPlatforms = Array.from(new Set(selectedPlatforms));
+    } else if (process.stdin.isTTY) {
+        clack.intro('YT Studio Pro / Bruno — Standalone Packager');
 
-    if (hasWin || hasMac || hasLinux || hasCurrent) {
-        if (hasMac) await packageMac();
-        if (hasWin) await packageWindows();
-        if (hasLinux) await packageLinux();
-        if (hasCurrent) {
-            if (isHostMac) await packageMac();
-            else if (isHostWin) await packageWindows();
-            else if (isHostLinux) await packageLinux();
+        const choice = await clack.multiselect({
+            message: 'Select target platform(s) to package:',
+            options: [
+                {
+                    value: 'darwin',
+                    label: 'macOS Standalone',
+                    hint: isHostMac ? 'Current Host (bruno.app)' : 'bruno.app'
+                },
+                {
+                    value: 'win32',
+                    label: 'Windows Standalone',
+                    hint: isHostWin ? 'Current Host (bruno.exe & zip)' : 'bruno.exe & windows-portable.zip'
+                },
+                {
+                    value: 'linux',
+                    label: 'Linux Standalone',
+                    hint: isHostLinux ? 'Current Host (bruno)' : 'bruno'
+                }
+            ],
+            initialValues: [process.platform],
+            required: true
+        });
+
+        if (clack.isCancel(choice)) {
+            clack.cancel('Packaging cancelled.');
+            process.exit(0);
         }
-        printSummary();
-        return;
-    }
 
-    // Check if running interactively in a TTY terminal
-    if (process.stdin.isTTY) {
-        const hostName = isHostMac ? 'macOS' : isHostWin ? 'Windows' : 'Linux';
-        console.log('============================================================');
-        console.log('📦 YT Studio Pro / Bruno — Standalone Multi-OS Packager');
-        console.log('============================================================');
-        console.log(` Detected Host OS: ${hostName} (${process.arch})\n`);
-        console.log(' Please select which standalone packages you want to build:');
-        console.log(`   [1] Current Host OS (${hostName}) [Default / Quickest]`);
-        console.log('   [2] Windows x64 Standalone (.exe & windows-portable.zip)');
-        console.log('   [3] macOS Standalone (bruno.app)');
-        console.log('   [4] Linux Standalone (bruno)');
-        console.log('   [5] All Platforms (macOS + Windows + Linux)');
-        console.log('   [0] Cancel\n');
-
-        const rl = readline.createInterface({
-            input: process.stdin,
-            output: process.stdout
-        });
-
-        rl.question(' Enter choice [1-5] (default: 1): ', async (answer) => {
-            rl.close();
-            const choice = (answer || '1').trim();
-
-            switch (choice) {
-                case '1':
-                    if (isHostMac) await packageMac();
-                    else if (isHostWin) await packageWindows();
-                    else await packageLinux();
-                    break;
-                case '2':
-                    await packageWindows();
-                    break;
-                case '3':
-                    await packageMac();
-                    break;
-                case '4':
-                    await packageLinux();
-                    break;
-                case '5':
-                    await packageMac();
-                    await packageWindows();
-                    await packageLinux();
-                    break;
-                case '0':
-                    console.log('Build cancelled.');
-                    return;
-                default:
-                    console.log(`Unknown choice "${choice}". Building for Current Host OS...`);
-                    if (isHostMac) await packageMac();
-                    else if (isHostWin) await packageWindows();
-                    else await packageLinux();
-            }
-            printSummary();
-        });
+        selectedPlatforms = choice;
     } else {
-        // Non-interactive fallback (CI / scripts)
-        if (isHostMac) await packageMac();
-        else if (isHostWin) await packageWindows();
-        else await packageLinux();
-        printSummary();
+        selectedPlatforms = [process.platform];
     }
-}
 
-function printSummary() {
-    console.log('\n============================================================');
-    console.log('🎉 Packaging Pipeline Completed!');
-    console.log('============================================================');
-    console.log(' 📂 Standalone outputs in release/ folder:');
-    if (fs.existsSync(path.join(releaseDir, 'mac', `${appName}.app`))) {
-        console.log(`  🍏 macOS App: release/mac/${appName}.app`);
+    const s = clack.spinner();
+    const results = [];
+
+    for (const platform of selectedPlatforms) {
+        if (platform === 'darwin') {
+            s.start('Building macOS Standalone...');
+            try {
+                const outPath = await packageMac(s);
+                s.stop('macOS Standalone ready: release/mac/bruno.app');
+                results.push({ label: 'macOS App', path: 'release/mac/bruno.app' });
+            } catch (err) {
+                s.stop('Failed to build macOS Standalone: ' + err.message);
+            }
+        } else if (platform === 'win32') {
+            s.start('Building Windows Standalone...');
+            try {
+                const outPath = await packageWindows(s);
+                s.stop('Windows Standalone ready: release/windows/bruno.exe');
+                results.push({ label: 'Windows App', path: 'release/windows/bruno.exe' });
+                results.push({ label: 'Windows Portable ZIP', path: 'release/windows-portable.zip' });
+            } catch (err) {
+                s.stop('Failed to build Windows Standalone: ' + err.message);
+            }
+        } else if (platform === 'linux') {
+            s.start('Building Linux Standalone...');
+            try {
+                const outPath = await packageLinux(s);
+                s.stop('Linux Standalone ready: release/linux/bruno');
+                results.push({ label: 'Linux App', path: 'release/linux/bruno' });
+            } catch (err) {
+                s.stop('Failed to build Linux Standalone: ' + err.message);
+            }
+        }
     }
-    if (fs.existsSync(path.join(releaseDir, 'windows', `${processName}.exe`))) {
-        console.log(`  🪟 Windows App: release/windows/${processName}.exe`);
+
+    if (results.length > 0) {
+        const noteSummary = results.map(r => `• ${r.label}: ${r.path}`).join('\n');
+        clack.note(noteSummary, 'Release Artifacts');
+        clack.outro('Packaging finished successfully.');
+    } else {
+        clack.outro('No packages were generated.');
     }
-    if (fs.existsSync(path.join(releaseDir, 'windows-portable.zip'))) {
-        console.log(`  📦 Windows Portable ZIP: release/windows-portable.zip`);
-    }
-    if (fs.existsSync(path.join(releaseDir, 'linux', processName))) {
-        console.log(`  🐧 Linux App: release/linux/${processName}`);
-    }
-    console.log('============================================================\n');
 }
 
 if (require.main === module) {
     runCLI().catch(err => {
-        console.error('❌ Build failed:', err);
+        console.error('[ERROR] Build failed:', err.message);
         process.exit(1);
     });
 }

@@ -68,7 +68,7 @@ function downloadFile(url, destPath, maxRedirects = 10) {
                     const percent = Math.floor((downloadedBytes / totalBytes) * 100);
                     if (percent !== lastPercent && percent % 10 === 0) {
                         lastPercent = percent;
-                        process.stdout.write(`  ⏳ Downloading: ${percent}% (${(downloadedBytes / (1024 * 1024)).toFixed(1)}MB / ${(totalBytes / (1024 * 1024)).toFixed(1)}MB)\r`);
+                        process.stdout.write(`  [DOWNLOADING] ${percent}% (${(downloadedBytes / (1024 * 1024)).toFixed(1)}MB / ${(totalBytes / (1024 * 1024)).toFixed(1)}MB)\r`);
                     }
                 }
             });
@@ -91,7 +91,7 @@ function downloadFile(url, destPath, maxRedirects = 10) {
         req.on('error', (err) => {
             // Fallback to system curl if available (e.g. proxy or local certificate issues)
             try {
-                process.stdout.write(`  ⏳ Fallback to system curl...\n`);
+                process.stdout.write(`  [INFO] Invoking curl fallback...\n`);
                 execSync(`curl -L -s --retry 3 -o "${destPath}" "${url}"`, { stdio: 'inherit' });
                 if (fs.existsSync(destPath) && fs.statSync(destPath).size > 0) {
                     return resolve(destPath);
@@ -126,7 +126,6 @@ function extractZip(zipPath, targetDir) {
  */
 async function ensurePlatformBinaries(platform, options = {}) {
     const isWin = platform === 'win32';
-    const isMac = platform === 'darwin';
     const force = options.force || false;
 
     const platformBinDir = path.join(BIN_DIR, platform);
@@ -138,26 +137,26 @@ async function ensurePlatformBinaries(platform, options = {}) {
     const ytDlpPath = path.join(platformBinDir, ytDlpName);
     const ffmpegPath = path.join(platformBinDir, ffmpegName);
 
-    console.log(`\n🔍 Checking binaries for [${platform}] in bin/${platform}...`);
+    console.log(`[INFO] Checking binaries for [${platform}] in bin/${platform}...`);
 
     // 1. Check / Download yt-dlp
     const ytDlpValid = fs.existsSync(ytDlpPath) && fs.statSync(ytDlpPath).size > 100000;
     if (!ytDlpValid || force) {
-        console.log(` 📥 Fetching latest yt-dlp binary for ${platform}...`);
+        console.log(`[INFO] Fetching yt-dlp for ${platform}...`);
         const tempYtDlp = path.join(platformBinDir, `temp_${ytDlpName}`);
         try {
             await downloadFile(SOURCES.ytDlp[platform], tempYtDlp);
             if (fs.existsSync(ytDlpPath)) fs.unlinkSync(ytDlpPath);
             fs.renameSync(tempYtDlp, ytDlpPath);
             if (!isWin) fs.chmodSync(ytDlpPath, 0o755);
-            console.log(` ✓ yt-dlp successfully installed: bin/${platform}/${ytDlpName}`);
+            console.log(`[SUCCESS] Installed: bin/${platform}/${ytDlpName}`);
         } catch (err) {
-            console.warn(` ⚠️ Failed to download yt-dlp: ${err.message}`);
+            console.warn(`[WARN] Failed to download yt-dlp: ${err.message}`);
             if (fs.existsSync(tempYtDlp)) fs.unlinkSync(tempYtDlp);
         }
     } else {
         if (!isWin) fs.chmodSync(ytDlpPath, 0o755);
-        console.log(` ✓ yt-dlp already present: bin/${platform}/${ytDlpName}`);
+        console.log(`[SUCCESS] Verified: bin/${platform}/${ytDlpName}`);
     }
 
     // 2. Check / Setup ffmpeg
@@ -172,7 +171,7 @@ async function ensurePlatformBinaries(platform, options = {}) {
                 if (ffmpegStaticPath && fs.existsSync(ffmpegStaticPath)) {
                     fs.copyFileSync(ffmpegStaticPath, ffmpegPath);
                     if (!isWin) fs.chmodSync(ffmpegPath, 0o755);
-                    console.log(` ✓ ffmpeg copied from ffmpeg-static: bin/${platform}/${ffmpegName}`);
+                    console.log(`[SUCCESS] Copied from ffmpeg-static: bin/${platform}/${ffmpegName}`);
                     ffmpegCopied = true;
                 }
             } catch (e) {}
@@ -180,7 +179,7 @@ async function ensurePlatformBinaries(platform, options = {}) {
 
         // If not copied, download official static build zip
         if (!ffmpegCopied) {
-            console.log(` 📥 Fetching static ffmpeg for ${platform}...`);
+            console.log(`[INFO] Fetching static ffmpeg for ${platform}...`);
             const zipPath = path.join(platformBinDir, `ffmpeg_temp.zip`);
             const extractDir = path.join(platformBinDir, `ffmpeg_extract`);
 
@@ -196,21 +195,21 @@ async function ensurePlatformBinaries(platform, options = {}) {
                     if (fs.existsSync(ffmpegPath)) fs.unlinkSync(ffmpegPath);
                     fs.copyFileSync(extractedExePath, ffmpegPath);
                     if (!isWin) fs.chmodSync(ffmpegPath, 0o755);
-                    console.log(` ✓ ffmpeg successfully extracted: bin/${platform}/${ffmpegName}`);
+                    console.log(`[SUCCESS] Extracted: bin/${platform}/${ffmpegName}`);
                 }
 
                 // Cleanup temp files
                 if (fs.existsSync(zipPath)) fs.unlinkSync(zipPath);
                 if (fs.existsSync(extractDir)) fs.rmSync(extractDir, { recursive: true, force: true });
             } catch (err) {
-                console.warn(` ⚠️ Failed to download ffmpeg: ${err.message}`);
+                console.warn(`[WARN] Failed to download ffmpeg: ${err.message}`);
                 if (fs.existsSync(zipPath)) try { fs.unlinkSync(zipPath); } catch (e) {}
                 if (fs.existsSync(extractDir)) try { fs.rmSync(extractDir, { recursive: true, force: true }); } catch (e) {}
             }
         }
     } else {
         if (!isWin) fs.chmodSync(ffmpegPath, 0o755);
-        console.log(` ✓ ffmpeg already present: bin/${platform}/${ffmpegName}`);
+        console.log(`[SUCCESS] Verified: bin/${platform}/${ffmpegName}`);
     }
 
     return true;
@@ -226,9 +225,9 @@ async function main() {
     const targetArg = args.find(a => a.startsWith('--platform='));
     const specifiedPlatform = targetArg ? targetArg.split('=')[1] : null;
 
-    console.log('====================================================');
-    console.log('🚀 YT Studio Pro & Bruno — Binary Auto-Setup Engine');
-    console.log('====================================================');
+    console.log('----------------------------------------------------');
+    console.log('YT Studio Pro / Bruno — Binary Auto-Setup');
+    console.log('----------------------------------------------------');
 
     if (allPlatforms) {
         for (const p of ['darwin', 'win32', 'linux']) {
@@ -238,20 +237,20 @@ async function main() {
         if (['darwin', 'win32', 'linux'].includes(specifiedPlatform)) {
             await ensurePlatformBinaries(specifiedPlatform, { force });
         } else {
-            console.error(`❌ Unknown platform: ${specifiedPlatform}. Use darwin, win32, or linux.`);
+            console.error(`[ERROR] Unknown platform: ${specifiedPlatform}. Options: darwin, win32, linux.`);
         }
     } else {
         // Default to host OS
         await ensurePlatformBinaries(process.platform, { force });
     }
 
-    console.log('\n✨ Binary setup completed successfully!\n');
+    console.log('\n[SUCCESS] Binary setup completed.\n');
 }
 
 if (require.main === module) {
     main().catch(err => {
-        console.error(`\n❌ Error during binary setup:`, err.message);
-        process.exit(0); // Exit smoothly so npm install continues
+        console.error(`\n[ERROR] Setup failed:`, err.message);
+        process.exit(0);
     });
 }
 

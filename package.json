@@ -88,6 +88,7 @@
   "author": "Antigravity",
   "license": "MIT",
   "devDependencies": {
+    "@clack/prompts": "^1.7.0",
     "electron": "^34.0.0",
     "electron-builder": "^25.1.8"
   },
