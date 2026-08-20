@@ -21,7 +21,7 @@ const BRAND_ICONS = {
         svg: `<svg viewBox="0 0 24 24" width="100%" height="100%" fill="#0066FF"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>`
     },
     github: {
-        bg: 'rgba(255, 255, 255, 0.08)',
+        bg: 'rgba(125, 125, 125, 0.12)',
         svg: `<svg viewBox="0 0 24 24" width="100%" height="100%" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>`
     },
     reddit: {
@@ -29,7 +29,7 @@ const BRAND_ICONS = {
         svg: `<svg viewBox="0 0 24 24" width="100%" height="100%" fill="#FF4500"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.56 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.56 12 8 12.56 8 13.25c0 .687.56 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.56-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.688-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.197-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>`
     },
     wikipedia: {
-        bg: 'rgba(255, 255, 255, 0.08)',
+        bg: 'rgba(125, 125, 125, 0.12)',
         svg: `<svg viewBox="0 0 24 24" width="100%" height="100%" fill="currentColor"><path d="M12.09 13.92 14.54 7.6h1.93l-3.53 8.8h-1.85L8.43 9.94 5.77 16.4H3.84L7.5 7.6h1.93l2.66 6.32zM21.5 7.6h-2.1l-2.4 6.32-2.4-6.32H12.5l3.5 8.8h1.9l3.6-8.8z"/></svg>`
     },
     spotify: {
@@ -37,7 +37,7 @@ const BRAND_ICONS = {
         svg: `<svg viewBox="0 0 24 24" width="100%" height="100%" fill="#1ED760"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>`
     },
     twitter: {
-        bg: 'rgba(255, 255, 255, 0.08)',
+        bg: 'rgba(125, 125, 125, 0.12)',
         svg: `<svg viewBox="0 0 24 24" width="100%" height="100%" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`
     },
     discord: {
@@ -69,7 +69,14 @@ const BROWSER_THEMES = [
         category: 'light',
         badge: 'Clean White',
         desc: 'Ultra-clean white aesthetics with subtle silver borders and crisp contrast',
-        swatch: ['#ffffff', '#f1f5f9', '#2563eb']
+        preview: {
+            headerBg: '#edf2f7',
+            tabActive: '#ffffff',
+            tabText: '#0f172a',
+            omnibarBg: '#ffffff',
+            canvasBg: '#f8fafc',
+            accent: '#2563eb'
+        }
     },
     {
         key: 'mac-light',
@@ -77,7 +84,14 @@ const BROWSER_THEMES = [
         category: 'light',
         badge: 'Native Light',
         desc: 'Apple-inspired refined silver chrome with smooth materials',
-        swatch: ['#f6f6f7', '#e5e5ea', '#007aff']
+        preview: {
+            headerBg: '#e8e8ed',
+            tabActive: '#ffffff',
+            tabText: '#1c1c1e',
+            omnibarBg: '#ffffff',
+            canvasBg: '#f5f5f7',
+            accent: '#007aff'
+        }
     },
     {
         key: 'nord-light',
@@ -85,7 +99,14 @@ const BROWSER_THEMES = [
         category: 'light',
         badge: 'Ice Light',
         desc: 'Cool Scandinavian crisp white with glacier ice cyan accents',
-        swatch: ['#f5f9fc', '#eaf2f8', '#0284c7']
+        preview: {
+            headerBg: '#e5eef5',
+            tabActive: '#ffffff',
+            tabText: '#102a43',
+            omnibarBg: '#ffffff',
+            canvasBg: '#f4f8fb',
+            accent: '#0284c7'
+        }
     },
     {
         key: 'warm-canvas',
@@ -93,7 +114,14 @@ const BROWSER_THEMES = [
         category: 'light',
         badge: 'Soft Cream',
         desc: 'Warm cream-white palette gentle on the eyes during daytime reading',
-        swatch: ['#faf7f2', '#f2ece4', '#d97706']
+        preview: {
+            headerBg: '#efe8de',
+            tabActive: '#ffffff',
+            tabText: '#2c2520',
+            omnibarBg: '#ffffff',
+            canvasBg: '#faf7f2',
+            accent: '#d97706'
+        }
     },
     // --- Dark & Night Themes ---
     {
@@ -102,7 +130,14 @@ const BROWSER_THEMES = [
         category: 'dark',
         badge: 'Default Dark',
         desc: 'Deep matte charcoal with subtle cobalt blue lighting',
-        swatch: ['#0b0c10', '#181b23', '#3b82f6']
+        preview: {
+            headerBg: '#14171f',
+            tabActive: '#1e232e',
+            tabText: '#f1f5f9',
+            omnibarBg: 'rgba(255,255,255,0.06)',
+            canvasBg: '#0c0e12',
+            accent: '#3b82f6'
+        }
     },
     {
         key: 'nord',
@@ -110,7 +145,14 @@ const BROWSER_THEMES = [
         category: 'dark',
         badge: 'Clean Polar',
         desc: 'Arctic slate, deep polar night blue, and ice cyan highlights',
-        swatch: ['#0c1017', '#1a232f', '#38bdf8']
+        preview: {
+            headerBg: '#141b24',
+            tabActive: '#1e2837',
+            tabText: '#f0f9ff',
+            omnibarBg: 'rgba(56,189,248,0.08)',
+            canvasBg: '#0c1017',
+            accent: '#38bdf8'
+        }
     },
     {
         key: 'violet-dark',
@@ -118,7 +160,14 @@ const BROWSER_THEMES = [
         category: 'dark',
         badge: 'Velvet Glow',
         desc: 'Deep midnight indigo with elegant lavender highlights',
-        swatch: ['#090611', '#191230', '#a855f7']
+        preview: {
+            headerBg: '#131020',
+            tabActive: '#1f1a34',
+            tabText: '#f5f3ff',
+            omnibarBg: 'rgba(168,85,247,0.08)',
+            canvasBg: '#0a0812',
+            accent: '#a855f7'
+        }
     },
     {
         key: 'ember',
@@ -126,7 +175,14 @@ const BROWSER_THEMES = [
         category: 'dark',
         badge: 'Warm Dark',
         desc: 'Warm graphite dark background with vibrant amber fire glow',
-        swatch: ['#100b08', '#241912', '#f97316']
+        preview: {
+            headerBg: '#18120d',
+            tabActive: '#271c14',
+            tabText: '#fff7ed',
+            omnibarBg: 'rgba(249,115,22,0.08)',
+            canvasBg: '#0f0b08',
+            accent: '#f97316'
+        }
     },
     {
         key: 'emerald',
@@ -134,7 +190,14 @@ const BROWSER_THEMES = [
         category: 'dark',
         badge: 'Forest Tech',
         desc: 'Dark cyber forest base with bright mint green accents',
-        swatch: ['#070f0a', '#132419', '#10b981']
+        preview: {
+            headerBg: '#0e1711',
+            tabActive: '#17271d',
+            tabText: '#ecfdf5',
+            omnibarBg: 'rgba(16,185,129,0.08)',
+            canvasBg: '#070d09',
+            accent: '#10b981'
+        }
     },
     {
         key: 'oled',
@@ -142,7 +205,14 @@ const BROWSER_THEMES = [
         category: 'dark',
         badge: 'Zero Backlight',
         desc: '100% True black for maximum contrast & battery efficiency',
-        swatch: ['#000000', '#0d0d0d', '#00f0ff']
+        preview: {
+            headerBg: '#050505',
+            tabActive: '#141414',
+            tabText: '#ffffff',
+            omnibarBg: 'rgba(255,255,255,0.08)',
+            canvasBg: '#000000',
+            accent: '#00f0ff'
+        }
     }
 ];
 
@@ -476,9 +546,9 @@ export function initBrowserManager() {
         if (brandKey && BRAND_ICONS[brandKey]) {
             const brand = BRAND_ICONS[brandKey];
             if (isLarge) {
-                return `<div class="home-app-icon-wrap" style="background: ${brand.bg};">${brand.svg}</div>`;
+                return `<div class="home-app-icon-wrap" style="background: ${brand.bg}; color: var(--br-text);">${brand.svg}</div>`;
             } else {
-                return `<div class="tab-favicon-wrap" style="color: ${brand.bg};">${brand.svg}</div>`;
+                return `<div class="tab-favicon-wrap" style="color: var(--br-text);">${brand.svg}</div>`;
             }
         }
 
@@ -529,17 +599,41 @@ export function initBrowserManager() {
 
         extThemesGrid.innerHTML = filtered.map(theme => {
             const isActive = theme.key === current;
+            const p = theme.preview || {
+                headerBg: '#14171f',
+                tabActive: '#1e232e',
+                tabText: '#f1f5f9',
+                omnibarBg: 'rgba(255,255,255,0.06)',
+                canvasBg: '#0c0e12',
+                accent: '#3b82f6'
+            };
+
             return `
                 <div class="ext-theme-card ${isActive ? 'active' : ''}" data-theme="${theme.key}">
-                    <div class="ext-theme-swatch-box">
-                        <div class="ext-theme-swatch-p1" style="background: ${theme.swatch[0]};"></div>
-                        <div class="ext-theme-swatch-p2" style="background: ${theme.swatch[1]};"></div>
-                        <div class="ext-theme-swatch-p3" style="background: ${theme.swatch[2]};"></div>
+                    <div class="mini-browser-mockup">
+                        <div class="mini-browser-titlebar" style="background: ${p.headerBg};">
+                            <div class="mini-browser-traffic-lights">
+                                <span class="mini-dot red"></span>
+                                <span class="mini-dot yellow"></span>
+                                <span class="mini-dot green"></span>
+                            </div>
+                            <div class="mini-browser-mini-tab" style="background: ${p.tabActive}; color: ${p.tabText};">
+                                Tab
+                            </div>
+                            <div class="mini-browser-mini-omnibar" style="background: ${p.omnibarBg};">
+                                <div class="mini-omnibar-pill" style="background: ${p.accent};"></div>
+                            </div>
+                        </div>
+                        <div class="mini-browser-canvas" style="background: ${p.canvasBg};">
+                            <div class="mini-canvas-search" style="background: ${p.omnibarBg}; border-color: ${p.accent}40;">
+                                <div class="mini-canvas-dot" style="background: ${p.accent};"></div>
+                            </div>
+                        </div>
                     </div>
                     <div>
                         <div class="ext-theme-title-row">
                             <h5 class="ext-theme-name">${theme.name}</h5>
-                            <span class="ext-theme-badge">${isActive ? 'Active ✓' : theme.badge}</span>
+                            <span class="ext-theme-badge" style="color: ${p.accent};">${isActive ? 'Active ✓' : theme.badge}</span>
                         </div>
                         <p class="ext-theme-desc">${theme.desc}</p>
                     </div>
@@ -1130,25 +1224,18 @@ export function initBrowserManager() {
                 <div class="home-app-card" data-index="${idx}" title="${app.name}">
                     <div class="home-app-actions">
                         <button class="home-app-action-btn edit" data-edit-index="${idx}" title="Edit Shortcut">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                         </button>
                         <button class="home-app-action-btn delete" data-delete-index="${idx}" title="Remove Shortcut">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                         </button>
                     </div>
                     ${getBrandIconHtml(app.url, app.name, true)}
                     <span class="home-app-name">${app.name}</span>
                 </div>
-            `).join('') + `
-                <div class="home-app-card add-card" id="home-card-add-pin" title="Add New Shortcut">
-                    <div class="home-app-icon-wrap" style="background: rgba(255,255,255,0.04);">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    </div>
-                    <span class="home-app-name">Add Shortcut</span>
-                </div>
-            `;
+            `).join('');
 
-            homeAppsGrid.querySelectorAll('.home-app-card:not(.add-card)').forEach(card => {
+            homeAppsGrid.querySelectorAll('.home-app-card').forEach(card => {
                 card.addEventListener('click', (e) => {
                     if (e.target.closest('.home-app-action-btn.delete')) {
                         e.stopPropagation();
@@ -1168,9 +1255,6 @@ export function initBrowserManager() {
                     if (app) navigateActiveTab(app.url);
                 });
             });
-
-            const homeAddCard = document.getElementById('home-card-add-pin');
-            if (homeAddCard) homeAddCard.addEventListener('click', () => openPinModal());
         }
     }
 
