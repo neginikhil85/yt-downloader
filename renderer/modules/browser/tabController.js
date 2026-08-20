@@ -230,35 +230,23 @@ export class TabController {
             if (this.quickTools) this.quickTools.applyInjections(wv);
 
             // Inject 1-click install helper on Chrome Web Store extension pages
-            if (currentUrl && currentUrl.includes('chromewebstore.google.com/detail/')) {
-                const match = currentUrl.match(/\/detail\/(?:[^\/]+\/)?([a-z]{32})/i);
-                if (match) {
-                    const extId = match[1];
-                    const helperScript = `
-                        (function() {
-                            if (document.getElementById('yt-webstore-installer-pill')) return;
-                            const pill = document.createElement('div');
-                            pill.id = 'yt-webstore-installer-pill';
-                            pill.style.cssText = 'position:fixed; bottom:28px; right:28px; z-index:2147483647; background:#0f172a; border:1px solid rgba(255,255,255,0.2); border-radius:14px; padding:12px 18px; display:flex; align-items:center; gap:14px; box-shadow:0 12px 36px rgba(0,0,0,0.45); font-family:-apple-system,BlinkMacSystemFont,sans-serif; color:#f8fafc; font-size:13.5px;';
-                            pill.innerHTML = '<div style="display:flex;align-items:center;gap:8px;font-weight:600;"><span style="font-size:18px;">🧩</span><span>Add to Research Browser</span></div><button id="btn-inject-install-ext" style="background:#2563eb;color:#fff;border:none;padding:7px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;transition:background 0.15s ease;">＋ Install Now</button>';
-                            document.body.appendChild(pill);
+            this._injectWebstoreHelper(wv, currentUrl);
+        });
 
-                            const btn = document.getElementById('btn-inject-install-ext');
-                            btn.addEventListener('click', () => {
-                                btn.disabled = true;
-                                btn.textContent = 'Installing...';
-                                console.log('[YT_BROWSER_INSTALL_EXTENSION]:' + '${extId}');
-                            });
-                        })();
-                    `;
-                    wv.executeJavaScript(helperScript).catch(()=>{});
+        // SPA navigation within Chrome Web Store (client-side routing)
+        wv.addEventListener('did-navigate-in-page', (e) => {
+            if (e.url) {
+                tabData.url = e.url;
+                if (tabData.id === this.activeTabId && this.urlInput) {
+                    this.urlInput.value = e.url;
                 }
+                this._injectWebstoreHelper(wv, e.url);
             }
         });
 
         wv.addEventListener('console-message', async (e) => {
             if (e.message && e.message.startsWith('[YT_BROWSER_INSTALL_EXTENSION]:')) {
-                const extId = e.message.split(':')[1];
+                const extId = e.message.replace('[YT_BROWSER_INSTALL_EXTENSION]:', '').trim();
                 if (extId && window.electronAPI && window.electronAPI.extensionInstall) {
                     try {
                         const res = await window.electronAPI.extensionInstall(extId);
@@ -402,5 +390,40 @@ export class TabController {
 
     getAllTabs() {
         return this.tabs;
+    }
+
+    _injectWebstoreHelper(wv, url) {
+        if (!url || !url.includes('chromewebstore.google.com/detail/')) return;
+
+        // Flexible regex: extension IDs are typically 32 chars but some are 33
+        const match = url.match(/\/detail\/(?:[^\/]+\/)?([a-z]{32,33})/i);
+        if (!match) return;
+
+        const extId = match[1];
+        const helperScript = `
+            (function() {
+                // Remove any existing pill (SPA re-navigation)
+                const existing = document.getElementById('yt-webstore-installer-pill');
+                if (existing) existing.remove();
+
+                const pill = document.createElement('div');
+                pill.id = 'yt-webstore-installer-pill';
+                pill.style.cssText = 'position:fixed; bottom:28px; right:28px; z-index:2147483647; background:#0f172a; border:1px solid rgba(255,255,255,0.15); border-radius:14px; padding:14px 20px; display:flex; align-items:center; gap:14px; box-shadow:0 12px 40px rgba(0,0,0,0.5); font-family:-apple-system,BlinkMacSystemFont,sans-serif; color:#f8fafc; font-size:13.5px; backdrop-filter:blur(12px);';
+                pill.innerHTML = '<div style="display:flex;align-items:center;gap:8px;font-weight:600;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><path d="M20.5 11H19V7a2 2 0 0 0-2-2h-4V3.5a1.5 1.5 0 0 0-3 0V5H6a2 2 0 0 0-2 2v4H2.5a1.5 1.5 0 0 0 0 3H4v4a2 2 0 0 0 2 2h4v1.5a1.5 1.5 0 0 0 3 0V20h4a2 2 0 0 0 2-2v-4h1.5a1.5 1.5 0 0 0 0-3z"/></svg><span>Add to Research Browser</span></div><button id="btn-inject-install-ext" style="background:#2563eb;color:#fff;border:none;padding:8px 18px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;transition:all 0.15s ease;">Install Now</button>';
+                document.body.appendChild(pill);
+
+                document.getElementById('btn-inject-install-ext').addEventListener('click', function() {
+                    this.disabled = true;
+                    this.textContent = 'Installing...';
+                    this.style.background = '#475569';
+                    console.log('[YT_BROWSER_INSTALL_EXTENSION]:${extId}');
+                });
+            })();
+        `;
+
+        // Delay slightly for SPA pages to finish rendering
+        setTimeout(() => {
+            wv.executeJavaScript(helperScript).catch(() => {});
+        }, 800);
     }
 }

@@ -190,10 +190,14 @@ export class AddonsController {
         }
 
         this.extInstalledList.innerHTML = this.installedExtensionsList.map(ext => {
+            const iconHtml = ext.iconDataUrl
+                ? `<img src="${ext.iconDataUrl}" width="36" height="36" style="border-radius:8px; object-fit:contain;" alt="${ext.name}" />`
+                : `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--br-text-muted, #64748b)" stroke-width="1.5"><path d="M20.5 11H19V7a2 2 0 0 0-2-2h-4V3.5a1.5 1.5 0 0 0-3 0V5H6a2 2 0 0 0-2 2v4H2.5a1.5 1.5 0 0 0 0 3H4v4a2 2 0 0 0 2 2h4v1.5a1.5 1.5 0 0 0 3 0V20h4a2 2 0 0 0 2-2v-4h1.5a1.5 1.5 0 0 0 0-3z"/></svg>`;
+
             return `
                 <div class="ext-installed-item">
                     <div class="ext-item-left">
-                        <div class="ext-item-icon">🧩</div>
+                        <div class="ext-item-icon">${iconHtml}</div>
                         <div>
                             <div class="ext-item-name-row">
                                 <span class="ext-item-name">${ext.name}</span>
