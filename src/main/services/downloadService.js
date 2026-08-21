@@ -5,7 +5,7 @@ const { app } = require('electron');
 const { YT_DLP_PATH, FFMPEG_DIR } = require('../config/paths');
 
 const activeDownloads = new Map();
-const EXTRACTOR_ARGS = ['--no-check-certificates', '--js-runtimes', 'node', '--extractor-args', 'youtube:player_client=android_vr,web'];
+const EXTRACTOR_ARGS = ['--no-check-certificates', '--js-runtimes', 'node'];
 
 /**
  * Spawns yt-dlp download process with real-time progress parsing
@@ -16,16 +16,16 @@ function startDownload(event, { downloadId, url, savePath, formatPreset }) {
         fs.mkdirSync(targetDir, { recursive: true });
     }
 
-    let formatOption = ['-f', 'best[protocol*=m3u8]/bestvideo+bestaudio/18/best', '--merge-output-format', 'mp4'];
+    let formatOption = ['-f', 'bestvideo+bestaudio/best[protocol*=m3u8]/best', '--merge-output-format', 'mp4'];
     if (formatPreset === 'MP3' || formatPreset === 'audio') {
-        formatOption = ['-f', 'ba/best[protocol*=m3u8]/best', '-x', '--audio-format', 'mp3', '--audio-quality', '0'];
+        formatOption = ['-f', 'ba/best', '-x', '--audio-format', 'mp3', '--audio-quality', '0'];
     } else if (formatPreset === 'M4A') {
-        formatOption = ['-f', 'ba/best[protocol*=m3u8]/best', '-x', '--audio-format', 'm4a'];
+        formatOption = ['-f', 'ba/best', '-x', '--audio-format', 'm4a'];
     } else {
         const heightMatch = String(formatPreset).match(/(\d+)/);
         if (heightMatch) {
             const h = parseInt(heightMatch[1], 10);
-            formatOption = ['-f', `best[height<=${h}][protocol*=m3u8]/bestvideo[height<=${h}]+bestaudio/best[height<=${h}]/18/best`, '--merge-output-format', 'mp4'];
+            formatOption = ['-f', `bestvideo[height<=${h}]+bestaudio/best[height<=${h}][protocol*=m3u8]/best[height<=${h}]/18/best`, '--merge-output-format', 'mp4'];
         }
     }
 

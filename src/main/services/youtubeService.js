@@ -2,7 +2,7 @@ const https = require('https');
 const { execFile } = require('child_process');
 const { YT_DLP_PATH } = require('../config/paths');
 
-const EXTRACTOR_ARGS = ['--no-check-certificates', '--js-runtimes', 'node', '--extractor-args', 'youtube:player_client=android_vr,web,mweb'];
+const EXTRACTOR_ARGS = ['--no-check-certificates', '--js-runtimes', 'node'];
 
 // In-memory cache for search pagination continuation tokens: query -> token
 const continuationTokenCache = new Map();
