@@ -598,6 +598,7 @@ export function updateDynamicResolutions(resolutions = []) {
                     try {
                         const res = await window.electronAPI.getStreamUrl(state.currentVideoData.url, quality);
                         if (playerLoader) playerLoader.style.display = 'none';
+                        if (res && res.success && res.streamUrl) {
                             videoEl.src = res.streamUrl;
                             if (res.audioUrl && audioEl) {
                                 audioEl.src = res.audioUrl;
@@ -620,6 +621,7 @@ export function updateDynamicResolutions(resolutions = []) {
                             };
 
                             videoEl.addEventListener('loadedmetadata', restorePlayback, { once: true });
+                        }
                     } catch (err) {
                         if (playerLoader) playerLoader.style.display = 'none';
                         console.error('Quality switch error:', err);

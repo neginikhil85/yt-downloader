@@ -2,7 +2,7 @@ const https = require('https');
 const { execFile } = require('child_process');
 const { YT_DLP_PATH } = require('../config/paths');
 
-const EXTRACTOR_ARGS = ['--no-check-certificates', '--js-runtimes', 'node', '--extractor-args', 'youtube:player_client=android,web'];
+const EXTRACTOR_ARGS = ['--no-check-certificates', '--js-runtimes', 'node', '--extractor-args', 'youtube:player_client=android_vr,web,mweb'];
 
 // In-memory cache for search pagination continuation tokens: query -> token
 const continuationTokenCache = new Map();
@@ -337,11 +337,12 @@ function getVideoFormats(url) {
  */
 function getStreamUrl(url, quality = 'auto') {
     return new Promise((resolve) => {
-        let formatFilter = '18/22/best[ext=mp4]/best';
+        // DASH adaptive (bestvideo+bestaudio) for 1080p+ support; WebM (VP9) preferred, MP4 fallback, then muxed fallback
+        let formatFilter = 'bestvideo[ext=webm]+bestaudio[ext=webm]/bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/22/18/best';
         const heightMatch = String(quality).match(/(\d+)/);
         if (heightMatch) {
             const h = parseInt(heightMatch[1], 10);
-            formatFilter = `best[height<=${h}][ext=mp4]/best[height<=${h}]/18/best`;
+            formatFilter = `bestvideo[height<=${h}][ext=webm]+bestaudio[ext=webm]/bestvideo[height<=${h}][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=${h}]+bestaudio/best[height<=${h}][ext=mp4]/best[height<=${h}]/22/18/best`;
         }
 
         const args = [

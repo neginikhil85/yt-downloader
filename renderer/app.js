@@ -4,7 +4,7 @@
 
 import { state, initSettings } from './modules/state.js';
 import { initNavigation } from './modules/navigation.js';
-import { initSearchFeed, performSearch } from './modules/searchFeed.js';
+import { initSearchFeed, initFeedDownloadPicker, performSearch } from './modules/searchFeed.js';
 import { initVideoPlayer } from './modules/videoPlayer.js';
 import { initDownloadManager } from './modules/downloadManager.js';
 import { initLibraryManager } from './modules/libraryManager.js';
@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 2. Initialize Controllers
     initNavigation();
     initSearchFeed();
+    initFeedDownloadPicker();
     initVideoPlayer();
     initDownloadManager();
     initLibraryManager();

@@ -233,10 +233,135 @@ export function renderVideoCards(videos, append = false) {
         if (dlBtn) {
             dlBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                startDownloadTask(video.url, video.title, '1080p');
+                openFeedDownloadPicker(video);
             });
         }
 
         videoGrid.appendChild(card);
+    });
+}
+
+// ======================================================================
+// Feed Download Resolution Picker Modal
+// ======================================================================
+
+let feedDlPickerState = { videoUrl: '', videoTitle: '', selectedQuality: '' };
+
+export function initFeedDownloadPicker() {
+    const modal = document.getElementById('feed-dl-picker-modal');
+    const btnClose = document.getElementById('btn-close-feed-dl-picker');
+    const btnCancel = document.getElementById('btn-feed-dl-picker-cancel');
+    const btnStart = document.getElementById('btn-feed-dl-picker-start');
+
+    if (!modal) return;
+
+    const closeModal = () => { modal.style.display = 'none'; };
+
+    if (btnClose) btnClose.addEventListener('click', closeModal);
+    if (btnCancel) btnCancel.addEventListener('click', closeModal);
+
+    // Click overlay to close
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+
+    if (btnStart) {
+        btnStart.addEventListener('click', () => {
+            if (!feedDlPickerState.selectedQuality || !feedDlPickerState.videoUrl) return;
+            closeModal();
+            startDownloadTask(feedDlPickerState.videoUrl, feedDlPickerState.videoTitle, feedDlPickerState.selectedQuality);
+        });
+    }
+}
+
+async function openFeedDownloadPicker(video) {
+    const modal = document.getElementById('feed-dl-picker-modal');
+    const titleEl = document.getElementById('feed-dl-picker-video-title');
+    const loadingEl = document.getElementById('feed-dl-picker-loading');
+    const optionsEl = document.getElementById('feed-dl-picker-options');
+    const btnStart = document.getElementById('btn-feed-dl-picker-start');
+
+    if (!modal) return;
+
+    // Reset state
+    feedDlPickerState = { videoUrl: video.url, videoTitle: video.title, selectedQuality: '' };
+    if (titleEl) titleEl.textContent = video.title;
+    if (loadingEl) loadingEl.style.display = 'flex';
+    if (optionsEl) { optionsEl.style.display = 'none'; optionsEl.innerHTML = ''; }
+    if (btnStart) { btnStart.disabled = true; }
+
+    modal.style.display = 'flex';
+
+    // Fetch available formats
+    try {
+        const res = await window.electronAPI.getVideoFormats(video.url);
+        if (loadingEl) loadingEl.style.display = 'none';
+
+        if (res && res.resolutions && res.resolutions.length > 0) {
+            renderPickerOptions(res.resolutions);
+        } else {
+            // Fallback: offer standard preset options
+            renderPickerOptions([
+                { height: 1080, quality: '1080p', label: '1080p Full HD', sizeStr: '' },
+                { height: 720, quality: '720p', label: '720p HD', sizeStr: '' },
+                { height: 480, quality: '480p', label: '480p SD', sizeStr: '' },
+                { height: 360, quality: '360p', label: '360p', sizeStr: '' },
+                { height: 0, quality: 'MP3', label: 'Audio MP3', sizeStr: '' }
+            ]);
+        }
+    } catch (err) {
+        if (loadingEl) loadingEl.style.display = 'none';
+        console.warn('Format fetch notice:', err);
+        // Fallback presets on error
+        renderPickerOptions([
+            { height: 1080, quality: '1080p', label: '1080p Full HD', sizeStr: '' },
+            { height: 720, quality: '720p', label: '720p HD', sizeStr: '' },
+            { height: 480, quality: '480p', label: '480p SD', sizeStr: '' },
+            { height: 360, quality: '360p', label: '360p', sizeStr: '' },
+            { height: 0, quality: 'MP3', label: 'Audio MP3', sizeStr: '' }
+        ]);
+    }
+}
+
+function renderPickerOptions(resolutions) {
+    const optionsEl = document.getElementById('feed-dl-picker-options');
+    const btnStart = document.getElementById('btn-feed-dl-picker-start');
+    if (!optionsEl) return;
+
+    optionsEl.innerHTML = '';
+    optionsEl.style.display = 'flex';
+
+    // Default selection = highest available quality (first video resolution, which is sorted descending)
+    const topVideoRes = resolutions.find(r => r.height > 0);
+    const defaultQuality = topVideoRes ? topVideoRes.quality : resolutions[0]?.quality || '1080p';
+
+    resolutions.forEach((r) => {
+        const btn = document.createElement('button');
+        btn.className = 'feed-dl-option';
+        btn.type = 'button';
+
+        const sizeLabel = r.sizeStr ? r.sizeStr : '';
+        btn.innerHTML = `
+            <span class="feed-dl-radio"></span>
+            <span class="feed-dl-label">${r.label}</span>
+            ${sizeLabel ? `<span class="feed-dl-size">${sizeLabel}</span>` : ''}
+        `;
+
+        // Pre-select the highest quality (default)
+        if (r.quality === defaultQuality) {
+            btn.classList.add('selected');
+            feedDlPickerState.selectedQuality = r.quality;
+            if (btnStart) btnStart.disabled = false;
+        }
+
+        btn.addEventListener('click', () => {
+            // Deselect all, select this
+            optionsEl.querySelectorAll('.feed-dl-option').forEach(o => o.classList.remove('selected'));
+            btn.classList.add('selected');
+            feedDlPickerState.selectedQuality = r.quality;
+            if (btnStart) btnStart.disabled = false;
+        });
+
+        optionsEl.appendChild(btn);
     });
 }
