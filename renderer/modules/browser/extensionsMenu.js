@@ -13,6 +13,7 @@ export class ExtensionsMenu {
         actionPopover,
         actionPopoverIcon,
         actionPopoverTitle,
+        actionPopoverOptions,
         actionPopoverClose,
         actionPopoverOpenTab,
         actionPopoverBody,
@@ -29,6 +30,7 @@ export class ExtensionsMenu {
         this.actionPopover = actionPopover;
         this.actionPopoverIcon = actionPopoverIcon;
         this.actionPopoverTitle = actionPopoverTitle;
+        this.actionPopoverOptions = actionPopoverOptions;
         this.actionPopoverClose = actionPopoverClose;
         this.actionPopoverOpenTab = actionPopoverOpenTab;
         this.actionPopoverBody = actionPopoverBody;
@@ -73,6 +75,15 @@ export class ExtensionsMenu {
             this.extMenuManageBtn.addEventListener('click', () => {
                 this.closeMenu();
                 this.onOpenExtensionHub('addons-view-installed');
+            });
+        }
+
+        if (this.actionPopoverOptions) {
+            this.actionPopoverOptions.addEventListener('click', () => {
+                if (this.currentActionExt && this.currentActionExt.optionsUrl) {
+                    this.closeActionPopover();
+                    this.onCreateTab(this.currentActionExt.optionsUrl, true);
+                }
             });
         }
 
@@ -273,6 +284,10 @@ export class ExtensionsMenu {
                 : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.5 11H19V7a2 2 0 0 0-2-2h-4V3.5a1.5 1.5 0 0 0-3 0V5H6a2 2 0 0 0-2 2v4H2.5a1.5 1.5 0 0 0 0 3H4v4a2 2 0 0 0 2 2h4v1.5a1.5 1.5 0 0 0 3 0V20h4a2 2 0 0 0 2-2v-4h1.5a1.5 1.5 0 0 0 0-3z"></path></svg>`;
         }
 
+        if (this.actionPopoverOptions) {
+            this.actionPopoverOptions.style.display = ext.optionsUrl ? 'inline-flex' : 'none';
+        }
+
         // 1. Show container
         this.actionPopover.style.display = 'flex';
 
@@ -281,12 +296,23 @@ export class ExtensionsMenu {
             this.actionPopoverBody.innerHTML = '';
 
             // 3. Create fresh webview dynamically so Electron initializes guest WebContents
+            let finalUrl = targetUrl;
+            try {
+                const activeTab = this.getActiveTab ? this.getActiveTab() : null;
+                if (activeTab && activeTab.webviewEl && typeof activeTab.webviewEl.getWebContentsId === 'function') {
+                    const wcId = activeTab.webviewEl.getWebContentsId();
+                    if (wcId && !finalUrl.includes('tabId=')) {
+                        finalUrl += (finalUrl.includes('?') ? '&' : '?') + 'tabId=' + wcId;
+                    }
+                }
+            } catch (e) {}
+
             const wv = document.createElement('webview');
             wv.id = 'ext-action-popover-webview';
             wv.setAttribute('partition', 'persist:main');
             wv.setAttribute('allowpopups', 'true');
             wv.className = 'ext-action-webview';
-            wv.src = targetUrl;
+            wv.src = finalUrl;
 
             wv.addEventListener('console-message', (e) => {
                 console.log(`[ExtPopover ${ext.name}]:`, e.message);

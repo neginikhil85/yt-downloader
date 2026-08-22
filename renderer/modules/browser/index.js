@@ -40,6 +40,7 @@ export function initBrowserManager() {
     const actionPopover = document.getElementById('browser-ext-action-popover');
     const actionPopoverIcon = document.getElementById('ext-action-popover-icon');
     const actionPopoverTitle = document.getElementById('ext-action-popover-title');
+    const actionPopoverOptions = document.getElementById('ext-action-popover-options');
     const actionPopoverClose = document.getElementById('ext-action-popover-close');
     const actionPopoverOpenTab = document.getElementById('ext-action-popover-open-tab');
     const actionPopoverBody = document.getElementById('ext-action-popover-body');
@@ -227,6 +228,7 @@ export function initBrowserManager() {
         actionPopover,
         actionPopoverIcon,
         actionPopoverTitle,
+        actionPopoverOptions,
         actionPopoverClose,
         actionPopoverOpenTab,
         actionPopoverBody,

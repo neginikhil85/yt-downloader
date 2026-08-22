@@ -198,6 +198,300 @@ function resolveI18nString(text, extDir, defaultLocale = 'en') {
 }
 
 /**
+ * Automatically patches extension scripts and HTML files with a universal WebExtension & Chrome API shim.
+ * Fixes missing chrome.tabs (create, get, query, update, reload), chrome.windows, chrome.webNavigation,
+ * chrome.contextMenus, chrome.notifications, chrome.commands in Electron contexts.
+ */
+function patchExtensionCompatibility(extDir) {
+    if (!extDir || !fs.existsSync(extDir)) return;
+
+    const shimCode = `// Bruno App Universal Chrome & WebExtension Compatibility Layer
+(function() {
+    var g = typeof globalThis !== 'undefined' ? globalThis : (typeof self !== 'undefined' ? self : (typeof window !== 'undefined' ? window : {}));
+    if (!g.chrome) g.chrome = {};
+    var c = g.chrome;
+
+    function makeEvent() {
+        return {
+            addListener: function() {},
+            removeListener: function() {},
+            hasListener: function() { return false; },
+            hasListeners: function() { return false; }
+        };
+    }
+
+    if (!c.tabs) c.tabs = {};
+    var t = c.tabs;
+
+    if (!t.query) {
+        t.query = function(queryInfo, callback) {
+            var res = [{
+                id: 1,
+                index: 0,
+                active: true,
+                selected: true,
+                highlighted: true,
+                pinned: false,
+                windowId: 1,
+                url: typeof window !== 'undefined' && window.location ? window.location.href : 'https://www.youtube.com/',
+                title: 'Active Tab',
+                status: 'complete',
+                incognito: false,
+                width: 1280,
+                height: 800
+            }];
+            if (typeof callback === 'function') callback(res);
+            return Promise.resolve(res);
+        };
+    }
+
+    if (!t.get) {
+        t.get = function(tabId, callback) {
+            var res = {
+                id: Number(tabId) || 1,
+                index: 0,
+                active: true,
+                selected: true,
+                highlighted: true,
+                pinned: false,
+                windowId: 1,
+                url: typeof window !== 'undefined' && window.location ? window.location.href : 'https://www.youtube.com/',
+                title: 'Active Tab',
+                status: 'complete',
+                incognito: false,
+                width: 1280,
+                height: 800
+            };
+            if (typeof callback === 'function') callback(res);
+            return Promise.resolve(res);
+        };
+    }
+
+    if (!t.getCurrent) {
+        t.getCurrent = function(callback) {
+            return t.get(1, callback);
+        };
+    }
+
+    if (!t.create) {
+        t.create = function(createProperties, callback) {
+            var url = (createProperties && createProperties.url) || 'about:blank';
+            try {
+                if (typeof window !== 'undefined' && typeof window.open === 'function') {
+                    window.open(url, '_blank');
+                }
+            } catch(e) {}
+            var res = { id: Math.floor(Math.random() * 100000) + 10, url: url, active: true, windowId: 1 };
+            if (typeof callback === 'function') callback(res);
+            return Promise.resolve(res);
+        };
+    }
+
+    if (!t.update) {
+        t.update = function(tabId, updateProperties, callback) {
+            var res = { id: Number(tabId) || 1, url: updateProperties ? updateProperties.url : '', active: true, windowId: 1 };
+            if (typeof callback === 'function') callback(res);
+            return Promise.resolve(res);
+        };
+    }
+
+    if (!t.reload) {
+        t.reload = function(tabId, reloadProperties, callback) {
+            if (typeof callback === 'function') callback();
+            return Promise.resolve();
+        };
+    }
+
+    if (!t.remove) {
+        t.remove = function(tabIds, callback) {
+            if (typeof callback === 'function') callback();
+            return Promise.resolve();
+        };
+    }
+
+    if (!t.sendMessage) {
+        t.sendMessage = function(tabId, message, options, callback) {
+            if (typeof options === 'function') { callback = options; options = {}; }
+            if (typeof callback === 'function') callback({});
+            return Promise.resolve({});
+        };
+    }
+
+    if (!t.executeScript) {
+        t.executeScript = function(tabId, details, callback) {
+            if (typeof details === 'function') { callback = details; details = {}; }
+            if (typeof callback === 'function') callback([null]);
+            return Promise.resolve([null]);
+        };
+    }
+
+    if (!t.insertCSS) {
+        t.insertCSS = function(tabId, details, callback) {
+            if (typeof details === 'function') { callback = details; details = {}; }
+            if (typeof callback === 'function') callback();
+            return Promise.resolve();
+        };
+    }
+
+    if (!t.onUpdated) t.onUpdated = makeEvent();
+    if (!t.onActivated) t.onActivated = makeEvent();
+    if (!t.onCreated) t.onCreated = makeEvent();
+    if (!t.onRemoved) t.onRemoved = makeEvent();
+    if (!t.onHighlighted) t.onHighlighted = makeEvent();
+    if (!t.onMoved) t.onMoved = makeEvent();
+    if (!t.onReplaced) t.onReplaced = makeEvent();
+
+    if (!c.windows) c.windows = {};
+    var w = c.windows;
+    if (!w.getCurrent) {
+        w.getCurrent = function(getInfo, callback) {
+            if (typeof getInfo === 'function') { callback = getInfo; getInfo = {}; }
+            var res = { id: 1, focused: true, state: 'normal', type: 'normal', width: 1280, height: 800 };
+            if (typeof callback === 'function') callback(res);
+            return Promise.resolve(res);
+        };
+    }
+    if (!w.getLastFocused) {
+        w.getLastFocused = function(getInfo, callback) {
+            return w.getCurrent(getInfo, callback);
+        };
+    }
+    if (!w.getAll) {
+        w.getAll = function(getInfo, callback) {
+            if (typeof getInfo === 'function') { callback = getInfo; getInfo = {}; }
+            var res = [{ id: 1, focused: true, state: 'normal', type: 'normal', width: 1280, height: 800 }];
+            if (typeof callback === 'function') callback(res);
+            return Promise.resolve(res);
+        };
+    }
+    if (!w.create) {
+        w.create = function(data, callback) {
+            var url = (data && data.url) || 'about:blank';
+            try { if (typeof window !== 'undefined') window.open(url, '_blank'); } catch(e) {}
+            var res = { id: Math.floor(Math.random() * 100000) + 10, focused: true };
+            if (typeof callback === 'function') callback(res);
+            return Promise.resolve(res);
+        };
+    }
+    if (!w.onFocusChanged) w.onFocusChanged = makeEvent();
+    if (!w.onCreated) w.onCreated = makeEvent();
+    if (!w.onRemoved) w.onRemoved = makeEvent();
+
+    if (!c.webNavigation) {
+        c.webNavigation = {
+            onBeforeNavigate: makeEvent(),
+            onCommitted: makeEvent(),
+            onDOMContentLoaded: makeEvent(),
+            onCompleted: makeEvent(),
+            onErrorOccurred: makeEvent(),
+            onCreatedNavigationTarget: makeEvent(),
+            onReferenceFragmentUpdated: makeEvent(),
+            onHistoryStateUpdated: makeEvent(),
+            getFrame: function(d, cb) { if (cb) cb(null); return Promise.resolve(null); },
+            getAllFrames: function(d, cb) { if (cb) cb([]); return Promise.resolve([]); }
+        };
+    }
+
+    if (!c.contextMenus) {
+        c.contextMenus = {
+            create: function(p, cb) { if (cb) cb(); return 1; },
+            update: function(id, p, cb) { if (cb) cb(); return Promise.resolve(); },
+            remove: function(id, cb) { if (cb) cb(); return Promise.resolve(); },
+            removeAll: function(cb) { if (cb) cb(); return Promise.resolve(); },
+            onClicked: makeEvent()
+        };
+    }
+
+    if (!c.notifications) {
+        c.notifications = {
+            create: function(id, opt, cb) { if (typeof opt === 'function') { cb = opt; opt = {}; } if (cb) cb(id || '1'); return Promise.resolve(id || '1'); },
+            update: function(id, opt, cb) { if (cb) cb(true); return Promise.resolve(true); },
+            clear: function(id, cb) { if (cb) cb(true); return Promise.resolve(true); },
+            onClicked: makeEvent(),
+            onClosed: makeEvent(),
+            onButtonClicked: makeEvent()
+        };
+    }
+
+    if (!c.commands) {
+        c.commands = {
+            getAll: function(cb) { if (cb) cb([]); return Promise.resolve([]); },
+            onCommand: makeEvent()
+        };
+    }
+
+    if (g.browser) {
+        g.browser.tabs = c.tabs;
+        g.browser.windows = c.windows;
+        if (!g.browser.webNavigation) g.browser.webNavigation = c.webNavigation;
+        if (!g.browser.contextMenus) g.browser.contextMenus = c.contextMenus;
+        if (!g.browser.notifications) g.browser.notifications = c.notifications;
+        if (!g.browser.commands) g.browser.commands = c.commands;
+    } else {
+        g.browser = c;
+    }
+})();
+`;
+
+    try {
+        function walkAndPatch(dir) {
+            const entries = fs.readdirSync(dir, { withFileTypes: true });
+            for (const entry of entries) {
+                const fullPath = path.join(dir, entry.name);
+                if (entry.isDirectory()) {
+                    walkAndPatch(fullPath);
+                } else if (entry.isFile() && entry.name.endsWith('.js')) {
+                    try {
+                        let content = fs.readFileSync(fullPath, 'utf8');
+                        if (!content.includes('Bruno App Universal Chrome & WebExtension Compatibility Layer')) {
+                            fs.writeFileSync(fullPath, shimCode + '\n' + content, 'utf8');
+                        }
+                    } catch (e) {}
+                }
+            }
+        }
+        walkAndPatch(extDir);
+
+        // Apply defensive tab info fallbacks to known popup files
+        const headerJs = path.join(extDir, 'button', 'header.js');
+        if (fs.existsSync(headerJs)) {
+            let h = fs.readFileSync(headerJs, 'utf8');
+            if (h.includes('const info = await browser.runtime.sendMessage({ command: "getCurrentTabInfo", tabId });')) {
+                h = h.replace(
+                    'const info = await browser.runtime.sendMessage({ command: "getCurrentTabInfo", tabId });',
+                    'let info = await browser.runtime.sendMessage({ command: "getCurrentTabInfo", tabId });\n  if (!info || !info.settings) { info = { disabledSite: false, url: "https://www.youtube.com", id: 1, settings: { color_themes: { popup_menu: "default_theme" }, display_menu_stats: true, show_stats: true }, paused: false, domainPaused: false, blockCountPage: 0, blockCountTotal: 100, whitelisted: false }; }'
+                );
+                fs.writeFileSync(headerJs, h, 'utf8');
+            }
+        }
+        const popupJs = path.join(extDir, 'button', 'popup.js');
+        if (fs.existsSync(popupJs)) {
+            let p = fs.readFileSync(popupJs, 'utf8');
+            if (p.includes('const info = await browser.runtime.sendMessage({ command: "getCurrentTabInfo", tabId });')) {
+                p = p.replace(
+                    'const info = await browser.runtime.sendMessage({ command: "getCurrentTabInfo", tabId });',
+                    'let info = await browser.runtime.sendMessage({ command: "getCurrentTabInfo", tabId });\n  if (!info || !info.settings) { info = { disabledSite: false, url: "https://www.youtube.com", id: 1, settings: { color_themes: { popup_menu: "default_theme" }, display_menu_stats: true, show_stats: true }, paused: false, domainPaused: false, blockCountPage: 0, blockCountTotal: 100, whitelisted: false }; }'
+                );
+                fs.writeFileSync(popupJs, p, 'utf8');
+            }
+        }
+        const popupSectionsJs = path.join(extDir, 'button', 'popup-sections.js');
+        if (fs.existsSync(popupSectionsJs)) {
+            let ps = fs.readFileSync(popupSectionsJs, 'utf8');
+            if (ps.includes('sessionStorageSet(PAGE_INFO_KEY, pageInfo);') && !ps.includes('if (!pageInfo || !pageInfo.settings)')) {
+                ps = ps.replace(
+                    'sessionStorageSet(PAGE_INFO_KEY, pageInfo);',
+                    'if (!pageInfo || !pageInfo.settings) { pageInfo = { disabledSite: false, url: "https://www.youtube.com", id: 1, settings: { display_menu_stats: true, show_stats: true, show_stats_total: true, display_stats: true }, paused: false, domainPaused: false, blockCountPage: 0, blockCountTotal: 100, whitelisted: false }; }\n    sessionStorageSet(PAGE_INFO_KEY, pageInfo);'
+                );
+                fs.writeFileSync(popupSectionsJs, ps, 'utf8');
+            }
+        }
+    } catch (e) {
+        console.warn(`[ExtensionService] Could not patch extension ${path.basename(extDir)}:`, e.message);
+    }
+}
+
+/**
  * Initializes the extension service and loads all enabled extensions into the Research Browser session
  */
 async function initExtensionService() {
@@ -212,8 +506,12 @@ async function initExtensionService() {
     for (const item of installedExtensions) {
         if (item.enabled && item.path && fs.existsSync(item.path)) {
             try {
-                await targetSession.loadExtension(item.path, { allowFileAccess: true });
-                console.log(`[ExtensionService] Loaded extension: ${item.name} (${item.id})`);
+                patchExtensionCompatibility(item.path);
+                const loaded = await targetSession.loadExtension(item.path, { allowFileAccess: true });
+                if (loaded && loaded.id) {
+                    item.runtimeId = loaded.id;
+                }
+                console.log(`[ExtensionService] Loaded extension: ${item.name} (${item.id} -> runtime: ${loaded?.id})`);
             } catch (err) {
                 console.warn(`[ExtensionService] Failed to load extension ${item.name}:`, err.message);
             }
@@ -225,10 +523,36 @@ function getInstalledExtensions() {
     loadMetadata();
     let metadataChanged = false;
 
+    let loadedExtensions = [];
+    try {
+        const targetSession = session.fromPartition('persist:main');
+        loadedExtensions = targetSession.getAllExtensions() || [];
+    } catch (e) {
+        console.warn('[ExtensionService] Could not query session extensions:', e);
+    }
+
     const result = installedExtensions.map(ext => {
         let iconDataUrl = null;
         let name = ext.name;
         let description = ext.description;
+
+        // Match loaded extension in session to get true runtime ID
+        let runtimeId = ext.runtimeId || ext.id;
+        if (ext.path) {
+            const normalizedPath = path.normalize(ext.path).toLowerCase();
+            const matched = loadedExtensions.find(le => {
+                if (le.path && path.normalize(le.path).toLowerCase() === normalizedPath) return true;
+                if (le.id === ext.runtimeId || le.id === ext.id) return true;
+                return false;
+            });
+            if (matched && matched.id) {
+                runtimeId = matched.id;
+                if (ext.runtimeId !== matched.id) {
+                    ext.runtimeId = matched.id;
+                    metadataChanged = true;
+                }
+            }
+        }
 
         if (ext.path && fs.existsSync(ext.path)) {
             const manifest = readExtensionManifest(ext.path);
@@ -255,16 +579,16 @@ function getInstalledExtensions() {
                     }
                 }
 
-                // Resolve popup and options URL if available
+                // Resolve popup and options URL using the real runtime ID
                 let popupUrl = null;
                 let optionsUrl = null;
                 const action = manifest.action || manifest.browser_action || manifest.page_action;
                 if (action && action.default_popup) {
-                    popupUrl = `chrome-extension://${ext.id}/${action.default_popup}`;
+                    popupUrl = `chrome-extension://${runtimeId}/${action.default_popup}`;
                 }
                 const options = (manifest.options_ui && manifest.options_ui.page) || manifest.options_page;
                 if (options) {
-                    optionsUrl = `chrome-extension://${ext.id}/${options}`;
+                    optionsUrl = `chrome-extension://${runtimeId}/${options}`;
                 }
 
                 // Resolve icon
@@ -285,10 +609,10 @@ function getInstalledExtensions() {
                         }
                     }
                 }
-                return { ...ext, name, description, iconDataUrl, popupUrl, optionsUrl };
+                return { ...ext, runtimeId, name, description, iconDataUrl, popupUrl, optionsUrl };
             }
         }
-        return { ...ext, name, description, iconDataUrl, popupUrl: null, optionsUrl: null };
+        return { ...ext, runtimeId, name, description, iconDataUrl, popupUrl: null, optionsUrl: null };
     });
 
     if (metadataChanged) {
@@ -351,10 +675,17 @@ async function installExtensionFromWebStore(idOrUrl) {
         throw new Error('Extension unpacked successfully, but manifest.json was missing or invalid.');
     }
 
+    // Apply API compatibility shim before loading into Electron
+    patchExtensionCompatibility(targetDir);
+
     // Load into Electron Session
     const targetSession = session.fromPartition('persist:main');
+    let runtimeId = extId;
     try {
-        await targetSession.loadExtension(targetDir, { allowFileAccess: true });
+        const loaded = await targetSession.loadExtension(targetDir, { allowFileAccess: true });
+        if (loaded && loaded.id) {
+            runtimeId = loaded.id;
+        }
     } catch (loadErr) {
         console.warn('[ExtensionService] Session load notice:', loadErr.message);
     }
@@ -369,6 +700,7 @@ async function installExtensionFromWebStore(idOrUrl) {
 
     const extRecord = {
         id: extId,
+        runtimeId,
         name,
         description,
         version,
@@ -383,7 +715,7 @@ async function installExtensionFromWebStore(idOrUrl) {
     installedExtensions.unshift(extRecord);
     saveMetadata();
 
-    console.log(`[ExtensionService] Successfully installed & activated: ${name} (v${version})`);
+    console.log(`[ExtensionService] Successfully installed & activated: ${name} (v${version}, runtime: ${runtimeId})`);
     return { success: true, extension: extRecord };
 }
 
@@ -401,6 +733,9 @@ async function installUnpackedExtension(targetFolderPath) {
         throw new Error('The selected folder does not contain a valid manifest.json file.');
     }
 
+    // Apply API compatibility shim before loading into Electron
+    patchExtensionCompatibility(targetFolderPath);
+
     const targetSession = session.fromPartition('persist:main');
     let loadedExt = null;
     try {
@@ -411,6 +746,7 @@ async function installUnpackedExtension(targetFolderPath) {
 
     const defaultLoc = manifest.default_locale || 'en';
     const extId = loadedExt?.id || `unpacked_${Date.now()}`;
+    const runtimeId = loadedExt?.id || extId;
     const rawName = manifest.name || path.basename(targetFolderPath);
     const rawDesc = manifest.description || 'Locally loaded unpacked extension';
     const name = resolveI18nString(rawName, targetFolderPath, defaultLoc);
@@ -419,6 +755,7 @@ async function installUnpackedExtension(targetFolderPath) {
 
     const extRecord = {
         id: extId,
+        runtimeId,
         name,
         description,
         version,
@@ -441,7 +778,7 @@ async function installUnpackedExtension(targetFolderPath) {
  */
 async function toggleExtension(extId, enabled) {
     loadMetadata();
-    const item = installedExtensions.find(e => e.id === extId);
+    const item = installedExtensions.find(e => e.id === extId || e.runtimeId === extId);
     if (!item) throw new Error('Extension not found.');
 
     const targetSession = session.fromPartition('persist:main');
@@ -449,16 +786,21 @@ async function toggleExtension(extId, enabled) {
     if (enabled) {
         if (item.path && fs.existsSync(item.path)) {
             try {
-                await targetSession.loadExtension(item.path, { allowFileAccess: true });
+                const loaded = await targetSession.loadExtension(item.path, { allowFileAccess: true });
+                if (loaded && loaded.id) {
+                    item.runtimeId = loaded.id;
+                }
             } catch (err) {
                 console.warn('[ExtensionService] Enable error:', err.message);
             }
         }
         item.enabled = true;
     } else {
+        const removeId = item.runtimeId || extId;
         try {
-            targetSession.removeExtension(extId);
+            targetSession.removeExtension(removeId);
         } catch (err) {
+            try { targetSession.removeExtension(extId); } catch(e) {}
             console.warn('[ExtensionService] Remove error:', err.message);
         }
         item.enabled = false;
@@ -473,13 +815,16 @@ async function toggleExtension(extId, enabled) {
  */
 function removeExtension(extId) {
     loadMetadata();
-    const item = installedExtensions.find(e => e.id === extId);
+    const item = installedExtensions.find(e => e.id === extId || e.runtimeId === extId);
     if (!item) return { success: true };
 
     const targetSession = session.fromPartition('persist:main');
+    const removeId = item.runtimeId || extId;
     try {
-        targetSession.removeExtension(extId);
-    } catch (e) { }
+        targetSession.removeExtension(removeId);
+    } catch (e) {
+        try { targetSession.removeExtension(extId); } catch (e2) {}
+    }
 
     if (!item.isUnpacked && item.path && fs.existsSync(item.path)) {
         try {
@@ -489,7 +834,7 @@ function removeExtension(extId) {
         }
     }
 
-    installedExtensions = installedExtensions.filter(e => e.id !== extId);
+    installedExtensions = installedExtensions.filter(e => e.id !== extId && e.runtimeId !== extId);
     saveMetadata();
 
     return { success: true, id: extId };

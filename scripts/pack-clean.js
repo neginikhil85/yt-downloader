@@ -331,10 +331,15 @@ async function packageWindows(spinner = null) {
     await ensurePlatformBinaries('win32');
 
     const winOutputDir = path.join(releaseDir, 'windows');
+    const tempWinDir = path.join(releaseDir, 'temp-windows');
     if (fs.existsSync(winOutputDir)) {
         try { fs.rmSync(winOutputDir, { recursive: true, force: true }); } catch (e) {}
     }
+    if (fs.existsSync(tempWinDir)) {
+        try { fs.rmSync(tempWinDir, { recursive: true, force: true }); } catch (e) {}
+    }
     fs.mkdirSync(winOutputDir, { recursive: true });
+    fs.mkdirSync(tempWinDir, { recursive: true });
 
     if (spinner) spinner.message('Resolving Windows Electron runtime (win32-x64)...');
     const runtime = await resolveElectronRuntime('win32', 'x64', spinner);
@@ -342,32 +347,166 @@ async function packageWindows(spinner = null) {
         throw new Error('Windows Electron runtime could not be resolved.');
     }
 
-    if (spinner) spinner.message('Extracting Windows runtime & configuring executable...');
+    if (spinner) spinner.message('Extracting Windows runtime & staging files...');
     if (runtime.isDistFolder) {
-        copyRecursive(runtime.path, winOutputDir);
+        copyRecursive(runtime.path, tempWinDir);
     } else {
-        extractZip(runtime.zipPath, winOutputDir);
+        extractZip(runtime.zipPath, tempWinDir);
     }
 
-    // Rename electron.exe to bruno.exe
-    const oldWinExe = path.join(winOutputDir, 'electron.exe');
-    const newWinExe = path.join(winOutputDir, `${processName}.exe`);
+    // Rename electron.exe to bruno_core.exe
+    const oldWinExe = path.join(tempWinDir, 'electron.exe');
+    const coreWinExe = path.join(tempWinDir, `${processName}_core.exe`);
     if (fs.existsSync(oldWinExe)) {
-        fs.renameSync(oldWinExe, newWinExe);
+        fs.renameSync(oldWinExe, coreWinExe);
     }
 
-    const winResources = path.join(winOutputDir, 'resources');
+    const winResources = path.join(tempWinDir, 'resources');
     fs.mkdirSync(winResources, { recursive: true });
 
     if (spinner) spinner.message('Bundling Windows app resources & dependencies...');
     populateAppResources(winResources);
 
-    // Create windows-portable.zip
-    const zipPath = path.join(releaseDir, 'windows-portable.zip');
-    if (spinner) spinner.message('Creating release/windows-portable.zip archive...');
-    createZip(winOutputDir, zipPath);
+    const cscCandidates = [
+        'C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe',
+        'C:\\Windows\\Microsoft.NET\\Framework\\v4.0.30319\\csc.exe'
+    ];
+    const cscPath = cscCandidates.find(p => fs.existsSync(p));
 
-    return newWinExe;
+    const singleExePath = path.join(winOutputDir, `${processName}.exe`);
+
+    if (process.platform === 'win32' && cscPath) {
+        if (spinner) spinner.message('Compressing payload into single standalone executable...');
+        const payloadZip = path.join(releaseDir, 'temp_payload.zip');
+        const launcherCs = path.join(releaseDir, 'temp_Launcher.cs');
+
+        if (fs.existsSync(payloadZip)) fs.unlinkSync(payloadZip);
+
+        // Find 7za if available for ultra-fast compression, otherwise use PowerShell
+        const sevenZipCandidates = [
+            path.join(rootDir, 'node_modules', '7zip-bin', 'win', 'x64', '7za.exe'),
+            path.join(rootDir, 'node_modules', '7zip-bin', 'win', 'ia32', '7za.exe')
+        ];
+        const sevenZipExe = sevenZipCandidates.find(p => fs.existsSync(p));
+
+        if (sevenZipExe) {
+            execSync(`"${sevenZipExe}" a -tzip -mx=3 "${payloadZip}" "${tempWinDir}\\*"`, { stdio: 'ignore' });
+        } else {
+            execSync(`powershell -NoProfile -Command "Compress-Archive -Path '${tempWinDir}\\*' -DestinationPath '${payloadZip}' -Force"`, { stdio: 'ignore' });
+        }
+
+        let pkgVersion = '2.0.0';
+        try {
+            pkgVersion = require(path.join(rootDir, 'package.json')).version || pkgVersion;
+        } catch (e) {}
+        const buildStamp = `${pkgVersion}.${Date.now()}`;
+
+        const csCode = `
+using System;
+using System.IO;
+using System.IO.Compression;
+using System.Reflection;
+using System.Diagnostics;
+using System.Windows.Forms;
+
+namespace BrunoApp
+{
+    static class Program
+    {
+        [STAThread]
+        static void Main(string[] args)
+        {
+            try
+            {
+                string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                string appDir = Path.Combine(localAppData, "BrunoApp");
+                string versionFile = Path.Combine(appDir, ".version");
+                string targetExe = Path.Combine(appDir, "${processName}_core.exe");
+                string currentVersion = "${buildStamp}";
+
+                bool needsExtract = !File.Exists(targetExe) || !File.Exists(versionFile);
+                if (!needsExtract)
+                {
+                    try
+                    {
+                        string existingVer = File.ReadAllText(versionFile).Trim();
+                        if (existingVer != currentVersion) needsExtract = true;
+                    }
+                    catch { needsExtract = true; }
+                }
+
+                if (needsExtract)
+                {
+                    if (Directory.Exists(appDir))
+                    {
+                        try { Directory.Delete(appDir, true); } catch { }
+                    }
+                    Directory.CreateDirectory(appDir);
+
+                    Assembly asm = Assembly.GetExecutingAssembly();
+                    using (Stream stream = asm.GetManifestResourceStream("payload.zip"))
+                    {
+                        if (stream != null)
+                        {
+                            using (ZipArchive archive = new ZipArchive(stream))
+                            {
+                                archive.ExtractToDirectory(appDir);
+                            }
+                        }
+                        else
+                        {
+                            throw new Exception("Embedded application payload not found.");
+                        }
+                    }
+
+                    try { File.WriteAllText(versionFile, currentVersion); } catch { }
+                }
+
+                if (File.Exists(targetExe))
+                {
+                    ProcessStartInfo psi = new ProcessStartInfo();
+                    psi.FileName = targetExe;
+                    psi.Arguments = string.Join(" ", args);
+                    psi.WorkingDirectory = appDir;
+                    psi.UseShellExecute = false;
+                    Process.Start(psi);
+                }
+                else
+                {
+                    throw new FileNotFoundException("Application core executable not found at: " + targetExe);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Failed to launch ${appName}: " + ex.Message, "${appName} Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+    }
+}
+`;
+        fs.writeFileSync(launcherCs, csCode, 'utf8');
+
+        const icoPath = path.join(rootDir, 'assets', 'icon.ico');
+        const iconFlag = fs.existsSync(icoPath) ? `/win32icon:"${icoPath}"` : '';
+
+        const compileCmd = `"${cscPath}" /target:winexe /optimize+ /platform:x64 /r:System.IO.Compression.FileSystem.dll /r:System.IO.Compression.dll /r:System.Windows.Forms.dll /resource:"${payloadZip}",payload.zip ${iconFlag} /out:"${singleExePath}" "${launcherCs}"`;
+        execSync(compileCmd, { stdio: 'ignore' });
+
+        // Clean up temporary staging files
+        try { fs.unlinkSync(payloadZip); } catch (e) {}
+        try { fs.unlinkSync(launcherCs); } catch (e) {}
+        try { fs.rmSync(tempWinDir, { recursive: true, force: true }); } catch (e) {}
+    } else {
+        // Fallback: copy raw folder if compiling single exe is not supported on host OS
+        copyRecursive(tempWinDir, winOutputDir);
+        const corePath = path.join(winOutputDir, `${processName}_core.exe`);
+        if (fs.existsSync(corePath)) {
+            fs.renameSync(corePath, singleExePath);
+        }
+        try { fs.rmSync(tempWinDir, { recursive: true, force: true }); } catch (e) {}
+    }
+
+    return singleExePath;
 }
 
 // ==========================================================================
@@ -451,7 +590,7 @@ async function runCLI() {
                 {
                     value: 'win32',
                     label: 'Windows Standalone',
-                    hint: isHostWin ? 'Current Host (bruno.exe & zip)' : 'bruno.exe & windows-portable.zip'
+                    hint: isHostWin ? 'Current Host (bruno.exe)' : 'bruno.exe'
                 },
                 {
                     value: 'linux',
@@ -492,7 +631,6 @@ async function runCLI() {
                 const outPath = await packageWindows(s);
                 s.stop('Windows Standalone ready: release/windows/bruno.exe');
                 results.push({ label: 'Windows App', path: 'release/windows/bruno.exe' });
-                results.push({ label: 'Windows Portable ZIP', path: 'release/windows-portable.zip' });
             } catch (err) {
                 s.stop('Failed to build Windows Standalone: ' + err.message);
             }
