@@ -1,8 +1,7 @@
 const https = require('https');
 const { execFile } = require('child_process');
 const { YT_DLP_PATH } = require('../config/paths');
-
-const EXTRACTOR_ARGS = ['--no-check-certificates', '--js-runtimes', 'node'];
+const { getExtractorArgs } = require('../config/ytDlpConfig');
 
 // In-memory cache for search pagination continuation tokens: query -> token
 const continuationTokenCache = new Map();
@@ -177,7 +176,7 @@ async function searchYouTube(query, page = 1, pageSize = 20) {
         }
 
         const args = [
-            ...EXTRACTOR_ARGS,
+            ...getExtractorArgs(),
             '--dump-single-json',
             '--flat-playlist',
             '--skip-download',
@@ -253,7 +252,7 @@ function formatProxiedStreamUrl(rawStreamUrl) {
 function getVideoFormats(url) {
     return new Promise((resolve) => {
         const args = [
-            ...EXTRACTOR_ARGS,
+            ...getExtractorArgs(),
             '-J',
             '--no-warnings',
             url
@@ -346,7 +345,7 @@ function getStreamUrl(url, quality = 'auto') {
         }
 
         const args = [
-            ...EXTRACTOR_ARGS,
+            ...getExtractorArgs(),
             '--no-playlist',
             '--no-warnings',
             '-g',
@@ -355,7 +354,7 @@ function getStreamUrl(url, quality = 'auto') {
         ];
         execFile(YT_DLP_PATH, args, (error, stdout) => {
             if (error) {
-                const fallbackArgs = [...EXTRACTOR_ARGS, '-g', '-f', 'best', url];
+                const fallbackArgs = [...getExtractorArgs(), '-g', '-f', 'best', url];
                 execFile(YT_DLP_PATH, fallbackArgs, (err2, stdout2) => {
                     if (err2) return resolve({ success: false, error: err2.message });
                     const lines = stdout2.trim().split('\n').filter(Boolean);

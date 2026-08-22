@@ -3,9 +3,9 @@ const path = require('path');
 const fs = require('fs');
 const { app } = require('electron');
 const { YT_DLP_PATH, FFMPEG_DIR } = require('../config/paths');
+const { getExtractorArgs } = require('../config/ytDlpConfig');
 
 const activeDownloads = new Map();
-const EXTRACTOR_ARGS = ['--no-check-certificates', '--js-runtimes', 'node'];
 
 /**
  * Spawns yt-dlp download process with real-time progress parsing
@@ -30,7 +30,7 @@ function startDownload(event, { downloadId, url, savePath, formatPreset }) {
     }
 
     const args = [
-        ...EXTRACTOR_ARGS,
+        ...getExtractorArgs(),
         ...formatOption,
         '-c', // Continue resuming partial downloads
         '--ffmpeg-location', FFMPEG_DIR,
