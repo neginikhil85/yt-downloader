@@ -78,10 +78,9 @@ function startHttpServer(options = {}) {
 
                 try {
                     const parsedTarget = new URL(targetUrl);
-                    const isAndroidClient = targetUrl.includes('c=ANDROID') || targetUrl.includes('c=TV') || targetUrl.includes('googlevideo.com');
-                    const ua = isAndroidClient
+                    const ua = targetUrl.includes('c=ANDROID')
                         ? 'com.google.android.youtube/19.29.37 (Linux; U; Android 11; en_US)'
-                        : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36';
+                        : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36';
 
                     const clientHeaders = {
                         'User-Agent': ua,
@@ -438,12 +437,12 @@ function startHttpServer(options = {}) {
 
         httpServer.on('error', (err) => {
             if (err.code === 'EADDRINUSE') {
-                console.warn(`[P2P Stream Server] Port ${port} busy, trying ${port + 1}...`);
-                httpPort = port + 1;
+                httpPort = httpPort + 1;
+                console.warn(`[P2P Stream Server] Port busy, trying ${httpPort}...`);
                 httpServer.listen(httpPort, '0.0.0.0', () => resolve(httpPort));
             } else {
                 console.error('[P2P Stream Server] Error:', err);
-                resolve(port);
+                resolve(httpPort);
             }
         });
     });

@@ -10,6 +10,7 @@
 
 const { execFileSync } = require('child_process');
 const { YT_DLP_PATH } = require('./paths');
+const { getHttpPort } = require('../services/p2p/p2pHttpServer');
 
 // ---------------------------------------------------------------------------
 // 1. Detect yt-dlp version
@@ -22,7 +23,7 @@ function getYtDlpVersion() {
     try {
         const raw = execFileSync(YT_DLP_PATH, ['--version'], {
             encoding: 'utf8',
-            timeout: 10000,
+            timeout: 25000,
             stdio: ['ignore', 'pipe', 'ignore']
         }).trim();
         _ytDlpVersion = raw; // e.g. "2026.08.19"
@@ -76,11 +77,15 @@ function isNodeAvailable() {
 // 3. Build Adaptive EXTRACTOR_ARGS
 // ---------------------------------------------------------------------------
 
-let _cachedArgs = null;
 let _strategyName = '';
 
 function buildExtractorArgs() {
-    const args = ['--no-check-certificates'];
+    const port = getHttpPort() || 9876;
+    const args = [
+        '--no-check-certificates',
+        '--proxy', `http://127.0.0.1:${port}`,
+        '--http-chunk-size', '10M'
+    ];
     const version = getYtDlpVersion();
     const nodeOk = isNodeAvailable();
 
@@ -88,21 +93,16 @@ function buildExtractorArgs() {
         args.push('--js-runtimes', 'node');
     }
 
-    _strategyName = `default-waterfall (yt-dlp ${version}, node=${nodeOk})`;
+    _strategyName = `local-proxy-tunnel (port ${port}, yt-dlp ${version}, node=${nodeOk})`;
     return args;
 }
 
 /**
  * Returns the optimal EXTRACTOR_ARGS for the current environment.
- * Cached after first call.
+ * Generates fresh proxy port mapping so runtime port changes are automatically reflected.
  */
 function getExtractorArgs() {
-    if (_cachedArgs === null) {
-        _cachedArgs = buildExtractorArgs();
-        console.log(`[ytDlpConfig] Strategy: ${_strategyName}`);
-        console.log(`[ytDlpConfig] EXTRACTOR_ARGS: ${JSON.stringify(_cachedArgs)}`);
-    }
-    return _cachedArgs;
+    return buildExtractorArgs();
 }
 
 /**
@@ -116,8 +116,9 @@ function getDiagnostics() {
         ytDlpVersion: getYtDlpVersion(),
         visionosSupported: parseVersionInt(getYtDlpVersion()) >= VISIONOS_MIN_VERSION,
         nodeAvailable: isNodeAvailable(),
+        proxyPort: getHttpPort() || 9876,
         strategy: _strategyName || '(not yet initialized)',
-        extractorArgs: _cachedArgs || '(not yet initialized)'
+        extractorArgs: buildExtractorArgs()
     };
 }
 

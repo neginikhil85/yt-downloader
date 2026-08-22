@@ -315,6 +315,10 @@ async function packageMac(spinner = null) {
     // Apply ad-hoc codesign and clear quarantine if packaging on macOS
     if (isHostMac) {
         try {
+            const resourcesBinDir = path.join(resourcesDir, 'bin');
+            if (fs.existsSync(resourcesBinDir)) {
+                execSync(`chmod -R 755 "${resourcesBinDir}"`, { stdio: 'ignore' });
+            }
             execSync(`xattr -cr "${destApp}"`, { stdio: 'ignore' });
             execSync(`codesign --force --deep --sign - "${destApp}"`, { stdio: 'ignore' });
         } catch (e) {}
