@@ -82,27 +82,13 @@ let _strategyName = '';
 function buildExtractorArgs() {
     const args = ['--no-check-certificates'];
     const version = getYtDlpVersion();
-    const versionInt = parseVersionInt(version);
-    const hasVisionos = versionInt >= VISIONOS_MIN_VERSION;
     const nodeOk = isNodeAvailable();
 
     if (nodeOk) {
         args.push('--js-runtimes', 'node');
     }
 
-    if (hasVisionos) {
-        // Modern yt-dlp (>= 2026.08.x): default client waterfall uses visionos
-        // which does NOT require PO tokens or JS challenge solving.
-        // Do NOT force any player_client — let yt-dlp pick the best one.
-        _strategyName = `default-waterfall (yt-dlp ${version}, visionos available, node=${nodeOk})`;
-    } else {
-        // Older yt-dlp: visionos client doesn't exist.
-        // Use android_vr as primary (no PO token needed on older versions),
-        // with web as fallback for signature-solved DASH formats.
-        args.push('--extractor-args', 'youtube:player_client=android_vr,web');
-        _strategyName = `legacy-clients (yt-dlp ${version}, pre-visionos, node=${nodeOk})`;
-    }
-
+    _strategyName = `default-waterfall (yt-dlp ${version}, node=${nodeOk})`;
     return args;
 }
 
