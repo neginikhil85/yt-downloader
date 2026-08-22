@@ -278,6 +278,11 @@ function getVideoFormats(url) {
                 const videoFormats = (json.formats || []).filter(f => f.vcodec && f.vcodec !== 'none' && f.protocol && f.protocol.startsWith('http') && f.height >= 144);
                 const heights = [...new Set(videoFormats.map(f => f.height).filter(Boolean))].sort((a, b) => b - a);
 
+                const audioFormats = (json.formats || []).filter(f => f.acodec && f.acodec !== 'none' && (!f.vcodec || f.vcodec === 'none'));
+                const bestAudio = audioFormats.find(f => f.ext === 'webm' || f.ext === 'm4a') || audioFormats.find(f => f.filesize || f.filesize_approx) || audioFormats[0];
+                const audioSize = bestAudio ? (bestAudio.filesize || bestAudio.filesize_approx) : null;
+                const audioStreamUrl = bestAudio?.url ? formatProxiedStreamUrl(bestAudio.url) : null;
+
                 const resolutions = heights.map(h => {
                     let label = `${h}p`;
                     let quality = `${h}p`;
@@ -295,34 +300,49 @@ function getVideoFormats(url) {
                     const sizeBytes = f ? (f.filesize || f.filesize_approx) : null;
                     const sizeStr = sizeBytes ? formatBytes(sizeBytes) : '';
 
+                    // Check for single progressive muxed MP4 format at this height
+                    const muxedAtHeight = (json.formats || []).find(mf => mf.height === h && mf.vcodec && mf.vcodec !== 'none' && mf.acodec && mf.acodec !== 'none' && mf.url);
+                    const videoFmt = matching.find(vf => vf.url && (vf.ext === 'webm' || vf.ext === 'mp4')) || matching[0];
+
                     return {
                         height: h,
                         quality,
                         label,
                         sizeBytes,
                         sizeStr,
-                        fps: f?.fps
+                        fps: f?.fps,
+                        streamUrl: muxedAtHeight?.url ? formatProxiedStreamUrl(muxedAtHeight.url) : (videoFmt?.url ? formatProxiedStreamUrl(videoFmt.url) : null),
+                        audioUrl: muxedAtHeight ? null : audioStreamUrl
                     };
                 });
 
-                // Add Audio option
-                const audioFormats = (json.formats || []).filter(f => f.acodec && f.acodec !== 'none' && (!f.vcodec || f.vcodec === 'none'));
-                const bestAudio = audioFormats.find(f => f.filesize || f.filesize_approx) || audioFormats[0];
-                const audioSize = bestAudio ? (bestAudio.filesize || bestAudio.filesize_approx) : null;
+                // Add Audio MP3 option
                 resolutions.push({
                     height: 0,
                     quality: 'MP3',
                     label: 'Audio MP3',
                     sizeBytes: audioSize,
-                    sizeStr: audioSize ? formatBytes(audioSize) : ''
+                    sizeStr: audioSize ? formatBytes(audioSize) : '',
+                    streamUrl: null,
+                    audioUrl: audioStreamUrl
                 });
+
+                // Default playback to Best Quality (1080p Full HD if available, or highest resolution <= 1080p, or highest resolution overall)
+                const defaultVideoRes = resolutions.find(r => r.height === 1080 && r.streamUrl)
+                    || resolutions.find(r => r.height > 0 && r.height <= 1080 && r.streamUrl)
+                    || resolutions.find(r => r.height > 0 && r.streamUrl);
+
+                const initialStreamUrl = defaultVideoRes ? defaultVideoRes.streamUrl : null;
+                const initialAudioUrl = defaultVideoRes ? defaultVideoRes.audioUrl : audioStreamUrl;
 
                 resolve({
                     success: true,
                     title: json.title,
                     thumbnail: json.thumbnail,
                     duration: json.duration,
-                    resolutions
+                    resolutions,
+                    streamUrl: initialStreamUrl,
+                    audioUrl: initialAudioUrl
                 });
             } catch (parseErr) {
                 resolve({ success: false, error: parseErr.message, resolutions: [] });

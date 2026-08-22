@@ -559,6 +559,7 @@ export function initVideoPlayer() {
  * Dynamically updates player quality menu and download presets bar with live YouTube resolutions & sizes
  */
 export function updateDynamicResolutions(resolutions = []) {
+    state.cachedResolutions = resolutions;
     const qualityList = document.getElementById('yt-quality-list');
     const dlPresetsContainer = document.getElementById('player-dl-presets');
 
@@ -588,6 +589,44 @@ export function updateDynamicResolutions(resolutions = []) {
                     const savedTime = videoEl.currentTime || 0;
                     const wasPlaying = !videoEl.paused;
 
+                    // 1. Instant Cache Switch (0ms latency, no subprocess spawns)
+                    let matchedRes = null;
+                    if (quality === 'auto') {
+                        matchedRes = (state.cachedResolutions || []).find(r => r.height === 1080 && r.streamUrl)
+                            || (state.cachedResolutions || []).find(r => r.height > 0 && r.height <= 1080 && r.streamUrl)
+                            || (state.cachedResolutions || []).find(r => r.height > 0 && r.streamUrl);
+                    } else {
+                        const targetHeight = parseInt(quality, 10);
+                        matchedRes = (state.cachedResolutions || []).find(r => r.quality === quality || (targetHeight && r.height === targetHeight));
+                    }
+
+                    if (matchedRes && matchedRes.streamUrl) {
+                        videoEl.src = matchedRes.streamUrl;
+                        if (matchedRes.audioUrl && audioEl) {
+                            audioEl.src = matchedRes.audioUrl;
+                            audioEl.volume = videoEl.volume;
+                            audioEl.muted = videoEl.muted;
+                            audioEl.playbackRate = videoEl.playbackRate;
+                        } else if (audioEl) {
+                            audioEl.pause();
+                            audioEl.removeAttribute('src');
+                        }
+
+                        const restorePlayback = () => {
+                            if (savedTime > 0) {
+                                try { videoEl.currentTime = savedTime; } catch {}
+                                if (audioEl && audioEl.src) { try { audioEl.currentTime = savedTime; } catch {} }
+                            }
+                            if (wasPlaying) {
+                                videoEl.play().catch(e => console.warn('Play notice on quality switch:', e.message || e));
+                                if (audioEl && audioEl.src) audioEl.play().catch(()=>{});
+                            }
+                        };
+                        videoEl.addEventListener('loadedmetadata', restorePlayback, { once: true });
+                        return;
+                    }
+
+                    // 2. Fallback to getStreamUrl only if not pre-cached
                     const playerLoader = document.getElementById('player-loader');
                     if (playerLoader) {
                         playerLoader.style.display = 'flex';
@@ -674,14 +713,16 @@ export async function streamVideo(video) {
     if (playerTitle) playerTitle.textContent = video.title;
     if (playerChannel) playerChannel.textContent = video.uploader || 'YouTube Video';
 
-    // Reset iframe & video elements
+    // Teardown previous playback completely
     if (iframeEl) {
         iframeEl.src = '';
         iframeEl.style.display = 'none';
     }
-    videoEl.pause();
-    videoEl.removeAttribute('src');
-    videoEl.style.display = 'none';
+    if (videoEl) {
+        videoEl.pause();
+        videoEl.removeAttribute('src');
+        videoEl.style.display = 'none';
+    }
     if (audioEl) {
         audioEl.pause();
         audioEl.removeAttribute('src');
@@ -694,47 +735,64 @@ export async function streamVideo(video) {
         if (loaderSpan) loaderSpan.textContent = 'Connecting YouTube Stream...';
     }
 
-    // Query live available formats & resolutions in background to dynamically populate presets
-    if (window.electronAPI && window.electronAPI.getVideoFormats) {
-        window.electronAPI.getVideoFormats(video.url).then(res => {
-            if (res && res.success && res.resolutions && res.resolutions.length > 0) {
-                updateDynamicResolutions(res.resolutions);
+    const startPlaying = (streamUrl, audioUrl) => {
+        if (!streamUrl || !videoEl) return;
+        if (playerLoader) playerLoader.style.display = 'none';
+        videoEl.style.display = 'block';
+        if (playerControls) playerControls.style.display = 'flex';
+
+        videoEl.onerror = (e) => {
+            console.warn('Native video playback notice:', e);
+            if (playerLoader) playerLoader.style.display = 'none';
+        };
+        videoEl.onloadeddata = () => {
+            if (playerLoader) playerLoader.style.display = 'none';
+        };
+        videoEl.onplaying = () => {
+            if (playerLoader) playerLoader.style.display = 'none';
+        };
+        videoEl.oncanplay = () => {
+            if (playerLoader) playerLoader.style.display = 'none';
+        };
+
+        videoEl.src = streamUrl;
+        if (audioUrl && audioEl) {
+            audioEl.src = audioUrl;
+            audioEl.volume = videoEl.volume;
+            audioEl.muted = videoEl.muted;
+            audioEl.playbackRate = videoEl.playbackRate;
+        } else if (audioEl) {
+            audioEl.pause();
+            audioEl.removeAttribute('src');
+        }
+
+        videoEl.play().catch(err => console.warn('Autoplay notice:', err.message || err));
+        if (audioUrl && audioEl && audioEl.src) audioEl.play().catch(() => {});
+    };
+
+    // Fast-path: Single combined query for both format discovery and stream playback
+    try {
+        const formatsRes = await window.electronAPI.getVideoFormats(video.url);
+        if (formatsRes && formatsRes.success) {
+            if (formatsRes.resolutions && formatsRes.resolutions.length > 0) {
+                updateDynamicResolutions(formatsRes.resolutions);
             }
-        }).catch(err => console.warn('Formats query notice:', err));
+            if (formatsRes.streamUrl) {
+                startPlaying(formatsRes.streamUrl, formatsRes.audioUrl);
+                return;
+            }
+        }
+    } catch (err) {
+        console.warn('Fast-path format notice:', err);
     }
 
+    // Fallback if needed
     try {
         const streamRes = await window.electronAPI.getStreamUrl(video.url);
-        if (playerLoader) playerLoader.style.display = 'none';
-
         if (streamRes && streamRes.success && streamRes.streamUrl) {
-            videoEl.style.display = 'block';
-            if (playerControls) playerControls.style.display = 'flex';
-
-            videoEl.onerror = (e) => {
-                console.warn('Native video playback notice:', e);
-                if (playerLoader) playerLoader.style.display = 'none';
-            };
-
-            videoEl.onloadeddata = () => {
-                if (playerLoader) playerLoader.style.display = 'none';
-            };
-            videoEl.onplaying = () => {
-                if (playerLoader) playerLoader.style.display = 'none';
-            };
-            videoEl.oncanplay = () => {
-                if (playerLoader) playerLoader.style.display = 'none';
-            };
-
-            videoEl.src = streamRes.streamUrl;
-            if (streamRes.audioUrl && audioEl) {
-                audioEl.src = streamRes.audioUrl;
-                audioEl.volume = videoEl.volume;
-                audioEl.muted = videoEl.muted;
-                audioEl.playbackRate = videoEl.playbackRate;
-            }
-            videoEl.play().catch(err => console.warn('Autoplay notice:', err.message || err));
-            if (audioEl && audioEl.src) audioEl.play().catch(()=>{});
+            startPlaying(streamRes.streamUrl, streamRes.audioUrl);
+        } else if (playerLoader) {
+            playerLoader.style.display = 'none';
         }
     } catch (err) {
         if (playerLoader) playerLoader.style.display = 'none';
@@ -750,6 +808,7 @@ export function playLocalVideo(file) {
 
     const iframeEl = document.getElementById('cinema-iframe');
     const videoEl = document.getElementById('cinema-video');
+    const audioEl = document.getElementById('cinema-audio');
     const playerControls = document.getElementById('player-controls');
     const playerTitle = document.getElementById('player-title');
     const playerChannel = document.getElementById('player-channel');
@@ -757,23 +816,37 @@ export function playLocalVideo(file) {
     if (playerTitle) playerTitle.textContent = file.name || 'Local Video';
     if (playerChannel) playerChannel.textContent = file.size || 'Local Media File';
 
+    // Teardown previous streams and background audio completely
     if (iframeEl) {
         iframeEl.src = '';
         iframeEl.style.display = 'none';
     }
+    if (audioEl) {
+        audioEl.pause();
+        audioEl.removeAttribute('src');
+    }
 
-    videoEl.style.display = 'block';
-    if (playerControls) playerControls.style.display = 'flex';
-    videoEl.src = `media://${file.fullPath}`;
-    videoEl.play().catch(err => console.error('Local video play notice:', err));
+    if (videoEl) {
+        videoEl.pause();
+        videoEl.removeAttribute('src');
+        videoEl.style.display = 'block';
+        if (playerControls) playerControls.style.display = 'flex';
+        videoEl.src = `media://${file.fullPath}`;
+        videoEl.play().catch(err => console.error('Local video play notice:', err));
+    }
 }
 
 export function stopVideoPlayer() {
     const iframeEl = document.getElementById('cinema-iframe');
     const videoEl = document.getElementById('cinema-video');
+    const audioEl = document.getElementById('cinema-audio');
     if (videoEl) {
         videoEl.pause();
         videoEl.removeAttribute('src');
+    }
+    if (audioEl) {
+        audioEl.pause();
+        audioEl.removeAttribute('src');
     }
     if (iframeEl) {
         iframeEl.src = '';

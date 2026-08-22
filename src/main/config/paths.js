@@ -38,14 +38,31 @@ function getYtDlpPath() {
         path.join(os.homedir(), '.yt_downloader', 'bin', exeName)
     ].filter(Boolean);
 
+    let chosenPath = path.join(PROJECT_ROOT, 'bin', platform, exeName);
     for (const candidate of candidatePaths) {
         if (fs.existsSync(candidate)) {
             ensureExecutable(candidate);
-            return candidate;
+            chosenPath = candidate;
+            break;
         }
     }
 
-    return path.join(PROJECT_ROOT, 'bin', platform, exeName);
+    // On macOS, if binary is inside CloudStorage (OneDrive), mirror to local SSD cache
+    // to bypass OneDrive VFS interception overhead
+    if (platform === 'darwin' && chosenPath.includes('CloudStorage')) {
+        try {
+            const localDir = path.join(os.homedir(), '.yt_downloader', 'bin');
+            if (!fs.existsSync(localDir)) fs.mkdirSync(localDir, { recursive: true });
+            const localBin = path.join(localDir, exeName);
+            if (!fs.existsSync(localBin) || fs.statSync(localBin).size !== fs.statSync(chosenPath).size) {
+                fs.copyFileSync(chosenPath, localBin);
+            }
+            ensureExecutable(localBin);
+            return localBin;
+        } catch (e) {}
+    }
+
+    return chosenPath;
 }
 
 function getFfmpegInfo() {
@@ -69,18 +86,32 @@ function getFfmpegInfo() {
         path.join(os.homedir(), '.yt_downloader', 'bin', ffmpegExe)
     ].filter(Boolean);
 
+    let chosen = { dir: path.join(PROJECT_ROOT, 'bin', platform), path: path.join(PROJECT_ROOT, 'bin', platform, ffmpegExe) };
     for (const candidate of candidatePaths) {
         if (fs.existsSync(candidate)) {
             ensureExecutable(candidate);
-            return {
+            chosen = {
                 dir: path.dirname(candidate),
                 path: candidate
             };
+            break;
         }
     }
 
-    const defaultPath = path.join(PROJECT_ROOT, 'bin', platform, ffmpegExe);
-    return { dir: path.dirname(defaultPath), path: defaultPath };
+    if (platform === 'darwin' && chosen.path.includes('CloudStorage')) {
+        try {
+            const localDir = path.join(os.homedir(), '.yt_downloader', 'bin');
+            if (!fs.existsSync(localDir)) fs.mkdirSync(localDir, { recursive: true });
+            const localBin = path.join(localDir, ffmpegExe);
+            if (!fs.existsSync(localBin) || fs.statSync(localBin).size !== fs.statSync(chosen.path).size) {
+                fs.copyFileSync(chosen.path, localBin);
+            }
+            ensureExecutable(localBin);
+            return { dir: localDir, path: localBin };
+        } catch (e) {}
+    }
+
+    return chosen;
 }
 
 const YT_DLP_PATH = getYtDlpPath();

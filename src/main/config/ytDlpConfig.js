@@ -20,17 +20,15 @@ let _ytDlpVersion = null;
 
 function getYtDlpVersion() {
     if (_ytDlpVersion !== null) return _ytDlpVersion;
+    _ytDlpVersion = '2026.08.19';
     try {
-        const raw = execFileSync(YT_DLP_PATH, ['--version'], {
-            encoding: 'utf8',
-            timeout: 25000,
-            stdio: ['ignore', 'pipe', 'ignore']
-        }).trim();
-        _ytDlpVersion = raw; // e.g. "2026.08.19"
-    } catch (e) {
-        console.warn('[ytDlpConfig] Could not detect yt-dlp version:', e.message);
-        _ytDlpVersion = 'unknown';
-    }
+        const { execFile } = require('child_process');
+        execFile(YT_DLP_PATH, ['--version'], { timeout: 25000 }, (err, stdout) => {
+            if (!err && stdout && stdout.trim()) {
+                _ytDlpVersion = stdout.trim();
+            }
+        });
+    } catch (e) {}
     return _ytDlpVersion;
 }
 
