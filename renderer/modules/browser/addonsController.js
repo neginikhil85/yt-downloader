@@ -20,6 +20,7 @@ export class AddonsController {
         addonsNavBtns,
         addonsTabContents,
         onExtensionInstalled,
+        onExtensionsUpdated,
         onOpenTab
     }) {
         this.extCuratedGrid = extCuratedGrid;
@@ -36,6 +37,7 @@ export class AddonsController {
         this.addonsNavBtns = addonsNavBtns || [];
         this.addonsTabContents = addonsTabContents || [];
         this.onExtensionInstalled = onExtensionInstalled || (() => {});
+        this.onExtensionsUpdated = onExtensionsUpdated || (() => {});
         this.onOpenTab = onOpenTab || (() => {});
 
         this.installedExtensionsList = [];
@@ -92,13 +94,14 @@ export class AddonsController {
             this.updateBadges();
             this.renderInstalled();
             this.renderCurated();
+            if (this.onExtensionsUpdated) this.onExtensionsUpdated(this.installedExtensionsList);
         } catch (e) {
             console.warn('[ExtensionHub] Load error:', e);
         }
     }
 
     updateBadges() {
-        const activeCount = this.installedExtensionsList.filter(e => e.enabled).length;
+        const activeCount = this.installedExtensionsList.filter(e => e.enabled !== false).length;
         if (this.activeCountBadge) {
             this.activeCountBadge.textContent = activeCount;
             this.activeCountBadge.style.display = activeCount > 0 ? 'inline-block' : 'none';

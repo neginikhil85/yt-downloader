@@ -157,6 +157,20 @@ function registerIpcHandlers(getMainWindow) {
         openExtensionFolder
     } = require('./services/extensionService');
 
+    function notifyExtensionsChanged(payload = {}) {
+        try {
+            const { webContents } = require('electron');
+            const allWc = webContents.getAllWebContents();
+            for (const wc of allWc) {
+                if (!wc.isDestroyed()) {
+                    wc.send('extensions:changed', payload);
+                }
+            }
+        } catch (e) {
+            console.warn('[IPC] notifyExtensionsChanged error:', e);
+        }
+    }
+
     ipcMain.handle('extension:get-installed', () => {
         return getInstalledExtensions();
     });
@@ -166,7 +180,11 @@ function registerIpcHandlers(getMainWindow) {
     });
 
     ipcMain.handle('extension:install', async (event, idOrUrl) => {
-        return installExtensionFromWebStore(idOrUrl);
+        const res = await installExtensionFromWebStore(idOrUrl);
+        if (res && res.success) {
+            notifyExtensionsChanged({ action: 'install', id: res.extension?.id });
+        }
+        return res;
     });
 
     ipcMain.handle('extension:install-unpacked', async () => {
@@ -179,15 +197,27 @@ function registerIpcHandlers(getMainWindow) {
         if (result.canceled || !result.filePaths.length) {
             return { success: false, cancelled: true };
         }
-        return installUnpackedExtension(result.filePaths[0]);
+        const res = await installUnpackedExtension(result.filePaths[0]);
+        if (res && res.success) {
+            notifyExtensionsChanged({ action: 'install-unpacked', id: res.extension?.id });
+        }
+        return res;
     });
 
     ipcMain.handle('extension:toggle', async (event, { id, enabled }) => {
-        return toggleExtension(id, enabled);
+        const res = await toggleExtension(id, enabled);
+        if (res && res.success) {
+            notifyExtensionsChanged({ action: 'toggle', id, enabled });
+        }
+        return res;
     });
 
     ipcMain.handle('extension:remove', (event, id) => {
-        return removeExtension(id);
+        const res = removeExtension(id);
+        if (res && res.success) {
+            notifyExtensionsChanged({ action: 'remove', id });
+        }
+        return res;
     });
 
     ipcMain.handle('extension:open-folder', (event, id) => {

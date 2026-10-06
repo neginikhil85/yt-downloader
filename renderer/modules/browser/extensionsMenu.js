@@ -9,6 +9,7 @@ export class ExtensionsMenu {
         extMenuList,
         extMenuCloseBtn,
         extMenuManageBtn,
+        activeCountBadge,
         pinnedIconsContainer,
         actionPopover,
         actionPopoverIcon,
@@ -26,6 +27,7 @@ export class ExtensionsMenu {
         this.extMenuList = extMenuList;
         this.extMenuCloseBtn = extMenuCloseBtn;
         this.extMenuManageBtn = extMenuManageBtn;
+        this.activeCountBadge = activeCountBadge;
         this.pinnedIconsContainer = pinnedIconsContainer;
         this.actionPopover = actionPopover;
         this.actionPopoverIcon = actionPopoverIcon;
@@ -120,10 +122,18 @@ export class ExtensionsMenu {
         this.loadAndRender();
     }
 
+    updateBadge() {
+        if (!this.activeCountBadge) return;
+        const activeCount = this.installedExtensions.filter(e => e.enabled !== false).length;
+        this.activeCountBadge.textContent = activeCount;
+        this.activeCountBadge.style.display = activeCount > 0 ? 'inline-block' : 'none';
+    }
+
     async loadAndRender() {
         if (!window.electronAPI || !window.electronAPI.extensionGetInstalled) return;
         try {
             this.installedExtensions = await window.electronAPI.extensionGetInstalled();
+            this.updateBadge();
             this.renderMenu();
             this.renderPinnedToolbar();
         } catch (e) {

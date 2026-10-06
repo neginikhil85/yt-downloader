@@ -32,6 +32,14 @@ function createMainWindow() {
 
     attachWindowCrashHandler(mainWindow);
 
+    // Ensure all guest webviews in Research Browser load the Chrome Web Store compatibility preload
+    mainWindow.webContents.on('will-attach-webview', (event, webPreferences, params) => {
+        const webstorePreload = path.join(__dirname, 'preload', 'webstoreCompat.js');
+        webPreferences.preload = webstorePreload;
+        webPreferences.contextIsolation = false;
+        webPreferences.nodeIntegration = false;
+    });
+
     mainWindow.loadFile(path.join(__dirname, '..', '..', 'renderer', 'index.html'));
 
     // Forward renderer console logs and errors directly to terminal stdout

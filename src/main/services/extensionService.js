@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const https = require('https');
 const http = require('http');
+const zlib = require('zlib');
 const { execSync } = require('child_process');
 const CURATED_ADDONS = require('../config/curatedAddons');
 
@@ -10,6 +11,10 @@ let extensionsDir = null;
 let metadataFile = null;
 let installedExtensions = [];
 let isInitialized = false;
+
+// Bump whenever patchExtensionCompatibility changes in a way that requires a
+// clean re-extract of previously installed Web Store extensions.
+const COMPAT_VERSION = 2;
 
 
 function ensurePaths() {
@@ -54,25 +59,139 @@ function saveMetadata() {
     }
 }
 
-function extractZipBuffer(zipBuf, targetDir) {
-    fs.mkdirSync(targetDir, { recursive: true });
-    const tempZip = path.join(targetDir, 'temp_archive.zip');
-    fs.writeFileSync(tempZip, zipBuf);
+// ==========================================================================
+// CRX parsing + pure-JS ZIP extraction
+// Avoids shelling out to ditto/unzip/powershell which silently corrupts or
+// fails on Chrome Web Store archives (spaces in paths, reserved names, etc.)
+// ==========================================================================
 
-    if (process.platform === 'win32') {
-        execSync(`powershell -NoProfile -Command "Expand-Archive -Path '${tempZip}' -DestinationPath '${targetDir}' -Force"`, { stdio: 'ignore' });
-    } else if (process.platform === 'darwin') {
-        try {
-            execSync(`/usr/bin/ditto -x -k "${tempZip}" "${targetDir}"`, { stdio: 'ignore' });
-        } catch (e) {
-            execSync(`unzip -q -o "${tempZip}" -d "${targetDir}"`, { stdio: 'ignore' });
-        }
-    } else {
-        execSync(`unzip -q -o "${tempZip}" -d "${targetDir}"`, { stdio: 'ignore' });
+/**
+ * Extracts the embedded ZIP payload from a CRX2 or CRX3 container.
+ * Scanning for the PK magic bytes is unreliable because the CRX3 protobuf
+ * signature header can legitimately contain the same byte sequence.
+ */
+function extractZipFromCrx(crxBuf) {
+    if (!crxBuf || crxBuf.length < 16) {
+        throw new Error('Downloaded extension archive was empty.');
     }
 
-    try { fs.unlinkSync(tempZip); } catch (e) { }
+    // Some mirrors serve the raw zip directly
+    if (crxBuf.readUInt32BE(0) === 0x504b0304) return crxBuf;
+
+    if (crxBuf.slice(0, 4).toString('latin1') !== 'Cr24') {
+        // Last-resort fallback for non-standard containers
+        const idx = crxBuf.indexOf(Buffer.from([0x50, 0x4b, 0x03, 0x04]));
+        if (idx === -1) throw new Error('CRX archive did not contain valid ZIP data.');
+        return crxBuf.slice(idx);
+    }
+
+    const version = crxBuf.readUInt32LE(4);
+    let zipStart;
+
+    if (version === 2) {
+        const pubKeyLen = crxBuf.readUInt32LE(8);
+        const sigLen = crxBuf.readUInt32LE(12);
+        zipStart = 16 + pubKeyLen + sigLen;
+    } else if (version === 3) {
+        const headerLen = crxBuf.readUInt32LE(8);
+        zipStart = 12 + headerLen;
+    } else {
+        throw new Error(`Unsupported CRX format version ${version}.`);
+    }
+
+    if (zipStart >= crxBuf.length) {
+        throw new Error('CRX header declared an invalid payload offset.');
+    }
+
+    const zipBuf = crxBuf.slice(zipStart);
+    if (zipBuf.readUInt32BE(0) !== 0x504b0304) {
+        throw new Error('CRX payload was not a valid ZIP archive.');
+    }
+    return zipBuf;
 }
+
+/**
+ * Minimal ZIP reader driven by the central directory.
+ * Supports stored (0) and deflate (8) entries, which is everything the
+ * Chrome Web Store produces.
+ */
+function extractZipBuffer(zipBuf, targetDir) {
+    fs.mkdirSync(targetDir, { recursive: true });
+
+    // Locate End Of Central Directory record (scan backwards, max 64KB comment)
+    const EOCD_SIG = 0x06054b50;
+    let eocd = -1;
+    const scanFloor = Math.max(0, zipBuf.length - 65557);
+    for (let i = zipBuf.length - 22; i >= scanFloor; i--) {
+        if (zipBuf.readUInt32LE(i) === EOCD_SIG) { eocd = i; break; }
+    }
+    if (eocd === -1) throw new Error('ZIP archive is corrupt (no end-of-central-directory record).');
+
+    let entryCount = zipBuf.readUInt16LE(eocd + 10);
+    let cdOffset = zipBuf.readUInt32LE(eocd + 16);
+
+    // ZIP64 fallback
+    if (cdOffset === 0xffffffff || entryCount === 0xffff) {
+        const locatorSig = 0x07064b50;
+        let loc = -1;
+        for (let i = eocd - 20; i >= 0; i--) {
+            if (zipBuf.readUInt32LE(i) === locatorSig) { loc = i; break; }
+        }
+        if (loc === -1) throw new Error('ZIP64 archive is corrupt (missing locator).');
+        const z64Offset = Number(zipBuf.readBigUInt64LE(loc + 8));
+        entryCount = Number(zipBuf.readBigUInt64LE(z64Offset + 32));
+        cdOffset = Number(zipBuf.readBigUInt64LE(z64Offset + 48));
+    }
+
+    const resolvedRoot = path.resolve(targetDir);
+    let ptr = cdOffset;
+
+    for (let n = 0; n < entryCount; n++) {
+        if (zipBuf.readUInt32LE(ptr) !== 0x02014b50) break;
+
+        const method = zipBuf.readUInt16LE(ptr + 10);
+        const compSize = zipBuf.readUInt32LE(ptr + 20);
+        const nameLen = zipBuf.readUInt16LE(ptr + 28);
+        const extraLen = zipBuf.readUInt16LE(ptr + 30);
+        const commentLen = zipBuf.readUInt16LE(ptr + 32);
+        const localOffset = zipBuf.readUInt32LE(ptr + 42);
+        const rawName = zipBuf.slice(ptr + 46, ptr + 46 + nameLen).toString('utf8');
+
+        ptr += 46 + nameLen + extraLen + commentLen;
+
+        // Chrome's own signing metadata — Electron refuses to load dirs starting with "_"
+        if (rawName.startsWith('_metadata/')) continue;
+        if (rawName.endsWith('/')) continue;
+
+        // Zip-slip protection
+        const destPath = path.resolve(resolvedRoot, rawName);
+        if (destPath !== resolvedRoot && !destPath.startsWith(resolvedRoot + path.sep)) {
+            console.warn(`[ExtensionService] Skipping unsafe archive path: ${rawName}`);
+            continue;
+        }
+
+        // Read the local file header to find the true data start
+        if (zipBuf.readUInt32LE(localOffset) !== 0x04034b50) continue;
+        const lhNameLen = zipBuf.readUInt16LE(localOffset + 26);
+        const lhExtraLen = zipBuf.readUInt16LE(localOffset + 28);
+        const dataStart = localOffset + 30 + lhNameLen + lhExtraLen;
+        const compressed = zipBuf.slice(dataStart, dataStart + compSize);
+
+        let contents;
+        if (method === 0) {
+            contents = compressed;
+        } else if (method === 8) {
+            contents = zlib.inflateRawSync(compressed);
+        } else {
+            console.warn(`[ExtensionService] Unsupported compression (${method}) for ${rawName}`);
+            continue;
+        }
+
+        fs.mkdirSync(path.dirname(destPath), { recursive: true });
+        fs.writeFileSync(destPath, contents);
+    }
+}
+
 
 function downloadCrx(url, maxRedirects = 8) {
     return new Promise((resolve, reject) => {
@@ -435,23 +554,68 @@ function patchExtensionCompatibility(extDir) {
 `;
 
     try {
-        function walkAndPatch(dir) {
-            const entries = fs.readdirSync(dir, { withFileTypes: true });
-            for (const entry of entries) {
-                const fullPath = path.join(dir, entry.name);
-                if (entry.isDirectory()) {
-                    walkAndPatch(fullPath);
-                } else if (entry.isFile() && entry.name.endsWith('.js')) {
-                    try {
-                        let content = fs.readFileSync(fullPath, 'utf8');
-                        if (!content.includes('Bruno App Universal Chrome & WebExtension Compatibility Layer')) {
-                            fs.writeFileSync(fullPath, shimCode + '\n' + content, 'utf8');
+        // Write the shim as a standalone file and register it only at the
+        // extension's declared entry points. Blanket-prepending it to every
+        // .js file (the previous behaviour) corrupted ES modules, minified
+        // bundles and source maps, which is what broke most Web Store addons.
+        const shimFileName = 'bruno-compat-shim.js';
+        const shimPath = path.join(extDir, shimFileName);
+        fs.writeFileSync(shimPath, shimCode, 'utf8');
+
+        const manifestPath = path.join(extDir, 'manifest.json');
+        const manifest = readExtensionManifest(extDir);
+
+        if (manifest) {
+            let manifestChanged = false;
+
+            // NOTE: the shim is deliberately NOT injected into content scripts.
+            // chrome.tabs / contextMenus / notifications do not exist in a real
+            // content script either, and faking them there makes extensions
+            // take the wrong code path.
+
+            const bg = manifest.background;
+            if (bg) {
+                // MV2 background scripts
+                if (Array.isArray(bg.scripts) && bg.scripts[0] !== shimFileName) {
+                    bg.scripts.unshift(shimFileName);
+                    manifestChanged = true;
+                }
+
+                // MV3 service worker
+                if (typeof bg.service_worker === 'string' && bg.service_worker !== shimFileName) {
+                    // Manifest paths may be written as "/js/background.js"
+                    const swRel = bg.service_worker.split(path.sep).join('/').replace(/^\/+/, '');
+                    const swAbs = path.join(extDir, swRel);
+                    if (fs.existsSync(swAbs)) {
+                        if (bg.type === 'module') {
+                            const sw = fs.readFileSync(swAbs, 'utf8');
+                            if (!sw.includes(shimFileName)) {
+                                const depth = swRel.split('/').length - 1;
+                                const spec = depth > 0
+                                    ? '../'.repeat(depth) + shimFileName
+                                    : './' + shimFileName;
+                                fs.writeFileSync(swAbs, `import '${spec}';\n` + sw, 'utf8');
+                            }
+                        } else {
+                            // Classic worker: wrap with importScripts so the
+                            // original file stays byte-for-byte untouched
+                            const wrapperName = 'bruno-sw-entry.js';
+                            fs.writeFileSync(
+                                path.join(extDir, wrapperName),
+                                `importScripts('/${shimFileName}');\nimportScripts('/${swRel}');\n`,
+                                'utf8'
+                            );
+                            bg.service_worker = wrapperName;
+                            manifestChanged = true;
                         }
-                    } catch (e) {}
+                    }
                 }
             }
+
+            if (manifestChanged) {
+                fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf8');
+            }
         }
-        walkAndPatch(extDir);
 
         // Apply defensive tab info fallbacks to known popup files
         const headerJs = path.join(extDir, 'button', 'header.js');
@@ -507,6 +671,19 @@ async function initExtensionService() {
     for (const item of installedExtensions) {
         if (item.enabled && item.path && fs.existsSync(item.path)) {
             try {
+                // Extensions installed by older builds had the compat shim
+                // prepended into every bundled .js file, permanently corrupting
+                // them. Re-fetch a clean copy once instead of loading garbage.
+                if (!item.isUnpacked && item.compatVersion !== COMPAT_VERSION) {
+                    try {
+                        console.log(`[ExtensionService] Repairing legacy install: ${item.name}`);
+                        await installExtensionFromWebStore(item.id);
+                        continue;
+                    } catch (repairErr) {
+                        console.warn(`[ExtensionService] Repair failed for ${item.name}:`, repairErr.message);
+                    }
+                }
+
                 patchExtensionCompatibility(item.path);
                 const loaded = await targetSession.loadExtension(item.path, { allowFileAccess: true });
                 if (loaded && loaded.id) {
@@ -518,6 +695,8 @@ async function initExtensionService() {
             }
         }
     }
+
+    saveMetadata();
 }
 
 function getInstalledExtensions() {
@@ -655,13 +834,7 @@ async function installExtensionFromWebStore(idOrUrl) {
         throw new Error('Downloaded extension buffer was empty or invalid.');
     }
 
-    // Find PKZip start offset
-    const zipOffset = crxBuffer.indexOf(Buffer.from([0x50, 0x4b, 0x03, 0x04]));
-    if (zipOffset === -1) {
-        throw new Error('CRX archive did not contain valid ZIP data.');
-    }
-
-    const zipBuffer = crxBuffer.slice(zipOffset);
+    const zipBuffer = extractZipFromCrx(crxBuffer);
     const targetDir = path.join(extensionsDir, extId);
 
     if (fs.existsSync(targetDir)) {
@@ -688,7 +861,10 @@ async function installExtensionFromWebStore(idOrUrl) {
             runtimeId = loaded.id;
         }
     } catch (loadErr) {
-        console.warn('[ExtensionService] Session load notice:', loadErr.message);
+        // Do not record a broken extension as "installed" — that is what forced
+        // users into the manual download-and-sideload workaround.
+        try { fs.rmSync(targetDir, { recursive: true, force: true }); } catch (e) { }
+        throw new Error(`Chrome could not load this extension: ${loadErr.message}`);
     }
 
     const curatedMeta = CURATED_ADDONS.find(c => c.id === extId);
@@ -708,6 +884,7 @@ async function installExtensionFromWebStore(idOrUrl) {
         path: targetDir,
         enabled: true,
         isUnpacked: false,
+        compatVersion: COMPAT_VERSION,
         category: curatedMeta ? curatedMeta.category : 'Custom Addon',
         installedAt: new Date().toISOString()
     };
@@ -763,6 +940,7 @@ async function installUnpackedExtension(targetFolderPath) {
         path: targetFolderPath,
         enabled: true,
         isUnpacked: true,
+        compatVersion: COMPAT_VERSION,
         category: 'Unpacked / Local',
         installedAt: new Date().toISOString()
     };
@@ -859,6 +1037,7 @@ module.exports = {
     initExtensionService,
     getInstalledExtensions,
     getCuratedAddons,
+    patchExtensionCompatibility,
     installExtensionFromWebStore,
     installUnpackedExtension,
     toggleExtension,

@@ -121,5 +121,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     extensionInstallUnpacked: () => ipcRenderer.invoke('extension:install-unpacked'),
     extensionToggle: (id, enabled) => ipcRenderer.invoke('extension:toggle', { id, enabled }),
     extensionRemove: (id) => ipcRenderer.invoke('extension:remove', id),
-    extensionOpenFolder: (id) => ipcRenderer.invoke('extension:open-folder', id)
+    extensionOpenFolder: (id) => ipcRenderer.invoke('extension:open-folder', id),
+    onExtensionsChanged: (cb) => {
+        const handler = (event, data) => cb(data);
+        ipcRenderer.on('extensions:changed', handler);
+        return () => {
+            ipcRenderer.removeListener('extensions:changed', handler);
+        };
+    }
 });

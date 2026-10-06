@@ -146,7 +146,8 @@ export function initBrowserManager() {
         addonsNavBtns,
         addonsTabContents,
         onOpenTab: (url, activate) => tabController && tabController.createTab(url, activate),
-        onExtensionInstalled: () => extensionsMenu && extensionsMenu.loadAndRender()
+        onExtensionInstalled: () => extensionsMenu && extensionsMenu.loadAndRender(),
+        onExtensionsUpdated: () => extensionsMenu && extensionsMenu.loadAndRender()
     });
 
     const findInPage = new FindInPageController({
@@ -224,6 +225,7 @@ export function initBrowserManager() {
         extMenuList,
         extMenuCloseBtn,
         extMenuManageBtn,
+        activeCountBadge,
         pinnedIconsContainer,
         actionPopover,
         actionPopoverIcon,
@@ -236,6 +238,14 @@ export function initBrowserManager() {
         onCreateTab: (url, activate) => tabController && tabController.createTab(url, activate),
         getActiveTab: () => tabController?.getActiveTab() || null
     });
+
+    // Real-time synchronization of extensions across the entire application (Web Store, sideload, uninstalled, toggled)
+    if (window.electronAPI && window.electronAPI.onExtensionsChanged) {
+        window.electronAPI.onExtensionsChanged(async () => {
+            if (addonsController) await addonsController.loadInstalled();
+            if (extensionsMenu) await extensionsMenu.loadAndRender();
+        });
+    }
 
     // 3. UI Action Bindings
     if (btnNewTab) {

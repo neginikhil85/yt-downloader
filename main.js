@@ -107,6 +107,19 @@ function setupSessionSecurity(sess) {
             details.requestHeaders['Origin'] = 'https://www.youtube.com';
         }
 
+        // Chrome Web Store gates listings on the Google Chrome brand hint.
+        // Electron advertises "Chromium", which renders every item as
+        // "Item currently unavailable". Scoped strictly to the store host.
+        if (url.includes('chromewebstore.google.com') || url.includes('chrome.google.com/webstore')) {
+            details.requestHeaders['sec-ch-ua'] =
+                '"Chromium";v="133", "Not(A:Brand";v="24", "Google Chrome";v="133"';
+            details.requestHeaders['sec-ch-ua-mobile'] = '?0';
+            const uaHeader = details.requestHeaders['User-Agent'] || '';
+            const isWin = uaHeader.includes('Windows');
+            const isMac = uaHeader.includes('Macintosh') || (process.platform === 'darwin' && !isWin);
+            details.requestHeaders['sec-ch-ua-platform'] = isWin ? '"Windows"' : (isMac ? '"macOS"' : '"Linux"');
+        }
+
         callback({ requestHeaders: details.requestHeaders });
     });
 
@@ -140,7 +153,26 @@ protocol.registerSchemesAsPrivileged([
 
 app.whenReady().then(() => {
     setupSessionSecurity(session.defaultSession);
-    setupSessionSecurity(session.fromPartition('persist:main'));
+
+    const browserSession = session.fromPartition('persist:main');
+    setupSessionSecurity(browserSession);
+
+    // Chrome Web Store compatibility shim for Research Browser webviews.
+    // The script itself exits immediately on any non-store origin.
+    try {
+        const webstorePreload = path.join(__dirname, 'src', 'main', 'preload', 'webstoreCompat.js');
+        if (typeof browserSession.registerPreloadScript === 'function') {
+            browserSession.registerPreloadScript({
+                id: 'bruno-webstore-compat',
+                type: 'frame',
+                filePath: webstorePreload
+            });
+        } else if (typeof browserSession.setPreloads === 'function') {
+            browserSession.setPreloads([...browserSession.getPreloads(), webstorePreload]);
+        }
+    } catch (err) {
+        console.warn('[WebStoreCompat] Preload registration skipped:', err.message);
+    }
 
     protocol.handle('media', (request) => {
         try {
@@ -265,6 +297,13 @@ app.on('web-contents-created', (event, contents) => {
     }
 
     if (type === 'window') {
+        contents.on('will-attach-webview', (event, webPreferences, params) => {
+            const webstorePreload = path.join(__dirname, 'src', 'main', 'preload', 'webstoreCompat.js');
+            webPreferences.preload = webstorePreload;
+            webPreferences.contextIsolation = false;
+            webPreferences.nodeIntegration = false;
+        });
+
         // App shell itself must never spawn OS windows or navigate away from index.html
         contents.setWindowOpenHandler(({ url, disposition }) => routeToTab(url, disposition));
 

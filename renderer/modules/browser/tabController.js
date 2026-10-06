@@ -59,10 +59,17 @@ export class TabController {
         webview.setAttribute('partition', 'persist:main');
         webview.setAttribute('allowpopups', 'true');
 
+        const isMac = (navigator.userAgent && navigator.userAgent.includes('Mac')) || (navigator.platform && navigator.platform.includes('Mac'));
+        const defaultDesktopUa = isMac
+            ? 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36'
+            : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36';
+
         const isGoogleAuth = finalUrl.includes('accounts.google.com') || finalUrl.includes('accounts.youtube.com') || finalUrl.includes('oauth2.googleapis.com');
-        const ua = isGoogleAuth
-            ? 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36'
-            : (this.quickTools ? this.quickTools.getUserAgent() : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36');
+        const isStore = finalUrl.includes('chromewebstore.google.com') || finalUrl.includes('chrome.google.com');
+
+        const ua = (isGoogleAuth || isStore)
+            ? defaultDesktopUa
+            : (this.quickTools ? this.quickTools.getUserAgent() : defaultDesktopUa);
 
         webview.setAttribute('useragent', ua);
         webview.className = 'browser-webview';
@@ -433,6 +440,10 @@ export class TabController {
         const extId = match[1];
         const helperScript = `
             (function() {
+                // The webstoreCompat preload renders a richer, state-aware pill.
+                // Only fall back to this simple one if that preload is absent.
+                if (window.__yt_cws_preload_active) return;
+
                 // Remove any existing pill (SPA re-navigation)
                 const existing = document.getElementById('yt-webstore-installer-pill');
                 if (existing) existing.remove();
