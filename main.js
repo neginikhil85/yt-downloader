@@ -239,6 +239,44 @@ app.on('certificate-error', (event, webContents, url, error, certificate, callba
     callback(true);
 });
 
+// Research Browser containment: never let a page spawn an OS-level window.
+// Every popup / target="_blank" request is denied and routed back to the renderer
+// so tabController can open it as an in-app tab.
+app.on('web-contents-created', (event, contents) => {
+    let type = '';
+    try { type = contents.getType(); } catch (e) {}
+
+    const routeToTab = (url, disposition) => {
+        if (url && /^https?:/i.test(url)) {
+            const win = getMainWindow();
+            if (win && !win.isDestroyed() && win.webContents) {
+                win.webContents.send('browser-open-tab', {
+                    url,
+                    activate: disposition !== 'background-tab'
+                });
+            }
+        }
+        return { action: 'deny' };
+    };
+
+    if (type === 'webview') {
+        contents.setWindowOpenHandler(({ url, disposition }) => routeToTab(url, disposition));
+        return;
+    }
+
+    if (type === 'window') {
+        // App shell itself must never spawn OS windows or navigate away from index.html
+        contents.setWindowOpenHandler(({ url, disposition }) => routeToTab(url, disposition));
+
+        contents.on('will-navigate', (e, url) => {
+            if (!url.startsWith('file://')) {
+                e.preventDefault();
+                routeToTab(url, 'foreground-tab');
+            }
+        });
+    }
+});
+
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit();
 });

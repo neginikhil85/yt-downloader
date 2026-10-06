@@ -34,6 +34,15 @@ export class TabController {
         this.tabs = [];
         this.activeTabId = null;
         this.tabIdCounter = 1;
+
+        // Popups denied in main process are routed back here as in-app tabs
+        if (window.electronAPI && window.electronAPI.onBrowserOpenTab) {
+            window.electronAPI.onBrowserOpenTab((payload) => {
+                if (payload && payload.url) {
+                    this.createTab(payload.url, payload.activate !== false);
+                }
+            });
+        }
     }
 
     createTab(initialUrl = 'about:home', activate = true) {

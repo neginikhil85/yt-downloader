@@ -28,6 +28,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
         ipcRenderer.on('download-progress', handler);
         return () => ipcRenderer.removeListener('download-progress', handler);
     },
+    // Research Browser: popup/new-window requests routed back as in-app tabs
+    onBrowserOpenTab: (callback) => {
+        const handler = (event, data) => callback(data);
+        ipcRenderer.on('browser-open-tab', handler);
+        return () => ipcRenderer.removeListener('browser-open-tab', handler);
+    },
     // Direct P2P Transfer APIs
     p2pGetLocalInfo: () => ipcRenderer.invoke('p2p-get-local-info'),
     p2pGetPortalInfo: (pin) => ipcRenderer.invoke('p2p-get-portal-info', pin),
