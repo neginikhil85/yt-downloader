@@ -21,6 +21,7 @@ export function initBrowserManager() {
     const btnBack = document.getElementById('browser-btn-back');
     const btnForward = document.getElementById('browser-btn-forward');
     const btnReload = document.getElementById('browser-btn-reload');
+    const loadingBar = document.getElementById('browser-loading-bar');
     const btnHome = document.getElementById('browser-btn-home');
     const btnFullscreen = document.getElementById('browser-btn-fullscreen');
     const btnPinPage = document.getElementById('browser-btn-pin-page');
@@ -197,6 +198,10 @@ export function initBrowserManager() {
                 const isPinned = topSites.pinnedApps.some(a => a.url === activeTab.url);
                 btnPinPage.classList.toggle('pinned', isPinned);
             }
+        },
+        onLoadingChanged: (isLoading) => {
+            if (btnReload) btnReload.classList.toggle('loading', isLoading);
+            if (loadingBar) loadingBar.classList.toggle('active', isLoading);
         },
         onOpenAddonsDashboard: () => {
             addonsController.loadInstalled();

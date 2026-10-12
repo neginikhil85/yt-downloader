@@ -137,8 +137,50 @@
     display: inline-block;
 }
 
-.browser-tab.loading .tab-favicon-wrap {
+.browser-tab.loading .tab-favicon-wrap,
+.browser-tab.loading .tab-favicon-container {
     display: none;
+}
+
+/* Thin indeterminate page-load progress line (Chrome/Firefox style) */
+.browser-loading-bar {
+    position: relative;
+    height: 2px;
+    width: 100%;
+    background: transparent;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    flex-shrink: 0;
+    z-index: 5;
+}
+
+.browser-loading-bar.active {
+    opacity: 1;
+}
+
+.browser-loading-bar-inner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 40%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, transparent, var(--br-accent, #ff3b30), transparent);
+}
+
+.browser-loading-bar.active .browser-loading-bar-inner {
+    animation: browserLoadingSlide 1s ease-in-out infinite;
+}
+
+@keyframes browserLoadingSlide {
+    0% { left: -40%; }
+    100% { left: 100%; }
+}
+
+/* Spin the reload icon while the active tab is loading */
+#browser-btn-reload.loading svg {
+    animation: tabSpin 0.8s linear infinite;
 }
 
 @keyframes tabSpin {

@@ -360,7 +360,7 @@ async function packageWindows(spinner = null) {
 
     // Rename electron.exe to bruno_core.exe
     const oldWinExe = path.join(tempWinDir, 'electron.exe');
-    const coreWinExe = path.join(tempWinDir, `${processName}_core.exe`);
+    const coreWinExe = path.join(tempWinDir, `${processName}.exe`);
     if (fs.existsSync(oldWinExe)) {
         fs.renameSync(oldWinExe, coreWinExe);
     }
@@ -425,7 +425,7 @@ namespace BrunoApp
                 string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
                 string appDir = Path.Combine(localAppData, "BrunoApp");
                 string versionFile = Path.Combine(appDir, ".version");
-                string targetExe = Path.Combine(appDir, "${processName}_core.exe");
+                string targetExe = Path.Combine(appDir, "${processName}.exe");
                 string currentVersion = "${buildStamp}";
 
                 bool needsExtract = !File.Exists(targetExe) || !File.Exists(versionFile);
@@ -503,10 +503,10 @@ namespace BrunoApp
     } else {
         // Fallback: copy raw folder if compiling single exe is not supported on host OS
         copyRecursive(tempWinDir, winOutputDir);
-        const corePath = path.join(winOutputDir, `${processName}_core.exe`);
-        if (fs.existsSync(corePath)) {
-            fs.renameSync(corePath, singleExePath);
-        }
+        // const corePath = path.join(winOutputDir, `${processName}.exe`);
+        // if (fs.existsSync(corePath)) {
+        //     fs.renameSync(corePath, singleExePath);
+        // }
         try { fs.rmSync(tempWinDir, { recursive: true, force: true }); } catch (e) {}
     }
 

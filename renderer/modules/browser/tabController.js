@@ -17,7 +17,8 @@ export class TabController {
         quickTools,
         findInPage,
         onTabChanged,
-        onOpenAddonsDashboard
+        onOpenAddonsDashboard,
+        onLoadingChanged
     }) {
         this.tabsContainer = tabsContainer;
         this.webviewsContainer = webviewsContainer;
@@ -30,6 +31,7 @@ export class TabController {
         this.findInPage = findInPage;
         this.onTabChanged = onTabChanged || (() => {});
         this.onOpenAddonsDashboard = onOpenAddonsDashboard || (() => {});
+        this.onLoadingChanged = onLoadingChanged || (() => {});
 
         this.tabs = [];
         this.activeTabId = null;
@@ -101,6 +103,7 @@ export class TabController {
             <div class="tab-favicon-container">
                 ${getBrandIconHtml(tabData.url, tabData.title)}
             </div>
+            <div class="tab-spinner"></div>
             <span class="tab-title">${tabData.title}</span>
             <span class="tab-audio-icon" style="display: none;" title="Audio playing — Click to mute">🔊</span>
             <button class="tab-close-btn" title="Close Tab (⌘W / Ctrl+W)">✕</button>
@@ -193,6 +196,7 @@ export class TabController {
         }
 
         this.updateControlsState();
+        this.onLoadingChanged(!!activeTab.loading);
         activeTab.tabEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
         this.onTabChanged(activeTab);
     }
@@ -221,7 +225,19 @@ export class TabController {
 
         wv.addEventListener('did-start-loading', () => {
             tabData.loading = true;
-            if (tabData.id === this.activeTabId) this.updateControlsState();
+            tabData.tabEl?.classList.add('loading');
+            if (tabData.id === this.activeTabId) {
+                this.updateControlsState();
+                this.onLoadingChanged(true);
+            }
+        });
+
+        wv.addEventListener('did-fail-load', (e) => {
+            // Ignore aborted sub-resource / in-page navigations (errorCode -3)
+            if (e && e.errorCode === -3) return;
+            tabData.loading = false;
+            tabData.tabEl?.classList.remove('loading');
+            if (tabData.id === this.activeTabId) this.onLoadingChanged(false);
         });
 
         wv.addEventListener('dom-ready', () => {
@@ -230,6 +246,8 @@ export class TabController {
 
         wv.addEventListener('did-stop-loading', () => {
             tabData.loading = false;
+            tabData.tabEl?.classList.remove('loading');
+            if (tabData.id === this.activeTabId) this.onLoadingChanged(false);
             const currentUrl = wv.getURL();
             if (currentUrl && currentUrl !== 'about:blank') {
                 tabData.url = currentUrl;
@@ -451,7 +469,7 @@ export class TabController {
                 const pill = document.createElement('div');
                 pill.id = 'yt-webstore-installer-pill';
                 pill.style.cssText = 'position:fixed; bottom:28px; right:28px; z-index:2147483647; background:#0f172a; border:1px solid rgba(255,255,255,0.15); border-radius:14px; padding:14px 20px; display:flex; align-items:center; gap:14px; box-shadow:0 12px 40px rgba(0,0,0,0.5); font-family:-apple-system,BlinkMacSystemFont,sans-serif; color:#f8fafc; font-size:13.5px; backdrop-filter:blur(12px);';
-                pill.innerHTML = '<div style="display:flex;align-items:center;gap:8px;font-weight:600;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><path d="M20.5 11H19V7a2 2 0 0 0-2-2h-4V3.5a1.5 1.5 0 0 0-3 0V5H6a2 2 0 0 0-2 2v4H2.5a1.5 1.5 0 0 0 0 3H4v4a2 2 0 0 0 2 2h4v1.5a1.5 1.5 0 0 0 3 0V20h4a2 2 0 0 0 2-2v-4h1.5a1.5 1.5 0 0 0 0-3z"/></svg><span>Add to Research Browser</span></div><button id="btn-inject-install-ext" style="background:#2563eb;color:#fff;border:none;padding:8px 18px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;transition:all 0.15s ease;">Install Now</button>';
+                pill.innerHTML = '<div style="display:flex;align-items:center;gap:8px;font-weight:600;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><path d="M20.5 11H19V7a2 2 0 0 0-2-2h-4V3.5a1.5 1.5 0 0 0-3 0V5H6a2 2 0 0 0-2 2v4H2.5a1.5 1.5 0 0 0 0 3H4v4a2 2 0 0 0 2 2h4v1.5a1.5 1.5 0 0 0 3 0V20h4a2 2 0 0 0 2-2v-4h1.5a1.5 1.5 0 0 0 0-3z"/></svg><span>Add to Research Browser</div><button id="btn-inject-install-ext" style="background:#2563eb;color:#fff;border:none;padding:8px 18px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;transition:all 0.15s ease;">Install Now</button>';</span>
                 document.body.appendChild(pill);
 
                 document.getElementById('btn-inject-install-ext').addEventListener('click', function() {

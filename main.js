@@ -151,7 +151,7 @@ protocol.registerSchemesAsPrivileged([
     }
 ]);
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
     setupSessionSecurity(session.defaultSession);
 
     const browserSession = session.fromPartition('persist:main');
@@ -248,15 +248,71 @@ app.whenReady().then(() => {
 
     registerIpcHandlers(getMainWindow);
 
-    // Route isolated webview sessions through local Node.js CONNECT forward proxy (Port 9876)
-    // Only applied to Research Browser partition so main app UI/images/fonts are completely unaffected
-    const { getHttpPort } = require('./src/main/services/p2p/p2pHttpServer');
-    const proxyPort = getHttpPort() || 9876;
-    const proxyRules = `http://127.0.0.1:${proxyPort}`;
+    // -----------------------------------------------------------------------
+    // Windows-only Netskope bypass for the Research Browser.
+    //
+    // Netskope steers traffic by process image name. "bruno.exe" is whitelisted
+    // (cert-pinned app => not SSL-inspected), so the main app window, the player
+    // and yt-dlp (via its --proxy through the in-process server) already egress
+    // as bruno.exe once the packaged executable is named bruno.exe.
+    //
+    // Research Browser webviews run as isolated guests whose egress is not
+    // reliably attributed to bruno.exe, so we route ONLY that partition through
+    // the in-process CONNECT proxy, whose outbound sockets are opened by the
+    // bruno.exe main process. The main UI session is intentionally left direct.
+    //
+    // macOS has no Netskope steering and is intentionally left untouched.
+    // -----------------------------------------------------------------------
+    if (process.platform === 'win32') {
+        const net = require('net');
+        const { getHttpPort } = require('./src/main/services/p2p/p2pHttpServer');
 
-    // Initialize installed Chrome extensions into Research Browser partition
+        // Wait until the in-process CONNECT proxy is actually accepting loopback
+        // connections before pointing the webviews at it. If it never comes up
+        // we leave them direct instead of routing into a dead proxy.
+        const waitForProxy = (port, attempts = 20) => new Promise((resolve) => {
+            const tryOnce = (left) => {
+                const sock = net.connect(port, '127.0.0.1');
+                sock.once('connect', () => { sock.destroy(); resolve(true); });
+                sock.once('error', () => {
+                    sock.destroy();
+                    if (left <= 0) return resolve(false);
+                    setTimeout(() => tryOnce(left - 1), 150);
+                });
+            };
+            tryOnce(attempts);
+        });
+
+        const proxyPort = getHttpPort() || 9876;
+        const ready = await waitForProxy(proxyPort);
+        if (ready) {
+            const proxyConfig = {
+                proxyRules: `http://127.0.0.1:${proxyPort}`,
+                // Keep loopback (local /api/stream proxy), media:// and file:// direct
+                // so we never proxy-loop back into our own server.
+                proxyBypassRules: 'localhost;127.0.0.1;[::1];<local>'
+            };
+            try {
+                await browserSession.setProxy(proxyConfig);
+                console.log(`[Netskope Bypass] Research Browser routed via ${proxyConfig.proxyRules}`);
+            } catch (err) {
+                console.warn('[Netskope Bypass] setProxy failed, Research Browser may be steered:', err.message);
+            }
+        } else {
+            console.warn(`[Netskope Bypass] Local proxy not reachable on 127.0.0.1:${proxyPort}; leaving Research Browser direct.`);
+        }
+    }
+
+    // Initialize installed Chrome extensions into the Research Browser partition
+    // BEFORE the window (and therefore any webview) is created. If this runs
+    // after webviews exist, enabled extensions like ad-blockers stay inactive
+    // until the user manually toggles them off/on in settings.
     const { initExtensionService } = require('./src/main/services/extensionService');
-    initExtensionService().catch(err => console.warn('[Extensions] Startup init notice:', err.message));
+    try {
+        await initExtensionService();
+    } catch (err) {
+        console.warn('[Extensions] Startup init notice:', err.message);
+    }
 
     createMainWindow();
 
@@ -319,4 +375,3 @@ app.on('web-contents-created', (event, contents) => {
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit();
 });
-
