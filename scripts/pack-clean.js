@@ -89,27 +89,51 @@ const filesToCopy = ['package.json', 'main.js', 'preload.js', 'src', 'renderer',
 const binSrc = path.join(rootDir, 'bin');
 
 /**
- * Copies production dependencies reliably into app/node_modules
+ * Copies production dependencies (and their full transitive tree) into app/node_modules
  */
 function bundleProdDependencies(targetAppDir) {
     const targetNodeModules = path.join(targetAppDir, 'node_modules');
     fs.mkdirSync(targetNodeModules, { recursive: true });
 
-    let prodDeps = ['qrcode', 'dijkstrajs', 'pngjs'];
+    const roots = new Set(['qrcode', 'dijkstrajs', 'pngjs']);
     try {
         const pkg = require(path.join(rootDir, 'package.json'));
         if (pkg.dependencies) {
-            prodDeps = Array.from(new Set([...prodDeps, ...Object.keys(pkg.dependencies)]));
+            Object.keys(pkg.dependencies).forEach((d) => roots.add(d));
         }
     } catch (e) {}
 
-    const extraSubs = ['yargs', 'yargs-parser', 'string-width', 'strip-ansi', 'ansi-regex', 'is-fullwidth-code-point', 'emoji-regex'];
-    prodDeps = Array.from(new Set([...prodDeps, ...extraSubs]));
+    // Walk every dependency's own package.json -> dependencies so transitive
+    // packages (@ghostery/adblocker, tldts-experimental, remusao/*, etc.) are
+    // never left behind in the standalone bundle.
+    const resolved = new Set();
+    const queue = Array.from(roots);
 
-    prodDeps.forEach(dep => {
+    while (queue.length > 0) {
+        const dep = queue.shift();
+        if (!dep || resolved.has(dep)) continue;
+        resolved.add(dep);
+
+        const depPkgPath = path.join(rootDir, 'node_modules', dep, 'package.json');
+        if (!fs.existsSync(depPkgPath)) continue;
+
+        try {
+            const depPkg = JSON.parse(fs.readFileSync(depPkgPath, 'utf8'));
+            const subDeps = {
+                ...(depPkg.dependencies || {}),
+                ...(depPkg.optionalDependencies || {})
+            };
+            for (const sub of Object.keys(subDeps)) {
+                if (!resolved.has(sub)) queue.push(sub);
+            }
+        } catch (e) {}
+    }
+
+    resolved.forEach((dep) => {
         const srcPath = path.join(rootDir, 'node_modules', dep);
         const destPath = path.join(targetNodeModules, dep);
         if (fs.existsSync(srcPath)) {
+            fs.mkdirSync(path.dirname(destPath), { recursive: true });
             copyRecursive(srcPath, destPath);
         }
     });
@@ -441,6 +465,19 @@ namespace BrunoApp
 
                 if (needsExtract)
                 {
+                    // Wait briefly so any exiting instance releases file locks
+                    try
+                    {
+                        foreach (var p in Process.GetProcessesByName("${processName}"))
+                        {
+                            if (p.Id != Process.GetCurrentProcess().Id)
+                            {
+                                try { p.Kill(); p.WaitForExit(3000); } catch { }
+                            }
+                        }
+                    }
+                    catch { }
+
                     if (Directory.Exists(appDir))
                     {
                         try { Directory.Delete(appDir, true); } catch { }
@@ -454,7 +491,24 @@ namespace BrunoApp
                         {
                             using (ZipArchive archive = new ZipArchive(stream))
                             {
-                                archive.ExtractToDirectory(appDir);
+                                foreach (ZipArchiveEntry entry in archive.Entries)
+                                {
+                                    string fullPath = Path.GetFullPath(Path.Combine(appDir, entry.FullName));
+                                    if (!fullPath.StartsWith(Path.GetFullPath(appDir), StringComparison.OrdinalIgnoreCase))
+                                        continue;
+
+                                    if (string.IsNullOrEmpty(entry.Name))
+                                    {
+                                        Directory.CreateDirectory(fullPath);
+                                        continue;
+                                    }
+
+                                    string parentDir = Path.GetDirectoryName(fullPath);
+                                    if (!string.IsNullOrEmpty(parentDir))
+                                        Directory.CreateDirectory(parentDir);
+
+                                    entry.ExtractToFile(fullPath, true);
+                                }
                             }
                         }
                         else

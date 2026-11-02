@@ -21,6 +21,8 @@ A modern, high-performance desktop application built with **Electron**, **Node.j
   * 📱 **User-Agent Switcher**: Emulate iPhone, iPad, Android, or Mac Safari.
   * 🛠️ **DevTools & Userscripts**: In-browser developer tools and custom JavaScript execution.
 * **Pinned Quick Apps**: Firefox-style bookmark grid with vector brand icons (ChatGPT, DeepSeek, GitHub, Reddit, Spotify, etc.).
+* **File Downloads (Chrome-style)**: Every file downloaded from a web page opens a **Save As** dialog (pre-filled with the last folder you used, otherwise your system Downloads folder). The toolbar download button shows a live progress ring; its panel (`Ctrl+J` / `⌘J`) lists each file with speed, time left, pause/resume/cancel, failure + retry, "Open" and "Show in folder". History survives restarts.
+* **Keyboard Shortcuts**: Chrome-standard shortcuts (`Ctrl+T`, `Ctrl+W`, `Ctrl+Shift+T`, `Ctrl+Tab`, `Ctrl+L`, `Alt+←/→`, `Ctrl+R`, `Ctrl+F`, `Ctrl +/-/0` zoom, `F12`, …) that work even while a web page has focus. Press `Ctrl+/` (`⌘/`) for the full list; the key table lives in `renderer/data/browserShortcuts.json`.
 
 ### 3. ⚡ ToffeeShare App-to-App Direct P2P Stream
 * **100% Direct Stream (Zero Cloud)**: Files stream directly from sender memory/disk to receiver disk over local Wi-Fi at gigabit speeds without uploading to any cloud server.

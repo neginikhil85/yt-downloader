@@ -142,45 +142,62 @@
     display: none;
 }
 
-/* Thin indeterminate page-load progress line (Chrome/Firefox style) */
+/* Thin page-load progress line (Chrome style); driven by modules/browser/loadingBar.js */
 .browser-loading-bar {
     position: relative;
     height: 2px;
     width: 100%;
     background: transparent;
     overflow: hidden;
-    opacity: 0;
-    transition: opacity 0.2s ease;
     flex-shrink: 0;
     z-index: 5;
-}
-
-.browser-loading-bar.active {
-    opacity: 1;
+    pointer-events: none;
 }
 
 .browser-loading-bar-inner {
     position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 40%;
-    border-radius: 2px;
-    background: linear-gradient(90deg, transparent, var(--br-accent, #ff3b30), transparent);
+    inset: 0;
+    border-radius: 0 2px 2px 0;
+    background: var(--br-accent, #ff3b30);
+    box-shadow: 0 0 6px var(--br-accent, #ff3b30);
+    transform-origin: left center;
+    transform: scaleX(0);
+    opacity: 0;
+    will-change: transform, opacity;
 }
 
-.browser-loading-bar.active .browser-loading-bar-inner {
-    animation: browserLoadingSlide 1s ease-in-out infinite;
+/* Reload button morphs into a Stop button while the active tab is loading */
+#browser-btn-reload {
+    position: relative;
 }
 
-@keyframes browserLoadingSlide {
-    0% { left: -40%; }
-    100% { left: 100%; }
+#browser-btn-reload svg {
+    transition: opacity 0.18s ease, transform 0.22s ease;
 }
 
-/* Spin the reload icon while the active tab is loading */
-#browser-btn-reload.loading svg {
-    animation: tabSpin 0.8s linear infinite;
+#browser-btn-reload .icon-stop {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    opacity: 0;
+    transform: scale(0.6) rotate(-90deg);
+}
+
+#browser-btn-reload.loading .icon-reload {
+    opacity: 0;
+    transform: scale(0.6) rotate(90deg);
+}
+
+#browser-btn-reload.loading .icon-stop {
+    opacity: 1;
+    transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .browser-loading-bar-inner,
+    #browser-btn-reload svg {
+        transition: none !important;
+    }
 }
 
 @keyframes tabSpin {
@@ -1113,7 +1130,7 @@
 /* Footer Action Strip */
 .ext-footer-strip {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 4px;
 }
 
@@ -2940,4 +2957,448 @@
     color: var(--br-text-muted, #94a3b8);
     margin: 0;
     line-height: 1.4;
+}
+/* ==========================================================================
+   Research Browser — Downloads button, panel & keyboard shortcuts overlay
+   ========================================================================== */
+.dl-toolbar-btn .dl-ring {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    transform: rotate(-90deg);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+}
+
+.dl-ring circle {
+    fill: none;
+    stroke-width: 2.4;
+}
+
+.dl-ring-track {
+    stroke: var(--br-border, rgba(255, 255, 255, 0.12));
+}
+
+.dl-ring-fill {
+    stroke: var(--br-accent, #38bdf8);
+    stroke-linecap: round;
+    stroke-dasharray: 100 100;
+    stroke-dashoffset: 100;
+    transition: stroke-dashoffset 0.35s ease;
+}
+
+.dl-toolbar-btn.dl-active {
+    color: var(--br-accent, #38bdf8);
+}
+
+.dl-toolbar-btn.dl-active .dl-ring {
+    opacity: 1;
+}
+
+.dl-toolbar-btn.dl-indeterminate .dl-ring {
+    animation: dlRingSpin 1.1s linear infinite;
+}
+
+.dl-toolbar-btn.dl-indeterminate .dl-ring-fill {
+    stroke-dashoffset: 72 !important;
+}
+
+@keyframes dlRingSpin {
+    from { transform: rotate(-90deg); }
+    to { transform: rotate(270deg); }
+}
+
+.dl-toolbar-btn .dl-glyph {
+    position: relative;
+    transition: transform 0.25s ease;
+}
+
+.dl-toolbar-btn.dl-pulse-started .dl-glyph {
+    animation: dlDrop 0.7s cubic-bezier(0.3, 0.7, 0.4, 1);
+}
+
+@keyframes dlDrop {
+    0% { transform: translateY(-5px); opacity: 0.3; }
+    60% { transform: translateY(2px); opacity: 1; }
+    100% { transform: translateY(0); }
+}
+
+.dl-toolbar-btn.dl-pulse-done {
+    color: #34d399;
+    background: rgba(52, 211, 153, 0.12);
+}
+
+.dl-error-dot {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #f87171;
+    box-shadow: 0 0 0 2px var(--br-header-bg, #181a20);
+    display: none;
+}
+
+.dl-toolbar-btn.dl-has-error .dl-error-dot {
+    display: block;
+}
+
+.browser-downloads-panel {
+    position: absolute;
+    top: 76px;
+    right: 18px;
+    width: 360px;
+    max-height: 460px;
+    background: var(--br-card-bg, #181b20) !important;
+    border: 1px solid var(--br-border, rgba(255, 255, 255, 0.12)) !important;
+    border-radius: 12px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
+    z-index: 220;
+    flex-direction: column;
+    overflow: hidden;
+    animation: extPopIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    -webkit-app-region: no-drag;
+}
+
+.dl-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 10px 10px 14px;
+    border-bottom: 1px solid var(--br-border, rgba(255, 255, 255, 0.06));
+}
+
+.dl-panel-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--br-text, #f1f5f9);
+}
+
+.dl-panel-tools {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.dl-panel-btn {
+    background: transparent;
+    border: none;
+    color: var(--br-text-muted, #94a3b8);
+    font-size: 11.5px;
+    font-family: inherit;
+    height: 26px;
+    min-width: 26px;
+    padding: 0 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dl-panel-btn:hover {
+    background: var(--br-card-hover, rgba(125, 125, 125, 0.12));
+    color: var(--br-text, #f1f5f9);
+}
+
+.dl-list {
+    overflow-y: auto;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.dl-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 26px 18px;
+    text-align: center;
+    color: var(--br-text, #e2e8f0);
+    font-size: 12.5px;
+}
+
+.dl-empty svg {
+    color: var(--br-text-muted, #64748b);
+    margin-bottom: 4px;
+}
+
+.dl-empty small {
+    color: var(--br-text-muted, #64748b);
+    font-size: 11.5px;
+    line-height: 1.45;
+}
+
+.dl-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    border-radius: 8px;
+    transition: background 0.12s ease;
+}
+
+.dl-item:hover {
+    background: var(--br-card-hover, rgba(125, 125, 125, 0.1));
+}
+
+.dl-item.clickable {
+    cursor: pointer;
+}
+
+.dl-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    color: #fff;
+    background: #64748b;
+}
+
+.dl-icon.kind-pdf { background: #ef4444; }
+.dl-icon.kind-archive { background: #a16207; }
+.dl-icon.kind-image { background: #8b5cf6; }
+.dl-icon.kind-video { background: #ec4899; }
+.dl-icon.kind-audio { background: #14b8a6; }
+.dl-icon.kind-app { background: #2563eb; }
+.dl-icon.kind-doc { background: #0ea5e9; }
+
+.dl-item.state-cancelled .dl-icon,
+.dl-item.state-failed .dl-icon,
+.dl-item.state-missing .dl-icon {
+    filter: grayscale(1);
+    opacity: 0.55;
+}
+
+.dl-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dl-name {
+    font-size: 12.5px;
+    color: var(--br-text, #f1f5f9);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dl-item.state-cancelled .dl-name,
+.dl-item.state-missing .dl-name {
+    text-decoration: line-through;
+    color: var(--br-text-muted, #94a3b8);
+}
+
+.dl-status {
+    font-size: 11px;
+    color: var(--br-text-muted, #94a3b8);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-variant-numeric: tabular-nums;
+}
+
+.dl-item.state-failed .dl-status,
+.dl-item.state-interrupted .dl-status {
+    color: #f87171;
+}
+
+.dl-item.state-completed .dl-status {
+    color: #34d399;
+}
+
+.dl-bar {
+    position: relative;
+    height: 4px;
+    border-radius: 4px;
+    background: var(--br-border, rgba(255, 255, 255, 0.1));
+    overflow: hidden;
+}
+
+.dl-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: var(--br-accent, #38bdf8);
+    transition: width 0.3s ease;
+}
+
+.dl-item.state-paused .dl-bar-fill,
+.dl-item.state-interrupted .dl-bar-fill {
+    background: var(--br-text-muted, #94a3b8);
+}
+
+.dl-bar.indeterminate .dl-bar-fill {
+    position: absolute;
+    animation: dlIndeterminate 1.2s ease-in-out infinite;
+}
+
+@keyframes dlIndeterminate {
+    from { left: -30%; }
+    to { left: 100%; }
+}
+
+.dl-actions {
+    display: flex;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.dl-action {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--br-text-muted, #94a3b8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.12s ease, color 0.12s ease;
+}
+
+.dl-action:hover {
+    background: var(--br-card-hover, rgba(125, 125, 125, 0.16));
+    color: var(--br-text, #f1f5f9);
+}
+
+.dl-action.danger:hover {
+    color: #f87171;
+}
+
+/* Keyboard shortcuts overlay */
+.shortcuts-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 400;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(3px);
+    -webkit-app-region: no-drag;
+}
+
+.shortcuts-card {
+    width: min(760px, calc(100% - 48px));
+    max-height: calc(100% - 64px);
+    overflow-y: auto;
+    background: var(--br-card-bg, #181b20);
+    border: 1px solid var(--br-border, rgba(255, 255, 255, 0.12));
+    border-radius: 14px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+    animation: extPopIn 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.shortcuts-header {
+    position: sticky;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 14px 12px 20px;
+    background: var(--br-card-bg, #181b20);
+    border-bottom: 1px solid var(--br-border, rgba(255, 255, 255, 0.06));
+}
+
+.shortcuts-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--br-text, #f1f5f9);
+}
+
+.shortcuts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 6px 28px;
+    padding: 14px 20px 20px;
+}
+
+.shortcuts-group h4 {
+    margin: 10px 0 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--br-accent, #38bdf8);
+}
+
+.shortcut-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 5px 0;
+    font-size: 12.5px;
+    color: var(--br-text, #e2e8f0);
+    border-bottom: 1px dashed var(--br-border, rgba(255, 255, 255, 0.06));
+}
+
+.shortcut-keys {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+.shortcut-keys kbd {
+    font-family: inherit;
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 5px;
+    color: var(--br-text, #f1f5f9);
+    background: var(--br-input-bg, rgba(255, 255, 255, 0.06));
+    border: 1px solid var(--br-border, rgba(255, 255, 255, 0.14));
+    border-bottom-width: 2px;
+    white-space: nowrap;
+}
+
+.shortcut-or {
+    font-size: 10.5px;
+    color: var(--br-text-muted, #64748b);
+}
+
+/* Small transient notice (zoom level etc.) */
+.browser-zoom-toast {
+    position: absolute;
+    top: 84px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 230;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--br-text, #f1f5f9);
+    background: var(--br-card-bg, #181b20);
+    border: 1px solid var(--br-border, rgba(255, 255, 255, 0.12));
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.browser-zoom-toast.visible {
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dl-toolbar-btn .dl-ring,
+    .dl-bar.indeterminate .dl-bar-fill,
+    .dl-toolbar-btn .dl-glyph {
+        animation: none !important;
+    }
 }

@@ -85,6 +85,21 @@ function registerIpcHandlers(getMainWindow) {
     });
 
     // ======================================================================
+    // Research Browser file downloads
+    // ======================================================================
+    const browserDownloads = require('./services/browserDownloadService');
+    ipcMain.handle('browser-download:list', () => browserDownloads.listDownloads());
+    ipcMain.handle('browser-download:pause', (event, id) => browserDownloads.pauseDownload(id));
+    ipcMain.handle('browser-download:resume', (event, id) => browserDownloads.resumeDownload(id));
+    ipcMain.handle('browser-download:cancel', (event, id) => browserDownloads.cancelDownload(id));
+    ipcMain.handle('browser-download:retry', (event, id) => browserDownloads.retryDownload(id));
+    ipcMain.handle('browser-download:remove', (event, id) => browserDownloads.removeDownload(id));
+    ipcMain.handle('browser-download:clear', () => browserDownloads.clearFinishedDownloads());
+    ipcMain.handle('browser-download:open', (event, id) => browserDownloads.openDownload(id));
+    ipcMain.handle('browser-download:show', (event, id) => browserDownloads.showDownloadInFolder(id));
+    ipcMain.handle('browser-download:open-folder', () => browserDownloads.openDownloadsFolder());
+
+    // ======================================================================
     // Direct P2P Transfer IPC Handlers
     // ======================================================================
     ipcMain.handle('p2p-get-local-info', () => {
@@ -222,6 +237,24 @@ function registerIpcHandlers(getMainWindow) {
 
     ipcMain.handle('extension:open-folder', (event, id) => {
         return openExtensionFolder(id);
+    });
+
+    // ======================================================================
+    // Research Browser Adblock (session filter engine)
+    // ======================================================================
+    const {
+        isAdblockEnabled,
+        isAdblockReady,
+        setAdblockEnabled
+    } = require('./services/adblockService');
+
+    ipcMain.handle('adblock:get-state', () => ({
+        enabled: isAdblockEnabled(),
+        ready: isAdblockReady()
+    }));
+
+    ipcMain.handle('adblock:set-enabled', (event, enabled) => {
+        return setAdblockEnabled(!!enabled);
     });
 }
 

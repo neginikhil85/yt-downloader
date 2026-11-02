@@ -2,17 +2,10 @@
 // YT Studio Pro — Injected CSS Styles for Webview Features
 // ==========================================================================
 
-export const ADBLOCK_CSS = `
-    .ad-container, .adsbygoogle, .ad-banner, [id*="google_ads"], 
-    [class*="sponsored"], [id*="sponsored"], #player-ads, 
-    .ytp-ad-module, .ytp-ad-overlay-container, .ad-slot, 
-    [aria-label*="advertisement" i], [aria-label*="sponsored" i] {
-        display: none !important;
-        visibility: hidden !important;
-        height: 0 !important;
-        width: 0 !important;
-    }
-`;
+// Ad blocking is handled in the main process by adblockService
+// (EasyList / uBlock Origin filter lists via @ghostery/adblocker-electron).
+// Do not reintroduce CSS/JS "ad skippers" here — they cannot stop YouTube
+// mid-roll streams and fight with the real network filter engine.
 
 export const DARK_READER_CSS = `
     html {

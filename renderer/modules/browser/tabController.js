@@ -4,6 +4,7 @@
 
 import { getBrandIconHtml } from '../../data/brandIcons.js';
 import { isHomeUrl, isAddonsUrl, parseUrl } from './urlUtils.js';
+import { CHROME_MAJOR } from '../../data/userAgents.js';
 
 export class TabController {
     constructor({
@@ -34,6 +35,7 @@ export class TabController {
         this.onLoadingChanged = onLoadingChanged || (() => {});
 
         this.tabs = [];
+        this.closedTabs = [];
         this.activeTabId = null;
         this.tabIdCounter = 1;
 
@@ -63,8 +65,8 @@ export class TabController {
 
         const isMac = (navigator.userAgent && navigator.userAgent.includes('Mac')) || (navigator.platform && navigator.platform.includes('Mac'));
         const defaultDesktopUa = isMac
-            ? 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36'
-            : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36';
+            ? `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_MAJOR}.0.0.0 Safari/537.36`
+            : `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_MAJOR}.0.0.0 Safari/537.36`;
 
         const isGoogleAuth = finalUrl.includes('accounts.google.com') || finalUrl.includes('accounts.youtube.com') || finalUrl.includes('oauth2.googleapis.com');
         const isStore = finalUrl.includes('chromewebstore.google.com') || finalUrl.includes('chrome.google.com');
@@ -196,9 +198,24 @@ export class TabController {
         }
 
         this.updateControlsState();
-        this.onLoadingChanged(!!activeTab.loading);
+        this.onLoadingChanged(!!activeTab.loading, { instant: true });
         activeTab.tabEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
         this.onTabChanged(activeTab);
+    }
+
+    /** Ctrl+Shift+T — reopens the most recently closed tab. */
+    reopenClosedTab() {
+        const last = this.closedTabs.pop();
+        if (last) this.createTab(last.url, true);
+        return !!last;
+    }
+
+    /** Ctrl+Tab / Ctrl+Shift+Tab — cycles through tabs (wraps around). */
+    selectRelativeTab(delta) {
+        if (this.tabs.length < 2) return;
+        const index = this.tabs.findIndex(t => t.id === this.activeTabId);
+        const next = (index + delta + this.tabs.length) % this.tabs.length;
+        this.switchTab(this.tabs[next].id);
     }
 
     closeTab(tabId) {
@@ -206,6 +223,10 @@ export class TabController {
         if (index === -1) return;
 
         const [removedTab] = this.tabs.splice(index, 1);
+        if (removedTab.url && !isHomeUrl(removedTab.url) && !isAddonsUrl(removedTab.url)) {
+            this.closedTabs.push({ url: removedTab.url, index });
+            if (this.closedTabs.length > 25) this.closedTabs.shift();
+        }
         removedTab.tabEl?.remove();
         removedTab.webviewEl?.remove();
 
@@ -222,8 +243,12 @@ export class TabController {
 
     setupWebviewEvents(tabData) {
         const wv = tabData.webviewEl;
+        // Home / Add-ons are rendered by the app over a blank webview; its
+        // about:blank load must not flash the spinner or progress line.
+        const isInternalPage = () => isHomeUrl(tabData.url) || isAddonsUrl(tabData.url);
 
         wv.addEventListener('did-start-loading', () => {
+            if (isInternalPage()) return;
             tabData.loading = true;
             tabData.tabEl?.classList.add('loading');
             if (tabData.id === this.activeTabId) {
@@ -253,16 +278,7 @@ export class TabController {
                 tabData.url = currentUrl;
             }
             if (tabData.id === this.activeTabId) {
-                if (this.urlInput) {
-                    if (isAddonsUrl(tabData.url)) {
-                        this.urlInput.value = 'about:addons';
-                    } else if (isHomeUrl(tabData.url)) {
-                        this.urlInput.value = '';
-                        this.urlInput.placeholder = 'Search Google or enter address...';
-                    } else {
-                        this.urlInput.value = tabData.url;
-                    }
-                }
+                this.syncUrlInput(false);
                 this.updateControlsState();
             }
             if (this.quickTools) this.quickTools.applyInjections(wv);
@@ -276,7 +292,7 @@ export class TabController {
         wv.addEventListener('did-navigate-in-page', (e) => {
             if (e.url) {
                 tabData.url = e.url;
-                if (tabData.id === this.activeTabId && this.urlInput) {
+                if (tabData.id === this.activeTabId && this.urlInput && document.activeElement !== this.urlInput) {
                     this.urlInput.value = e.url;
                 }
                 this._injectLinkHandler(wv);
@@ -374,6 +390,26 @@ export class TabController {
                 this.findInPage.handleFoundInPageResult(e.result);
             }
         });
+    }
+
+    /**
+     * Reflects the active tab's URL in the address bar. Background page events
+     * pass force=false so they never clobber text the user is typing.
+     */
+    syncUrlInput(force = true) {
+        if (!this.urlInput) return;
+        if (!force && document.activeElement === this.urlInput) return;
+        const activeTab = this.tabs.find(t => t.id === this.activeTabId);
+        if (!activeTab) return;
+
+        if (isAddonsUrl(activeTab.url)) {
+            this.urlInput.value = 'about:addons';
+        } else if (isHomeUrl(activeTab.url)) {
+            this.urlInput.value = '';
+            this.urlInput.placeholder = 'Search Google or enter address...';
+        } else {
+            this.urlInput.value = activeTab.url;
+        }
     }
 
     navigateActiveTab(inputUrl) {

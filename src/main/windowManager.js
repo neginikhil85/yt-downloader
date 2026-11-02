@@ -32,12 +32,15 @@ function createMainWindow() {
 
     attachWindowCrashHandler(mainWindow);
 
-    // Ensure all guest webviews in Research Browser load the Chrome Web Store compatibility preload
+    // Guest webviews: Chrome brand fingerprint (Cloudflare) + Web Store install shim
+    // sandbox: false is required so browserGuestPreload can require() local files
+    // and @ghostery/adblocker-electron-preload (DOMMonitor + cosmetic CSS).
     mainWindow.webContents.on('will-attach-webview', (event, webPreferences, params) => {
-        const webstorePreload = path.join(__dirname, 'preload', 'webstoreCompat.js');
-        webPreferences.preload = webstorePreload;
+        const guestPreload = path.join(__dirname, 'preload', 'browserGuestPreload.js');
+        webPreferences.preload = guestPreload;
         webPreferences.contextIsolation = false;
         webPreferences.nodeIntegration = false;
+        webPreferences.sandbox = false;
     });
 
     mainWindow.loadFile(path.join(__dirname, '..', '..', 'renderer', 'index.html'));

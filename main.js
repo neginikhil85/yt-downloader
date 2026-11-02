@@ -36,6 +36,8 @@ if (process.platform !== 'win32') {
 
 const { createMainWindow, getMainWindow } = require('./src/main/windowManager');
 const { registerIpcHandlers } = require('./src/main/ipcHandlers');
+const { resolvePageShortcut } = require('./src/main/browserShortcuts');
+const { initBrowserDownloads } = require('./src/main/services/browserDownloadService');
 
 // Suppress verbose Chromium internal debug logs & bypass corporate proxy SSL inspection errors
 app.commandLine.appendSwitch('log-level', '3');
@@ -57,15 +59,20 @@ function getMimeType(filePath) {
     }
 }
 
+// The UA major version must match the real bundled Chromium. Bot-protection
+// (Cloudflare Turnstile etc.) cross-checks it against sec-ch-ua and
+// navigator.userAgentData and loops forever on a mismatch.
+const CHROME_MAJOR = (process.versions.chrome || '132').split('.')[0];
+
 const DESKTOP_UA = process.platform === 'darwin'
-    ? 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36'
-    : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36';
+    ? `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_MAJOR}.0.0.0 Safari/537.36`
+    : `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_MAJOR}.0.0.0 Safari/537.36`;
 
 const FIREFOX_UA = process.platform === 'darwin'
     ? 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:135.0) Gecko/20100101 Firefox/135.0'
     : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0';
 
-function setupSessionSecurity(sess) {
+function setupSessionSecurity(sess, { ownHeadersReceived = true } = {}) {
     sess.setUserAgent(DESKTOP_UA);
 
     // Enterprise & Corporate Proxy SSL Bypass (Accepts corporate MITM inspection certificates)
@@ -107,34 +114,49 @@ function setupSessionSecurity(sess) {
             details.requestHeaders['Origin'] = 'https://www.youtube.com';
         }
 
-        // Chrome Web Store gates listings on the Google Chrome brand hint.
-        // Electron advertises "Chromium", which renders every item as
-        // "Item currently unavailable". Scoped strictly to the store host.
-        if (url.includes('chromewebstore.google.com') || url.includes('chrome.google.com/webstore')) {
-            details.requestHeaders['sec-ch-ua'] =
-                '"Chromium";v="133", "Not(A:Brand";v="24", "Google Chrome";v="133"';
-            details.requestHeaders['sec-ch-ua-mobile'] = '?0';
+        // Present Google Chrome Client Hints on every request.
+        // Electron defaults to "Chromium" only; Cloudflare Turnstile and the
+        // Chrome Web Store both reject / hard-block that fingerprint
+        // ("Additional Verification Required", "Item currently unavailable").
+        // Skip when we intentionally switched to Firefox UA for Google OAuth.
+        if (!isGoogleAuth) {
             const uaHeader = details.requestHeaders['User-Agent'] || '';
             const isWin = uaHeader.includes('Windows');
             const isMac = uaHeader.includes('Macintosh') || (process.platform === 'darwin' && !isWin);
+            details.requestHeaders['sec-ch-ua'] =
+                `"Not(A:Brand";v="8", "Chromium";v="${CHROME_MAJOR}", "Google Chrome";v="${CHROME_MAJOR}"`;
+            details.requestHeaders['sec-ch-ua-mobile'] = uaHeader.includes('Mobile') ? '?1' : '?0';
             details.requestHeaders['sec-ch-ua-platform'] = isWin ? '"Windows"' : (isMac ? '"macOS"' : '"Linux"');
         }
 
         callback({ requestHeaders: details.requestHeaders });
     });
 
-    sess.webRequest.onHeadersReceived((details, callback) => {
-        const url = details.url || '';
-        if (url.includes('youtube.com') || url.includes('youtube-nocookie.com')) {
-            if (details.responseHeaders) {
-                delete details.responseHeaders['x-frame-options'];
-                delete details.responseHeaders['X-Frame-Options'];
-                delete details.responseHeaders['content-security-policy'];
-                delete details.responseHeaders['Content-Security-Policy'];
-            }
+    // Research Browser (persist:main) leaves onHeadersReceived to adblockService
+    // so EasyList/uBlock blocking and YouTube embed fixes share one listener.
+    // Electron allows only a single webRequest listener per event.
+    if (ownHeadersReceived) {
+        sess.webRequest.onHeadersReceived((details, callback) => {
+            applyYoutubeEmbedHeaders(details);
+            callback({ responseHeaders: details.responseHeaders });
+        });
+    }
+}
+
+function applyYoutubeEmbedHeaders(details) {
+    const url = details.url || '';
+    if (!url.includes('youtube.com') && !url.includes('youtube-nocookie.com')) return;
+    if (!details.responseHeaders) return;
+    for (const key of Object.keys(details.responseHeaders)) {
+        const lower = key.toLowerCase();
+        if (
+            lower === 'x-frame-options' ||
+            lower === 'content-security-policy' ||
+            lower === 'content-security-policy-report-only'
+        ) {
+            delete details.responseHeaders[key];
         }
-        callback({ responseHeaders: details.responseHeaders });
-    });
+    }
 }
 
 // Register media protocol for high-performance offline video playback
@@ -155,23 +177,51 @@ app.whenReady().then(async () => {
     setupSessionSecurity(session.defaultSession);
 
     const browserSession = session.fromPartition('persist:main');
-    setupSessionSecurity(browserSession);
+    // Adblock owns onHeadersReceived for this partition (YouTube embed + filters).
+    setupSessionSecurity(browserSession, { ownHeadersReceived: false });
+    initBrowserDownloads(browserSession, getMainWindow);
 
-    // Chrome Web Store compatibility shim for Research Browser webviews.
-    // The script itself exits immediately on any non-store origin.
+    // Network + cosmetic adblocking for Research Browser (EasyList / uBlock lists).
+    // Must run after setupSessionSecurity's onBeforeSendHeaders, and owns
+    // onHeadersReceived for persist:main (see applyYoutubeEmbedHeaders).
     try {
+        const { initAdblockService } = require('./src/main/services/adblockService');
+        await initAdblockService(browserSession, { applyYoutubeHeaders: applyYoutubeEmbedHeaders });
+    } catch (err) {
+        console.warn('[Adblock] Startup notice:', err.message);
+        // Fallback so YouTube embed header stripping still works without engine
+        browserSession.webRequest.onHeadersReceived((details, callback) => {
+            applyYoutubeEmbedHeaders(details);
+            callback({ responseHeaders: details.responseHeaders });
+        });
+    }
+
+    // Research Browser preloads:
+    // 1) Chrome brand fingerprint (all origins) — Cloudflare / Turnstile
+    // 2) Chrome Web Store install shim (no-ops off the store host)
+    try {
+        const chromeBrandPreload = path.join(__dirname, 'src', 'main', 'preload', 'chromeBrandCompat.js');
         const webstorePreload = path.join(__dirname, 'src', 'main', 'preload', 'webstoreCompat.js');
         if (typeof browserSession.registerPreloadScript === 'function') {
+            browserSession.registerPreloadScript({
+                id: 'bruno-chrome-brand',
+                type: 'frame',
+                filePath: chromeBrandPreload
+            });
             browserSession.registerPreloadScript({
                 id: 'bruno-webstore-compat',
                 type: 'frame',
                 filePath: webstorePreload
             });
         } else if (typeof browserSession.setPreloads === 'function') {
-            browserSession.setPreloads([...browserSession.getPreloads(), webstorePreload]);
+            browserSession.setPreloads([
+                ...browserSession.getPreloads(),
+                chromeBrandPreload,
+                webstorePreload
+            ]);
         }
     } catch (err) {
-        console.warn('[WebStoreCompat] Preload registration skipped:', err.message);
+        console.warn('[BrowserPreloads] Registration skipped:', err.message);
     }
 
     protocol.handle('media', (request) => {
@@ -349,15 +399,26 @@ app.on('web-contents-created', (event, contents) => {
 
     if (type === 'webview') {
         contents.setWindowOpenHandler(({ url, disposition }) => routeToTab(url, disposition));
+
+        // Browser shortcuts must keep working while focus is inside a web page,
+        // where the host renderer never sees the keydown.
+        contents.on('before-input-event', (e, input) => {
+            const hit = resolvePageShortcut(input);
+            if (!hit) return;
+            e.preventDefault();
+            const win = getMainWindow();
+            if (win && !win.isDestroyed()) win.webContents.send('browser-shortcut', hit);
+        });
         return;
     }
 
     if (type === 'window') {
         contents.on('will-attach-webview', (event, webPreferences, params) => {
-            const webstorePreload = path.join(__dirname, 'src', 'main', 'preload', 'webstoreCompat.js');
-            webPreferences.preload = webstorePreload;
+            const guestPreload = path.join(__dirname, 'src', 'main', 'preload', 'browserGuestPreload.js');
+            webPreferences.preload = guestPreload;
             webPreferences.contextIsolation = false;
             webPreferences.nodeIntegration = false;
+            webPreferences.sandbox = false;
         });
 
         // App shell itself must never spawn OS windows or navigate away from index.html

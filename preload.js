@@ -2,6 +2,7 @@ const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
     platform: process.platform,
+    chromeVersion: process.versions.chrome,
     searchYouTube: (query, page = 1) => ipcRenderer.invoke('search-youtube', query, page),
     getVideoFormats: (url) => ipcRenderer.invoke('get-video-formats', url),
     getStreamUrl: (url, quality = 'auto') => ipcRenderer.invoke('get-stream-url', url, quality),
@@ -33,6 +34,35 @@ contextBridge.exposeInMainWorld('electronAPI', {
         const handler = (event, data) => callback(data);
         ipcRenderer.on('browser-open-tab', handler);
         return () => ipcRenderer.removeListener('browser-open-tab', handler);
+    },
+    // Research Browser: shortcuts pressed while focus is inside a web page
+    onBrowserShortcut: (callback) => {
+        const handler = (event, data) => callback(data);
+        ipcRenderer.on('browser-shortcut', handler);
+        return () => ipcRenderer.removeListener('browser-shortcut', handler);
+    },
+    // Research Browser: file downloads
+    browserDownloads: {
+        list: () => ipcRenderer.invoke('browser-download:list'),
+        pause: (id) => ipcRenderer.invoke('browser-download:pause', id),
+        resume: (id) => ipcRenderer.invoke('browser-download:resume', id),
+        cancel: (id) => ipcRenderer.invoke('browser-download:cancel', id),
+        retry: (id) => ipcRenderer.invoke('browser-download:retry', id),
+        remove: (id) => ipcRenderer.invoke('browser-download:remove', id),
+        clear: () => ipcRenderer.invoke('browser-download:clear'),
+        open: (id) => ipcRenderer.invoke('browser-download:open', id),
+        show: (id) => ipcRenderer.invoke('browser-download:show', id),
+        openFolder: () => ipcRenderer.invoke('browser-download:open-folder'),
+        onUpdated: (callback) => {
+            const handler = (event, data) => callback(data);
+            ipcRenderer.on('browser-download:updated', handler);
+            return () => ipcRenderer.removeListener('browser-download:updated', handler);
+        },
+        onRemoved: (callback) => {
+            const handler = (event, id) => callback(id);
+            ipcRenderer.on('browser-download:removed', handler);
+            return () => ipcRenderer.removeListener('browser-download:removed', handler);
+        }
     },
     // Direct P2P Transfer APIs
     p2pGetLocalInfo: () => ipcRenderer.invoke('p2p-get-local-info'),
@@ -128,5 +158,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
         return () => {
             ipcRenderer.removeListener('extensions:changed', handler);
         };
-    }
+    },
+
+    // Research Browser session adblocker (EasyList / uBlock filter engine)
+    adblockGetState: () => ipcRenderer.invoke('adblock:get-state'),
+    adblockSetEnabled: (enabled) => ipcRenderer.invoke('adblock:set-enabled', enabled)
 });

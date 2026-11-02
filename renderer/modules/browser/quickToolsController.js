@@ -2,7 +2,7 @@
 // YT Studio Pro — Quick Tools & Page Injections Controller
 // ==========================================================================
 
-import { ADBLOCK_CSS, DARK_READER_CSS } from '../../data/pageStyles.js';
+import { DARK_READER_CSS } from '../../data/pageStyles.js';
 import { USER_AGENTS } from '../../data/userAgents.js';
 
 export class QuickToolsController {
@@ -78,7 +78,10 @@ export class QuickToolsController {
             }
         });
 
-        if (this.extToggleAdblock) this.extToggleAdblock.addEventListener('change', (e) => this.toggleAdBlock(e.target.checked));
+        if (this.extToggleAdblock) {
+            this.extToggleAdblock.addEventListener('change', (e) => this.toggleAdBlock(e.target.checked));
+            this.syncAdblockToggle();
+        }
         if (this.extToggleDarkmode) this.extToggleDarkmode.addEventListener('change', (e) => this.toggleDarkMode(e.target.checked));
         if (this.extBtnReader) this.extBtnReader.addEventListener('click', () => this.triggerReaderMode());
         if (this.extBtnPip) this.extBtnPip.addEventListener('click', () => this.triggerVideoPip());
@@ -109,11 +112,19 @@ export class QuickToolsController {
         }
     }
 
+    async syncAdblockToggle() {
+        if (!this.extToggleAdblock || !window.electronAPI?.adblockGetState) return;
+        try {
+            const state = await window.electronAPI.adblockGetState();
+            if (state && typeof state.enabled === 'boolean') {
+                this.globalAdBlock = state.enabled;
+                this.extToggleAdblock.checked = state.enabled;
+            }
+        } catch (_) {}
+    }
+
     applyInjections(wv) {
         if (!wv) return;
-        if (this.globalAdBlock) {
-            wv.insertCSS(ADBLOCK_CSS).catch(()=>{});
-        }
         if (this.globalDarkMode) {
             wv.insertCSS(DARK_READER_CSS).catch(()=>{});
         }
@@ -123,15 +134,19 @@ export class QuickToolsController {
         return USER_AGENTS[this.currentUaKey] || USER_AGENTS.desktop;
     }
 
-    toggleAdBlock(enable) {
+    async toggleAdBlock(enable) {
         this.globalAdBlock = enable;
+        if (window.electronAPI?.adblockSetEnabled) {
+            try {
+                await window.electronAPI.adblockSetEnabled(enable);
+            } catch (err) {
+                console.warn('[QuickTools] Adblock toggle failed:', err);
+            }
+        }
+        // Reload open pages so blocked/unblocked requests take effect immediately
         this.getAllTabs().forEach(t => {
-            if (t.webviewEl && t.url !== 'about:home' && t.url !== 'about:addons') {
-                if (enable) {
-                    t.webviewEl.insertCSS(ADBLOCK_CSS).catch(()=>{});
-                } else if (t.webviewEl.reload) {
-                    t.webviewEl.reload();
-                }
+            if (t.webviewEl && t.url !== 'about:home' && t.url !== 'about:addons' && t.webviewEl.reload) {
+                t.webviewEl.reload();
             }
         });
     }

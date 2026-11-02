@@ -1,0 +1,51 @@
+{
+    "_comment": "Research Browser keyboard shortcuts. 'Mod' = Ctrl on Windows/Linux, Cmd on macOS. Shared by main.js (keys pressed inside a web page) and renderer/modules/browser/shortcuts.js. Entries with hostOnly are not stolen from web pages.",
+    "groups": [
+        {
+            "title": "Tabs",
+            "shortcuts": [
+                { "id": "newTab", "label": "New tab", "keys": ["Mod+T"] },
+                { "id": "closeTab", "label": "Close tab", "keys": ["Mod+W", "Mod+F4"] },
+                { "id": "reopenTab", "label": "Reopen closed tab", "keys": ["Mod+Shift+T"] },
+                { "id": "nextTab", "label": "Next tab", "keys": ["Ctrl+Tab", "Mod+PageDown"] },
+                { "id": "prevTab", "label": "Previous tab", "keys": ["Ctrl+Shift+Tab", "Mod+PageUp"] },
+                { "id": "goToTab", "label": "Go to tab 1–8", "display": ["Mod+1 … 8"], "keys": ["Mod+1", "Mod+2", "Mod+3", "Mod+4", "Mod+5", "Mod+6", "Mod+7", "Mod+8"] },
+                { "id": "lastTab", "label": "Go to last tab", "keys": ["Mod+9"] }
+            ]
+        },
+        {
+            "title": "Navigation",
+            "shortcuts": [
+                { "id": "focusAddress", "label": "Focus address bar", "keys": ["Mod+L", "Alt+D", "F6"] },
+                { "id": "back", "label": "Back", "keys": ["Alt+ArrowLeft", "Mod+["] },
+                { "id": "forward", "label": "Forward", "keys": ["Alt+ArrowRight", "Mod+]"] },
+                { "id": "reload", "label": "Reload", "keys": ["Mod+R", "F5"] },
+                { "id": "hardReload", "label": "Hard reload (ignore cache)", "keys": ["Mod+Shift+R", "Shift+F5", "Mod+F5"] },
+                { "id": "stop", "label": "Stop loading", "keys": ["Escape"], "hostOnly": true },
+                { "id": "home", "label": "Start page", "keys": ["Alt+Home"] }
+            ]
+        },
+        {
+            "title": "Page",
+            "shortcuts": [
+                { "id": "find", "label": "Find in page", "keys": ["Mod+F"] },
+                { "id": "findNext", "label": "Find next / previous", "display": ["F3", "Shift+F3"], "keys": ["F3", "Mod+G"] },
+                { "id": "findPrev", "label": "Find previous", "keys": ["Shift+F3", "Mod+Shift+G"], "hidden": true },
+                { "id": "zoomIn", "label": "Zoom in", "keys": ["Mod+=", "Mod++", "Mod+Shift++"] },
+                { "id": "zoomOut", "label": "Zoom out", "keys": ["Mod+-", "Mod+Shift+_"] },
+                { "id": "zoomReset", "label": "Reset zoom", "keys": ["Mod+0"] },
+                { "id": "bookmark", "label": "Pin / bookmark page", "keys": ["Mod+D"] },
+                { "id": "print", "label": "Print", "keys": ["Mod+P"] },
+                { "id": "devtools", "label": "Developer tools", "keys": ["F12", "Mod+Shift+I"] },
+                { "id": "fullscreen", "label": "Fullscreen", "keys": ["F11"] }
+            ]
+        },
+        {
+            "title": "Downloads & help",
+            "shortcuts": [
+                { "id": "downloads", "label": "Show downloads", "keys": ["Mod+J"] },
+                { "id": "shortcutsHelp", "label": "Keyboard shortcuts", "keys": ["Mod+/"] }
+            ]
+        }
+    ]
+}

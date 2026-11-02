@@ -8,7 +8,7 @@ const CURATED_ADDONS = [
         id: 'cjpalhdlnbpafiamejdnhcphjbkeiagm',
         name: 'uBlock Origin',
         category: 'Privacy & Security',
-        description: 'An efficient ad, tracker, and malware blocker. Fast, lightweight, and highly customizable.',
+        description: 'Chrome Web Store build cannot fully block ads inside Electron. Research Browser already uses the same EasyList/uBlock filter lists via the built-in Ad & Tracker Shield toggle.',
         badge: 'Top Rated',
         rating: '4.9 ★ (10M+)',
         author: 'Raymond Hill'

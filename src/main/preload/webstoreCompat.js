@@ -19,8 +19,8 @@ if (!isStoreHost) {
 } else {
     const { ipcRenderer } = require('electron');
 
-    const CHROME_MAJOR = '133';
-    const CHROME_FULL = '133.0.6943.142';
+    const CHROME_MAJOR = (process.versions.chrome || '132').split('.')[0];
+    const CHROME_FULL = process.versions.chrome || '132.0.0.0';
 
     // ---------------------------------------------------------------------
     // 1. Present Google Chrome branded userAgentData

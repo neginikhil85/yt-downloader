@@ -5,6 +5,11 @@ import { FindInPageController } from './findInPage.js';
 import { QuickToolsController } from './quickToolsController.js';
 import { TabController } from './tabController.js';
 import { ExtensionsMenu } from './extensionsMenu.js';
+import { createLoadingBar } from './loadingBar.js';
+import { DownloadsPanel } from './downloadsPanel.js';
+import { ShortcutsHelp, resolveShortcut, shortcutHint } from './shortcuts.js';
+
+const ZOOM_STEPS = [0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5];
 
 export function initBrowserManager() {
     // 1. DOM Elements Query
@@ -21,7 +26,7 @@ export function initBrowserManager() {
     const btnBack = document.getElementById('browser-btn-back');
     const btnForward = document.getElementById('browser-btn-forward');
     const btnReload = document.getElementById('browser-btn-reload');
-    const loadingBar = document.getElementById('browser-loading-bar');
+    const loadingBar = createLoadingBar(document.getElementById('browser-loading-bar'));
     const btnHome = document.getElementById('browser-btn-home');
     const btnFullscreen = document.getElementById('browser-btn-fullscreen');
     const btnPinPage = document.getElementById('browser-btn-pin-page');
@@ -29,6 +34,10 @@ export function initBrowserManager() {
     const btnThemeStudio = document.getElementById('browser-btn-theme-studio');
     const btnExtHub = document.getElementById('browser-btn-ext-hub');
     const btnExtensions = document.getElementById('browser-btn-extensions');
+    const btnDownloads = document.getElementById('browser-btn-downloads');
+    const downloadsPanelEl = document.getElementById('browser-downloads-panel');
+    const shortcutsOverlay = document.getElementById('browser-shortcuts-overlay');
+    const extBtnShortcuts = document.getElementById('ext-btn-shortcuts');
     const browserPanel = document.getElementById('view-browser');
     const activeCountBadge = document.getElementById('ext-active-count-badge');
 
@@ -199,9 +208,16 @@ export function initBrowserManager() {
                 btnPinPage.classList.toggle('pinned', isPinned);
             }
         },
-        onLoadingChanged: (isLoading) => {
-            if (btnReload) btnReload.classList.toggle('loading', isLoading);
-            if (loadingBar) loadingBar.classList.toggle('active', isLoading);
+        onLoadingChanged: (isLoading, { instant = false } = {}) => {
+            if (btnReload) {
+                btnReload.classList.toggle('loading', isLoading);
+                    btnReload.title = isLoading
+                        ? 'Stop loading this page (Esc)'
+                        : `Reload page (${shortcutHint('reload')})`;
+                }
+            if (isLoading) loadingBar.start();
+            else if (instant) loadingBar.reset();
+            else loadingBar.done();
         },
         onOpenAddonsDashboard: () => {
             addonsController.loadInstalled();
@@ -252,11 +268,24 @@ export function initBrowserManager() {
         });
     }
 
+    // Chrome-like address bar: a new tab puts the caret in the URL bar, and the
+    // first click into the bar selects the whole URL so typing replaces it.
+    function focusUrlBar() {
+        if (!urlInput) return;
+        requestAnimationFrame(() => {
+            urlInput.focus();
+            urlInput.select();
+        });
+    }
+
+    function openNewTab() {
+        tabController.createTab('about:home', true);
+        focusUrlBar();
+    }
+
     // 3. UI Action Bindings
     if (btnNewTab) {
-        btnNewTab.addEventListener('click', () => {
-            tabController.createTab('about:home', true);
-        });
+        btnNewTab.addEventListener('click', openNewTab);
     }
 
     if (urlInput) {
@@ -268,9 +297,26 @@ export function initBrowserManager() {
                 } else {
                     tabController.navigateActiveTab(urlInput.value);
                 }
+                urlInput.blur();
+            } else if (e.key === 'Escape') {
+                tabController.syncUrlInput();
+                urlInput.select();
             }
         });
         urlInput.addEventListener('focus', () => urlInput.select());
+
+        let selectAllOnMouseUp = false;
+        urlInput.addEventListener('mousedown', () => {
+            selectAllOnMouseUp = document.activeElement !== urlInput;
+        });
+        urlInput.addEventListener('mouseup', (e) => {
+            // Keep a drag-selection the user made; otherwise select everything.
+            if (selectAllOnMouseUp && urlInput.selectionStart === urlInput.selectionEnd) {
+                e.preventDefault();
+                urlInput.select();
+            }
+            selectAllOnMouseUp = false;
+        });
     }
 
     if (btnGo) {
@@ -305,7 +351,10 @@ export function initBrowserManager() {
     if (btnReload) {
         btnReload.addEventListener('click', () => {
             const activeTab = tabController.getActiveTab();
-            if (activeTab && activeTab.webviewEl && activeTab.webviewEl.reload) {
+            if (!activeTab || !activeTab.webviewEl) return;
+            if (activeTab.loading && activeTab.webviewEl.stop) {
+                activeTab.webviewEl.stop();
+            } else if (activeTab.webviewEl.reload) {
                 activeTab.webviewEl.reload();
             }
         });
@@ -399,74 +448,120 @@ export function initBrowserManager() {
         });
     }
 
-    // 4. Global Keyboard Shortcuts for Browser
+    // 4. Downloads panel, shortcuts help & keyboard shortcuts
+    const downloadsPanel = new DownloadsPanel({ button: btnDownloads, panel: downloadsPanelEl });
+    const shortcutsHelp = new ShortcutsHelp(shortcutsOverlay);
+
+    if (extBtnShortcuts) {
+        extBtnShortcuts.addEventListener('click', () => {
+            if (extPanel) extPanel.classList.remove('open');
+            shortcutsHelp.open();
+        });
+    }
+
+    let zoomToast = null;
+    let zoomToastTimer = null;
+    function showZoomToast(factor) {
+        if (!browserPanel) return;
+        if (!zoomToast) {
+            zoomToast = document.createElement('div');
+            zoomToast.className = 'browser-zoom-toast';
+            browserPanel.appendChild(zoomToast);
+        }
+        zoomToast.textContent = `Zoom ${Math.round(factor * 100)}%`;
+        zoomToast.classList.add('visible');
+        clearTimeout(zoomToastTimer);
+        zoomToastTimer = setTimeout(() => zoomToast.classList.remove('visible'), 1200);
+    }
+
+    function zoomActiveTab(direction) {
+        const wv = tabController.getActiveTab()?.webviewEl;
+        if (!wv || !wv.getZoomFactor || !wv.setZoomFactor) return;
+        let factor = 1;
+        if (direction !== 0) {
+            const current = wv.getZoomFactor();
+            factor = direction > 0
+                ? (ZOOM_STEPS.find(z => z > current + 0.001) || ZOOM_STEPS[ZOOM_STEPS.length - 1])
+                : ([...ZOOM_STEPS].reverse().find(z => z < current - 0.001) || ZOOM_STEPS[0]);
+        }
+        wv.setZoomFactor(factor);
+        showZoomToast(factor);
+    }
+
+    function closeTopmostOverlay() {
+        if (shortcutsHelp.isOpen()) { shortcutsHelp.close(); return true; }
+        if (downloadsPanel.isOpen && downloadsPanel.panel && downloadsPanel.isOpen()) { downloadsPanel.close(); return true; }
+        if (findBar && findBar.style.display !== 'none') { findInPage.close(); return true; }
+        return false;
+    }
+
+    /** Runs a browser shortcut action. Returns false if it did nothing. */
+    function runShortcut(id, key) {
+        const activeTab = tabController.getActiveTab();
+        const wv = activeTab && activeTab.url !== 'about:home' && activeTab.url !== 'about:addons'
+            ? activeTab.webviewEl : null;
+
+        switch (id) {
+            case 'newTab': openNewTab(); break;
+            case 'closeTab': if (tabController.activeTabId) tabController.closeTab(tabController.activeTabId); break;
+            case 'reopenTab': tabController.reopenClosedTab(); break;
+            case 'nextTab': tabController.selectRelativeTab(1); break;
+            case 'prevTab': tabController.selectRelativeTab(-1); break;
+            case 'goToTab': {
+                const target = tabController.getAllTabs()[parseInt(key, 10) - 1];
+                if (target) tabController.switchTab(target.id);
+                break;
+            }
+            case 'lastTab': {
+                const tabs = tabController.getAllTabs();
+                if (tabs.length) tabController.switchTab(tabs[tabs.length - 1].id);
+                break;
+            }
+            case 'focusAddress': focusUrlBar(); break;
+            case 'back': if (wv && wv.canGoBack()) wv.goBack(); break;
+            case 'forward': if (wv && wv.canGoForward()) wv.goForward(); break;
+            case 'reload': if (wv) wv.reload(); break;
+            case 'hardReload': if (wv) wv.reloadIgnoringCache(); break;
+            case 'stop':
+                if (closeTopmostOverlay()) break;
+                if (activeTab && activeTab.loading && wv) { wv.stop(); break; }
+                return false;
+            case 'home': tabController.navigateActiveTab('about:home'); break;
+            case 'find': findInPage.open(); break;
+            case 'findNext':
+            case 'findPrev':
+                if (!findBar || findBar.style.display === 'none') findInPage.open();
+                else findInPage.execute(id === 'findNext', true);
+                break;
+            case 'zoomIn': zoomActiveTab(1); break;
+            case 'zoomOut': zoomActiveTab(-1); break;
+            case 'zoomReset': zoomActiveTab(0); break;
+            case 'bookmark': if (activeTab) topSites.togglePin(activeTab.title, activeTab.url); break;
+            case 'print': if (wv && wv.print) wv.print().catch(() => {}); break;
+            case 'devtools': if (wv) quickTools.openDevTools(); break;
+            case 'fullscreen': toggleBrowserFullscreen(); break;
+            case 'downloads': downloadsPanel.toggle(); break;
+            case 'shortcutsHelp': shortcutsHelp.toggle(); break;
+            default: return false;
+        }
+        return true;
+    }
+
+    const isBrowserVisible = () => browserPanel && browserPanel.classList.contains('active');
+
+    // Keys pressed while the app UI (address bar, tabs, panels) has focus
     document.addEventListener('keydown', (e) => {
-        if (!browserPanel || !browserPanel.classList.contains('active')) return;
-
-        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-        const cmdOrCtrl = isMac ? e.metaKey : e.ctrlKey;
-
-        // Cmd/Ctrl + T: New Tab
-        if (cmdOrCtrl && (e.key === 't' || e.key === 'T')) {
-            e.preventDefault();
-            tabController.createTab('about:home', true);
-        }
-
-        // Cmd/Ctrl + W: Close Active Tab
-        if (cmdOrCtrl && (e.key === 'w' || e.key === 'W')) {
-            e.preventDefault();
-            if (tabController.activeTabId) tabController.closeTab(tabController.activeTabId);
-        }
-
-        // Cmd/Ctrl + L: Focus Address Bar
-        if (cmdOrCtrl && (e.key === 'l' || e.key === 'L')) {
-            e.preventDefault();
-            if (urlInput) urlInput.focus();
-        }
-
-        // Cmd/Ctrl + F: Find in Page
-        if (cmdOrCtrl && (e.key === 'f' || e.key === 'F')) {
-            e.preventDefault();
-            findInPage.open();
-        }
-
-        // Cmd/Ctrl + D: Pin / Bookmark Current Page
-        if (cmdOrCtrl && (e.key === 'd' || e.key === 'D')) {
-            e.preventDefault();
-            const activeTab = tabController.getActiveTab();
-            if (activeTab) topSites.togglePin(activeTab.title, activeTab.url);
-        }
-
-        // Cmd/Ctrl + R: Reload
-        if (cmdOrCtrl && (e.key === 'r' || e.key === 'R')) {
-            e.preventDefault();
-            const activeTab = tabController.getActiveTab();
-            if (activeTab && activeTab.webviewEl && activeTab.webviewEl.reload) {
-                activeTab.webviewEl.reload();
-            }
-        }
-
-        // Cmd/Ctrl + 1..8: Switch Tab
-        if (cmdOrCtrl && e.key >= '1' && e.key <= '8') {
-            const index = parseInt(e.key, 10) - 1;
-            const targetTab = tabController.getAllTabs()[index];
-            if (targetTab) {
-                e.preventDefault();
-                tabController.switchTab(targetTab.id);
-            }
-        }
-
-        // F11: Fullscreen
-        if (e.key === 'F11') {
-            e.preventDefault();
-            toggleBrowserFullscreen();
-        }
-
-        // Esc: Close Find bar
-        if (e.key === 'Escape') {
-            if (findBar && findBar.style.display !== 'none') findInPage.close();
-        }
+        if (!isBrowserVisible()) return;
+        const id = resolveShortcut(e);
+        if (id && runShortcut(id, e.key)) e.preventDefault();
     });
+
+    // Keys pressed while focus is inside a web page (forwarded by main.js)
+    if (window.electronAPI && window.electronAPI.onBrowserShortcut) {
+        window.electronAPI.onBrowserShortcut(({ id, key }) => {
+            if (isBrowserVisible()) runShortcut(id, key);
+        });
+    }
 
     // 5. Initial Boot
     tabController.createTab('about:home', true);
