@@ -100,9 +100,10 @@ function actionButtons(rec) {
 }
 
 export class DownloadsPanel {
-    constructor({ button, panel }) {
+    constructor({ button, panel, onBeforeOpen }) {
         this.button = button;
         this.panel = panel;
+        this.onBeforeOpen = onBeforeOpen || (() => {});
         this.api = window.electronAPI && window.electronAPI.browserDownloads;
         this.records = new Map();
         this.autoHideTimer = null;
@@ -175,6 +176,10 @@ export class DownloadsPanel {
         });
         document.addEventListener('focusin', (e) => {
             if (this.isOpen() && e.target && e.target.tagName === 'WEBVIEW') this.close();
+        });
+
+        window.addEventListener('resize', () => {
+            if (this.isOpen()) this.position();
         });
     }
 
@@ -296,6 +301,7 @@ export class DownloadsPanel {
 
     open({ autoHide = false } = {}) {
         const wasOpen = this.isOpen();
+        if (this.onBeforeOpen) this.onBeforeOpen();
         this.panel.style.display = 'flex';
         this.position();
         // Only count the failure as "seen" if the panel is actually on screen

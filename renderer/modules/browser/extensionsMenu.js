@@ -20,7 +20,8 @@ export class ExtensionsMenu {
         actionPopoverBody,
         onOpenExtensionHub,
         onCreateTab,
-        getActiveTab
+        getActiveTab,
+        onBeforeOpen
     }) {
         this.btnExtHub = btnExtHub;
         this.extMenuPanel = extMenuPanel;
@@ -40,6 +41,7 @@ export class ExtensionsMenu {
         this.onOpenExtensionHub = onOpenExtensionHub || (() => {});
         this.onCreateTab = onCreateTab || (() => {});
         this.getActiveTab = getActiveTab || (() => null);
+        this.onBeforeOpen = onBeforeOpen || (() => {});
 
         this.installedExtensions = [];
         this.pinnedExtIds = this.loadPinnedExtIds();
@@ -119,6 +121,12 @@ export class ExtensionsMenu {
             }
         });
 
+        window.addEventListener('resize', () => {
+            if (this.extMenuPanel && this.extMenuPanel.style.display !== 'none') {
+                this.positionMenu();
+            }
+        });
+
         this.loadAndRender();
     }
 
@@ -151,9 +159,35 @@ export class ExtensionsMenu {
         }
     }
 
+    positionMenu() {
+        if (!this.extMenuPanel || !this.btnExtHub) return;
+        const parent = this.extMenuPanel.offsetParent || this.extMenuPanel.parentElement;
+        if (!parent) return;
+        const btn = this.btnExtHub.getBoundingClientRect();
+        const box = parent.getBoundingClientRect();
+        this.extMenuPanel.style.top = `${btn.bottom - box.top + 6}px`;
+        const idealRight = box.right - btn.right;
+        const maxRight = Math.max(8, box.width - (this.extMenuPanel.offsetWidth || 280) - 8);
+        this.extMenuPanel.style.right = `${Math.max(8, Math.min(idealRight, maxRight))}px`;
+    }
+
+    isOpen() {
+        const menuOpen = this.extMenuPanel && this.extMenuPanel.style.display !== 'none';
+        const actionOpen = this.actionPopover && this.actionPopover.style.display !== 'none';
+        return !!(menuOpen || actionOpen);
+    }
+
+    close() {
+        this.closeMenu();
+        this.closeActionPopover();
+    }
+
     openMenu() {
         if (!this.extMenuPanel) return;
+        if (this.onBeforeOpen) this.onBeforeOpen();
+        this.closeActionPopover();
         this.extMenuPanel.style.display = 'flex';
+        this.positionMenu();
         this.loadAndRender();
     }
 
@@ -281,6 +315,9 @@ export class ExtensionsMenu {
             this.onCreateTab(targetUrl, true);
             return;
         }
+
+        if (this.onBeforeOpen) this.onBeforeOpen();
+        this.closeMenu();
 
         this.currentActionExt = ext;
 

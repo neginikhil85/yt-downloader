@@ -17,6 +17,7 @@
             "title": "Navigation",
             "shortcuts": [
                 { "id": "focusAddress", "label": "Focus address bar", "keys": ["Mod+L", "Alt+D", "F6"] },
+                { "id": "toggleSidebar", "label": "Toggle sidebar", "keys": ["Mod+\\"] },
                 { "id": "back", "label": "Back", "keys": ["Alt+ArrowLeft", "Mod+["] },
                 { "id": "forward", "label": "Forward", "keys": ["Alt+ArrowRight", "Mod+]"] },
                 { "id": "reload", "label": "Reload", "keys": ["Mod+R", "F5"] },
@@ -41,8 +42,10 @@
             ]
         },
         {
-            "title": "Downloads & help",
+            "title": "Library & tools",
             "shortcuts": [
+                { "id": "history", "label": "Browsing history", "keys": ["Mod+H", "Mod+Y"] },
+                { "id": "bookmarks", "label": "Bookmarks library", "keys": ["Mod+B", "Mod+Shift+O"] },
                 { "id": "downloads", "label": "Show downloads", "keys": ["Mod+J"] },
                 { "id": "shortcutsHelp", "label": "Keyboard shortcuts", "keys": ["Mod+/"] }
             ]

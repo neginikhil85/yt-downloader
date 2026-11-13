@@ -25,7 +25,8 @@ export class QuickToolsController {
         btnScriptRun,
         scriptTextarea,
         getActiveTab,
-        getAllTabs
+        getAllTabs,
+        onBeforeOpen
     }) {
         this.extPanel = extPanel;
         this.btnExtensions = btnExtensions;
@@ -48,6 +49,7 @@ export class QuickToolsController {
 
         this.getActiveTab = getActiveTab || (() => null);
         this.getAllTabs = getAllTabs || (() => []);
+        this.onBeforeOpen = onBeforeOpen || (() => {});
 
         this.globalAdBlock = true;
         this.globalDarkMode = false;
@@ -56,13 +58,46 @@ export class QuickToolsController {
         this.init();
     }
 
+    isOpen() {
+        return this.extPanel && this.extPanel.classList.contains('open');
+    }
+
+    close() {
+        if (this.extPanel) this.extPanel.classList.remove('open');
+    }
+
+    position() {
+        if (!this.extPanel || !this.btnExtensions) return;
+        const parent = this.extPanel.offsetParent || this.extPanel.parentElement;
+        if (!parent) return;
+        const btn = this.btnExtensions.getBoundingClientRect();
+        const box = parent.getBoundingClientRect();
+        this.extPanel.style.top = `${btn.bottom - box.top + 6}px`;
+        const idealRight = box.right - btn.right;
+        const maxRight = Math.max(8, box.width - (this.extPanel.offsetWidth || 300) - 8);
+        this.extPanel.style.right = `${Math.max(8, Math.min(idealRight, maxRight))}px`;
+    }
+
     init() {
         if (this.btnExtensions && this.extPanel) {
             this.btnExtensions.addEventListener('click', (e) => {
                 e.stopPropagation();
-                this.extPanel.classList.toggle('open');
+                const willOpen = !this.extPanel.classList.contains('open');
+                if (willOpen) {
+                    if (this.onBeforeOpen) this.onBeforeOpen();
+                    this.extPanel.classList.add('open');
+                    this.position();
+                } else {
+                    this.extPanel.classList.remove('open');
+                }
             });
         }
+
+        window.addEventListener('resize', () => {
+            if (this.extPanel && this.extPanel.classList.contains('open')) {
+                this.position();
+            }
+        });
 
         if (this.extCloseBtn && this.extPanel) {
             this.extCloseBtn.addEventListener('click', () => {

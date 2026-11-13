@@ -19,7 +19,8 @@ export class TabController {
         findInPage,
         onTabChanged,
         onOpenAddonsDashboard,
-        onLoadingChanged
+        onLoadingChanged,
+        onPageVisited
     }) {
         this.tabsContainer = tabsContainer;
         this.webviewsContainer = webviewsContainer;
@@ -33,6 +34,7 @@ export class TabController {
         this.onTabChanged = onTabChanged || (() => {});
         this.onOpenAddonsDashboard = onOpenAddonsDashboard || (() => {});
         this.onLoadingChanged = onLoadingChanged || (() => {});
+        this.onPageVisited = onPageVisited || (() => {});
 
         this.tabs = [];
         this.closedTabs = [];
@@ -224,7 +226,7 @@ export class TabController {
 
         const [removedTab] = this.tabs.splice(index, 1);
         if (removedTab.url && !isHomeUrl(removedTab.url) && !isAddonsUrl(removedTab.url)) {
-            this.closedTabs.push({ url: removedTab.url, index });
+            this.closedTabs.push({ url: removedTab.url, title: removedTab.title, index });
             if (this.closedTabs.length > 25) this.closedTabs.shift();
         }
         removedTab.tabEl?.remove();
@@ -276,6 +278,9 @@ export class TabController {
             const currentUrl = wv.getURL();
             if (currentUrl && currentUrl !== 'about:blank') {
                 tabData.url = currentUrl;
+                if (!isHomeUrl(currentUrl) && !isAddonsUrl(currentUrl)) {
+                    this.onPageVisited({ url: currentUrl, title: tabData.title });
+                }
             }
             if (tabData.id === this.activeTabId) {
                 this.syncUrlInput(false);
@@ -297,6 +302,9 @@ export class TabController {
                 }
                 this._injectLinkHandler(wv);
                 this._injectWebstoreHelper(wv, e.url);
+                if (e.url !== 'about:blank' && !isHomeUrl(e.url) && !isAddonsUrl(e.url)) {
+                    this.onPageVisited({ url: e.url, title: tabData.title });
+                }
             }
         });
 
@@ -357,6 +365,9 @@ export class TabController {
             if (tabData.tabEl) {
                 const titleSpan = tabData.tabEl.querySelector('.tab-title');
                 if (titleSpan) titleSpan.textContent = tabData.title;
+            }
+            if (tabData.url && tabData.url !== 'about:blank' && !isHomeUrl(tabData.url) && !isAddonsUrl(tabData.url)) {
+                this.onPageVisited({ url: tabData.url, title: tabData.title });
             }
         });
 
@@ -458,6 +469,7 @@ export class TabController {
             if (activeTab.webviewEl) {
                 activeTab.webviewEl.src = target;
             }
+            this.onPageVisited({ url: target, title: activeTab.title || target });
         }
         this.updateControlsState();
         this.onTabChanged(activeTab);

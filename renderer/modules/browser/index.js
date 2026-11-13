@@ -8,6 +8,10 @@ import { ExtensionsMenu } from './extensionsMenu.js';
 import { createLoadingBar } from './loadingBar.js';
 import { DownloadsPanel } from './downloadsPanel.js';
 import { ShortcutsHelp, resolveShortcut, shortcutHint } from './shortcuts.js';
+import { HistoryManager } from './historyManager.js';
+import { BookmarksManager } from './bookmarksManager.js';
+import { OmnibarSuggestions } from './omnibarSuggestions.js';
+import { toggleSidebar } from '../navigation.js';
 
 const ZOOM_STEPS = [0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5];
 
@@ -40,6 +44,21 @@ export function initBrowserManager() {
     const extBtnShortcuts = document.getElementById('ext-btn-shortcuts');
     const browserPanel = document.getElementById('view-browser');
     const activeCountBadge = document.getElementById('ext-active-count-badge');
+
+    // Hub Panels Elements (History, Bookmarks, Autocomplete)
+    const btnHistory = document.getElementById('browser-btn-history');
+    const btnBookmarks = document.getElementById('browser-btn-bookmarks');
+    const historyPanel = document.getElementById('browser-history-panel');
+    const historySearchInput = document.getElementById('history-search-input');
+    const historyListWrap = document.getElementById('history-list-wrap');
+    const historyBtnClear = document.getElementById('history-btn-clear');
+    const historyBtnClose = document.getElementById('history-btn-close');
+    const bookmarksPanel = document.getElementById('browser-bookmarks-panel');
+    const bookmarksSearchInput = document.getElementById('bookmarks-search-input');
+    const bookmarksListWrap = document.getElementById('bookmarks-list-wrap');
+    const bookmarksBtnAddCurrent = document.getElementById('bookmarks-btn-add-current');
+    const bookmarksBtnClose = document.getElementById('bookmarks-btn-close');
+    const urlSuggestionsContainer = document.getElementById('browser-url-suggestions');
 
     // Chrome-Style Extensions Menu & Action Popover Elements
     const pinnedIconsContainer = document.getElementById('browser-pinned-ext-icons');
@@ -123,6 +142,33 @@ export function initBrowserManager() {
     });
 
     let tabController;
+    let extensionsMenu;
+    let quickTools;
+    let historyManager;
+    let bookmarksManager;
+    let omnibarSuggestions;
+    let downloadsPanel;
+
+    function closeAllBrowserPopovers(except = null) {
+        if (except !== 'history' && historyManager && historyManager.isOpen()) {
+            historyManager.close();
+        }
+        if (except !== 'bookmarks' && bookmarksManager && bookmarksManager.isOpen()) {
+            bookmarksManager.close();
+        }
+        if (except !== 'downloads' && downloadsPanel && downloadsPanel.isOpen && downloadsPanel.isOpen()) {
+            downloadsPanel.close();
+        }
+        if (except !== 'extensions' && extensionsMenu && extensionsMenu.isOpen()) {
+            extensionsMenu.close();
+        }
+        if (except !== 'quickTools' && quickTools && quickTools.isOpen()) {
+            quickTools.close();
+        }
+        if (except !== 'suggestions' && omnibarSuggestions && omnibarSuggestions.isOpen()) {
+            omnibarSuggestions.close();
+        }
+    }
 
     const topSites = new TopSitesController({
         pinnedBar,
@@ -139,7 +185,54 @@ export function initBrowserManager() {
         onCreateTab: (url, activate) => tabController && tabController.createTab(url, activate)
     });
 
-    let extensionsMenu;
+    historyManager = new HistoryManager({
+        panel: historyPanel,
+        btnToggle: btnHistory,
+        searchInput: historySearchInput,
+        listWrap: historyListWrap,
+        btnClear: historyBtnClear,
+        btnClose: historyBtnClose,
+        onNavigate: (url) => tabController && tabController.navigateActiveTab(url),
+        onCreateTab: (url, activate) => tabController && tabController.createTab(url, activate),
+        getRecentlyClosed: () => tabController ? tabController.closedTabs : [],
+        onBeforeOpen: () => closeAllBrowserPopovers('history')
+    });
+
+    bookmarksManager = new BookmarksManager({
+        panel: bookmarksPanel,
+        btnToggle: btnBookmarks,
+        btnPinPage: null,
+        searchInput: bookmarksSearchInput,
+        listWrap: bookmarksListWrap,
+        btnAddCurrent: bookmarksBtnAddCurrent,
+        btnClose: bookmarksBtnClose,
+        onNavigate: (url) => tabController && tabController.navigateActiveTab(url),
+        onCreateTab: (url, activate) => tabController && tabController.createTab(url, activate),
+        getActivePageInfo: () => {
+            const active = tabController?.getActiveTab();
+            return {
+                title: active?.title || '',
+                url: active?.url || ''
+            };
+        },
+        onBookmarksUpdated: () => {
+            const active = tabController?.getActiveTab();
+            if (active && active.url) {
+                bookmarksManager.syncStarButton(active.url);
+            }
+        },
+        onBeforeOpen: () => closeAllBrowserPopovers('bookmarks')
+    });
+
+    omnibarSuggestions = new OmnibarSuggestions({
+        input: urlInput,
+        container: urlSuggestionsContainer,
+        historyManager,
+        bookmarksManager,
+        onNavigate: (url) => tabController && tabController.navigateActiveTab(url),
+        onCreateTab: (url, activate) => tabController && tabController.createTab(url, activate),
+        onBeforeOpen: () => closeAllBrowserPopovers('suggestions')
+    });
 
     const addonsController = new AddonsController({
         extCuratedGrid,
@@ -170,7 +263,7 @@ export function initBrowserManager() {
         getActiveWebview: () => tabController?.getActiveTab()?.webviewEl || null
     });
 
-    const quickTools = new QuickToolsController({
+    quickTools = new QuickToolsController({
         extPanel,
         btnExtensions,
         extCloseBtn,
@@ -189,7 +282,8 @@ export function initBrowserManager() {
         btnScriptRun,
         scriptTextarea,
         getActiveTab: () => tabController?.getActiveTab() || null,
-        getAllTabs: () => tabController?.getAllTabs() || []
+        getAllTabs: () => tabController?.getAllTabs() || [],
+        onBeforeOpen: () => closeAllBrowserPopovers('quickTools')
     });
 
     tabController = new TabController({
@@ -204,8 +298,16 @@ export function initBrowserManager() {
         findInPage,
         onTabChanged: (activeTab) => {
             if (btnPinPage && activeTab) {
-                const isPinned = topSites.pinnedApps.some(a => a.url === activeTab.url);
+                const isPinned = topSites.pinnedApps.some(a => a.url === activeTab.url) || (bookmarksManager && bookmarksManager.isBookmarked(activeTab.url));
                 btnPinPage.classList.toggle('pinned', isPinned);
+                btnPinPage.title = isPinned
+                    ? 'Remove bookmark / unpin (Ctrl+D / ⌘D)'
+                    : 'Bookmark this page (Ctrl+D / ⌘D)';
+            }
+        },
+        onPageVisited: ({ url, title }) => {
+            if (historyManager) {
+                historyManager.recordVisit({ url, title });
             }
         },
         onLoadingChanged: (isLoading, { instant = false } = {}) => {
@@ -257,7 +359,8 @@ export function initBrowserManager() {
         actionPopoverBody,
         onOpenExtensionHub: (tab) => openExtensionHub(tab),
         onCreateTab: (url, activate) => tabController && tabController.createTab(url, activate),
-        getActiveTab: () => tabController?.getActiveTab() || null
+        getActiveTab: () => tabController?.getActiveTab() || null,
+        onBeforeOpen: () => closeAllBrowserPopovers('extensions')
     });
 
     // Real-time synchronization of extensions across the entire application (Web Store, sideload, uninstalled, toggled)
@@ -291,6 +394,10 @@ export function initBrowserManager() {
     if (urlInput) {
         urlInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
+                if (omnibarSuggestions && omnibarSuggestions.selectedIndex >= 0) {
+                    return; // Handled by OmnibarSuggestions
+                }
+                if (omnibarSuggestions) omnibarSuggestions.close();
                 const openInNewTab = e.altKey || (e.metaKey && e.shiftKey) || (e.ctrlKey && e.shiftKey);
                 if (openInNewTab) {
                     tabController.createTab(urlInput.value, true);
@@ -299,6 +406,10 @@ export function initBrowserManager() {
                 }
                 urlInput.blur();
             } else if (e.key === 'Escape') {
+                if (omnibarSuggestions && omnibarSuggestions.isOpen()) {
+                    omnibarSuggestions.close();
+                    return;
+                }
                 tabController.syncUrlInput();
                 urlInput.select();
             }
@@ -449,8 +560,44 @@ export function initBrowserManager() {
     }
 
     // 4. Downloads panel, shortcuts help & keyboard shortcuts
-    const downloadsPanel = new DownloadsPanel({ button: btnDownloads, panel: downloadsPanelEl });
+    downloadsPanel = new DownloadsPanel({
+        button: btnDownloads,
+        panel: downloadsPanelEl,
+        onBeforeOpen: () => closeAllBrowserPopovers('downloads')
+    });
     const shortcutsHelp = new ShortcutsHelp(shortcutsOverlay);
+
+    if (btnDownloads) {
+        btnDownloads.addEventListener('click', () => {
+            if (historyManager && historyManager.isOpen()) historyManager.close();
+            if (bookmarksManager && bookmarksManager.isOpen()) bookmarksManager.close();
+        });
+    }
+
+    function toggleBookmarkCurrentTab() {
+        const activeTab = tabController?.getActiveTab();
+        if (!activeTab || !activeTab.url || activeTab.url.startsWith('about:')) return;
+        const wasBookmarked = bookmarksManager ? bookmarksManager.isBookmarked(activeTab.url) : false;
+        if (wasBookmarked) {
+            if (bookmarksManager) bookmarksManager.removeBookmark(activeTab.url);
+            const idx = topSites.pinnedApps.findIndex(a => a.url === activeTab.url);
+            if (idx >= 0) topSites.removePinnedApp(idx);
+        } else {
+            if (bookmarksManager) bookmarksManager.addBookmark({ title: activeTab.title, url: activeTab.url });
+            topSites.addPinnedApp(activeTab.title, activeTab.url);
+        }
+        const isNow = bookmarksManager ? bookmarksManager.isBookmarked(activeTab.url) : false;
+        if (btnPinPage) {
+            btnPinPage.classList.toggle('pinned', isNow);
+            btnPinPage.title = isNow
+                ? 'Remove bookmark / unpin (Ctrl+D / ⌘D)'
+                : 'Bookmark this page (Ctrl+D / ⌘D)';
+        }
+    }
+
+    if (btnPinPage) {
+        btnPinPage.addEventListener('click', toggleBookmarkCurrentTab);
+    }
 
     if (extBtnShortcuts) {
         extBtnShortcuts.addEventListener('click', () => {
@@ -490,7 +637,12 @@ export function initBrowserManager() {
 
     function closeTopmostOverlay() {
         if (shortcutsHelp.isOpen()) { shortcutsHelp.close(); return true; }
-        if (downloadsPanel.isOpen && downloadsPanel.panel && downloadsPanel.isOpen()) { downloadsPanel.close(); return true; }
+        if (downloadsPanel && downloadsPanel.isOpen && downloadsPanel.isOpen()) { downloadsPanel.close(); return true; }
+        if (historyManager && historyManager.isOpen()) { historyManager.close(); return true; }
+        if (bookmarksManager && bookmarksManager.isOpen()) { bookmarksManager.close(); return true; }
+        if (extensionsMenu && extensionsMenu.isOpen()) { extensionsMenu.close(); return true; }
+        if (quickTools && quickTools.isOpen()) { quickTools.close(); return true; }
+        if (omnibarSuggestions && omnibarSuggestions.isOpen()) { omnibarSuggestions.close(); return true; }
         if (findBar && findBar.style.display !== 'none') { findInPage.close(); return true; }
         return false;
     }
@@ -518,6 +670,7 @@ export function initBrowserManager() {
                 break;
             }
             case 'focusAddress': focusUrlBar(); break;
+            case 'toggleSidebar': toggleSidebar(); break;
             case 'back': if (wv && wv.canGoBack()) wv.goBack(); break;
             case 'forward': if (wv && wv.canGoForward()) wv.goForward(); break;
             case 'reload': if (wv) wv.reload(); break;
@@ -536,11 +689,13 @@ export function initBrowserManager() {
             case 'zoomIn': zoomActiveTab(1); break;
             case 'zoomOut': zoomActiveTab(-1); break;
             case 'zoomReset': zoomActiveTab(0); break;
-            case 'bookmark': if (activeTab) topSites.togglePin(activeTab.title, activeTab.url); break;
+            case 'bookmark': toggleBookmarkCurrentTab(); break;
+            case 'history': if (historyManager) historyManager.toggle(); break;
+            case 'bookmarks': if (bookmarksManager) bookmarksManager.toggle(); break;
             case 'print': if (wv && wv.print) wv.print().catch(() => {}); break;
             case 'devtools': if (wv) quickTools.openDevTools(); break;
             case 'fullscreen': toggleBrowserFullscreen(); break;
-            case 'downloads': downloadsPanel.toggle(); break;
+            case 'downloads': if (downloadsPanel) downloadsPanel.toggle(); break;
             case 'shortcutsHelp': shortcutsHelp.toggle(); break;
             default: return false;
         }

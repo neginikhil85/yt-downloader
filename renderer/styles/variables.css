@@ -41,3 +41,10 @@ body {
     overflow: hidden;
     user-select: none;
 }
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.35);
+    outline-offset: 2px;
+}

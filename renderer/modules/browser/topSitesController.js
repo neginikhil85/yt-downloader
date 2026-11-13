@@ -122,9 +122,20 @@ export class TopSitesController {
                     ${getBrandIconHtml(app.url, app.name, true)}
                     <span class="home-app-name">${app.name}</span>
                 </div>
-            `).join('');
+            `).join('') + `
+                <div class="home-app-card home-add-card" id="home-add-shortcut-card" title="Add Shortcut">
+                    <div class="home-app-icon-wrap home-add-icon-wrap">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </div>
+                    <span class="home-app-name">Add</span>
+                </div>
+            `;
 
             this.homeAppsGrid.querySelectorAll('.home-app-card').forEach(card => {
+                if (card.classList.contains('home-add-card')) {
+                    card.addEventListener('click', () => this.openPinModal());
+                    return;
+                }
                 card.addEventListener('click', (e) => {
                     if (e.target.closest('.home-app-action-btn.delete')) {
                         e.stopPropagation();

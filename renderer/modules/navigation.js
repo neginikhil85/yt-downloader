@@ -19,6 +19,66 @@ export function initNavigation() {
             goBack();
         });
     }
+
+    initSidebarToggle();
+}
+
+export function toggleSidebar(forceState) {
+    const sidebar = document.getElementById('app-sidebar') || document.querySelector('.sidebar');
+    const toggleBtn = document.getElementById('btn-toggle-sidebar');
+    if (!sidebar) return;
+
+    const shouldCollapse = (typeof forceState === 'boolean')
+        ? forceState
+        : !sidebar.classList.contains('collapsed');
+
+    sidebar.classList.toggle('collapsed', shouldCollapse);
+    localStorage.setItem('yt_sidebar_collapsed', String(shouldCollapse));
+
+    if (toggleBtn) {
+        toggleBtn.title = shouldCollapse ? 'Expand sidebar (⌘\\)' : 'Collapse sidebar (⌘\\)';
+        const label = toggleBtn.querySelector('.toggle-label');
+        if (label) label.textContent = shouldCollapse ? 'Expand' : 'Collapse';
+    }
+
+    // Trigger window resize so webviews, popovers, and tab layouts update cleanly
+    window.dispatchEvent(new Event('resize'));
+}
+
+export function initSidebarToggle() {
+    const sidebar = document.getElementById('app-sidebar') || document.querySelector('.sidebar');
+    const toggleBtn = document.getElementById('btn-toggle-sidebar');
+    const brandLogoBtn = document.getElementById('brand-logo-btn');
+
+    if (!sidebar) return;
+
+    // Default to true (collapsed) unless user explicitly saved 'false'
+    const stored = localStorage.getItem('yt_sidebar_collapsed');
+    const isCollapsed = stored !== null ? stored === 'true' : true;
+
+    toggleSidebar(isCollapsed);
+
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleSidebar();
+        });
+    }
+
+    if (brandLogoBtn) {
+        brandLogoBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleSidebar();
+        });
+    }
+
+    // Keyboard shortcut Cmd+\ or Ctrl+\ to toggle sidebar
+    document.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === '\\') {
+            e.preventDefault();
+            toggleSidebar();
+        }
+    });
 }
 
 export function switchView(viewName) {
