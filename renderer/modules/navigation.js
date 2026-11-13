@@ -1,7 +1,7 @@
 import { loadLibraryFiles } from './libraryManager.js';
 import { stopVideoPlayer } from './videoPlayer.js';
 
-let currentView = 'explore';
+let currentView = 'browser';
 let previousView = 'explore';
 
 export function initNavigation() {
@@ -21,6 +21,7 @@ export function initNavigation() {
     }
 
     initSidebarToggle();
+    switchView('browser');
 }
 
 export function toggleSidebar(forceState) {

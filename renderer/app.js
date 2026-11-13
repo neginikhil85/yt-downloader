@@ -41,8 +41,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     initSettingsModal();
     initOnboardingModal();
 
-    // 3. Auto-load Explore Trending Feed if onboarding is already completed
+    // 3. Auto-load Explore Trending Feed in background if onboarding is already completed
     if (state.userSettings.onboardingCompleted) {
-        performSearch('trending');
+        performSearch('trending', false);
     }
 });

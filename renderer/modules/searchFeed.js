@@ -95,7 +95,7 @@ export function renderSkeletons(count = 8) {
     }
 }
 
-export async function performSearch(query) {
+export async function performSearch(query, shouldSwitchView = true) {
     const cleanQuery = query.trim();
     if (!cleanQuery) return;
 
@@ -111,7 +111,9 @@ export async function performSearch(query) {
     const exploreLoading = document.getElementById('explore-loading');
     const infiniteLoading = document.getElementById('infinite-loading');
 
-    switchView('explore');
+    if (shouldSwitchView) {
+        switchView('explore');
+    }
     exploreTitle.textContent = `Results for "${cleanQuery}"`;
     exploreSubtitle.textContent = 'Searching YouTube...';
     if (exploreLoading) exploreLoading.style.display = 'none';
