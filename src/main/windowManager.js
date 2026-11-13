@@ -19,7 +19,7 @@ function createMainWindow() {
             symbolColor: '#94a3b8',
             height: 38
         },
-        trafficLightPosition: isMac ? { x: 18, y: 20 } : undefined,
+        trafficLightPosition: isMac ? { x: 14, y: 16 } : undefined,
         autoHideMenuBar: true,
         backgroundColor: '#0c0d0e',
         webPreferences: {
