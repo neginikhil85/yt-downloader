@@ -358,7 +358,21 @@ function attachNetworkHandlers() {
             callback({});
             return;
         }
-        blocker.onBeforeRequest(details, callback);
+        // Never answer with `redirectURL`. Ghostery maps `$redirect=` filters to
+        // data: URLs; when the page aborts that request first (YouTube playlists
+        // do this constantly while auto-advancing), Electron's
+        // ProxyingURLLoaderFactory::HandleBeforeRequestRedirect dereferences a
+        // gone client and the whole main process crashes (0xC0000005 in
+        // URLLoaderClientProxy::OnReceiveRedirect). Chromium rejects data:
+        // subresource redirects anyway (ERR_UNSAFE_REDIRECT), so cancelling
+        // gives the same result without the crash.
+        blocker.onBeforeRequest(details, (response) => {
+            if (response && response.redirectURL) {
+                callback({ cancel: true });
+                return;
+            }
+            callback(response);
+        });
     });
 
     browserSession.webRequest.onHeadersReceived({ urls: ['<all_urls>'] }, (details, callback) => {
