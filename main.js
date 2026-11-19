@@ -68,6 +68,12 @@ const DESKTOP_UA = process.platform === 'darwin'
     ? `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_MAJOR}.0.0.0 Safari/537.36`
     : `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_MAJOR}.0.0.0 Safari/537.36`;
 
+// session.setUserAgent / <webview useragent> only cover the top frame. Cross-site
+// iframes (e.g. the Cloudflare Turnstile widget) run in their own renderer and
+// fall back to the app-wide UA, which otherwise leaks "bruno/x Electron/y" to
+// navigator.userAgent and fails the challenge in a loop.
+app.userAgentFallback = DESKTOP_UA;
+
 const FIREFOX_UA = process.platform === 'darwin'
     ? 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:135.0) Gecko/20100101 Firefox/135.0'
     : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0';
@@ -87,12 +93,14 @@ function setupSessionSecurity(sess, { ownHeadersReceived = true } = {}) {
         const isGoogleAuth = url.includes('accounts.google.com') ||
             url.includes('accounts.youtube.com') ||
             url.includes('oauth2.googleapis.com');
+        const isWebStore = url.includes('chromewebstore.google.com') ||
+            url.includes('chrome.google.com');
 
         // Always strip Electron and app identifiers from request headers
         if (details.requestHeaders['User-Agent']) {
             details.requestHeaders['User-Agent'] = details.requestHeaders['User-Agent']
                 .replace(/Electron\/[0-9\.]+\s?/g, '')
-                .replace(/yt-downloader-pro\/[0-9\.]+\s?/g, '');
+                .replace(/(?:yt-downloader-pro|bruno)\/[0-9\.]+\s?/gi, '');
         }
 
         if (isGoogleAuth) {
@@ -114,12 +122,13 @@ function setupSessionSecurity(sess, { ownHeadersReceived = true } = {}) {
             details.requestHeaders['Origin'] = 'https://www.youtube.com';
         }
 
-        // Present Google Chrome Client Hints on every request.
-        // Electron defaults to "Chromium" only; Cloudflare Turnstile and the
-        // Chrome Web Store both reject / hard-block that fingerprint
-        // ("Additional Verification Required", "Item currently unavailable").
-        // Skip when we intentionally switched to Firefox UA for Google OAuth.
-        if (!isGoogleAuth) {
+        // Present Google Chrome Client Hints to the Chrome Web Store only
+        // ("Item currently unavailable" otherwise; webstoreCompat patches the
+        // matching JS brands there). Everywhere else keep Chromium's native
+        // hints: they always agree with navigator.userAgentData in every frame,
+        // whereas a header-only "Google Chrome" brand is exactly the mismatch
+        // that makes Cloudflare Turnstile re-ask "Verify you are human" forever.
+        if (isWebStore && !isGoogleAuth) {
             const uaHeader = details.requestHeaders['User-Agent'] || '';
             const isWin = uaHeader.includes('Windows');
             const isMac = uaHeader.includes('Macintosh') || (process.platform === 'darwin' && !isWin);
@@ -196,18 +205,10 @@ app.whenReady().then(async () => {
         });
     }
 
-    // Research Browser preloads:
-    // 1) Chrome brand fingerprint (all origins) — Cloudflare / Turnstile
-    // 2) Chrome Web Store install shim (no-ops off the store host)
+    // Research Browser preload: Chrome Web Store install shim (no-ops off the store host)
     try {
-        const chromeBrandPreload = path.join(__dirname, 'src', 'main', 'preload', 'chromeBrandCompat.js');
         const webstorePreload = path.join(__dirname, 'src', 'main', 'preload', 'webstoreCompat.js');
         if (typeof browserSession.registerPreloadScript === 'function') {
-            browserSession.registerPreloadScript({
-                id: 'bruno-chrome-brand',
-                type: 'frame',
-                filePath: chromeBrandPreload
-            });
             browserSession.registerPreloadScript({
                 id: 'bruno-webstore-compat',
                 type: 'frame',
@@ -216,7 +217,6 @@ app.whenReady().then(async () => {
         } else if (typeof browserSession.setPreloads === 'function') {
             browserSession.setPreloads([
                 ...browserSession.getPreloads(),
-                chromeBrandPreload,
                 webstorePreload
             ]);
         }

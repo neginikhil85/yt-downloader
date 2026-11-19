@@ -32,7 +32,7 @@ function createMainWindow() {
 
     attachWindowCrashHandler(mainWindow);
 
-    // Guest webviews: Chrome brand fingerprint (Cloudflare) + Web Store install shim
+    // Guest webviews: adblock scriptlets + Web Store install shim
     // sandbox: false is required so browserGuestPreload can require() local files
     // and @ghostery/adblocker-electron-preload (DOMMonitor + cosmetic CSS).
     mainWindow.webContents.on('will-attach-webview', (event, webPreferences, params) => {

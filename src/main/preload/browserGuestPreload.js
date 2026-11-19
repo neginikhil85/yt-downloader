@@ -44,5 +44,4 @@ try {
     require('@ghostery/adblocker-electron-preload');
 } catch (_) {}
 
-require('./chromeBrandCompat.js');
 require('./webstoreCompat.js');
